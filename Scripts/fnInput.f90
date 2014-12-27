@@ -9,8 +9,8 @@ subroutine fnInput()
   character*20 :: buffer
   
   ! set the simulation variables to default values
-  n_ch=7
-  m_ch=6
+  n_ch=10
+  m_ch=0
   nkg=501
   nr=200
   E_th=1.5d0

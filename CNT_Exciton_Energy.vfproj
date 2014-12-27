@@ -47,19 +47,19 @@
 	<Files>
 		<Filter Name="Header Files" Filter="fi;fd"/>
 		<Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
-		<File RelativePath=".\fnCNTband.f90"/>
-		<File RelativePath=".\fnDielectric.f90"/>
-		<File RelativePath=".\fnExcitonDispersion.f90"/>
-		<File RelativePath=".\fnExcitonEnergy.f90"/>
-		<File RelativePath=".\fnFileHandler.f90"/>
-		<File RelativePath=".\fnGeomProp.f90"/>
-		<File RelativePath=".\fnGrapheneEnergy.f90"/>
-		<File RelativePath=".\fnInput.f90"/>
-		<File RelativePath=".\fnPhysConst.f90"/>
-		<File RelativePath=".\fnSelfEnergy.f90"/>
-		<File RelativePath=".\fnTest.f90"/>
-		<File RelativePath=".\smallFns.f90"/>
-		<File RelativePath=".\Main.f90"/>
-		<File RelativePath=".\module.f90"/></Filter>
+		<File RelativePath=".\Scripts\fnCNTband.f90"/>
+		<File RelativePath=".\Scripts\fnDielectric.f90"/>
+		<File RelativePath=".\Scripts\fnExcitonDispersion.f90"/>
+		<File RelativePath=".\Scripts\fnExcitonEnergy.f90"/>
+		<File RelativePath=".\Scripts\fnFileHandler.f90"/>
+		<File RelativePath=".\Scripts\fnGeomProp.f90"/>
+		<File RelativePath=".\Scripts\fnGrapheneEnergy.f90"/>
+		<File RelativePath=".\Scripts\fnInput.f90"/>
+		<File RelativePath=".\Scripts\fnPhysConst.f90"/>
+		<File RelativePath=".\Scripts\fnSelfEnergy.f90"/>
+		<File RelativePath=".\Scripts\fnTest.f90"/>
+		<File RelativePath=".\Scripts\Main.f90"/>
+		<File RelativePath=".\Scripts\module.f90"/>
+		<File RelativePath=".\Scripts\smallFns.f90"/></Filter>
 		<Filter Name="Source Files" Filter="f90;for;f;fpp;ftn;def;odl;idl"/></Files>
 	<Globals/></VisualStudioProject>

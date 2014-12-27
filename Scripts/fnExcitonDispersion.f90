@@ -25,30 +25,30 @@ subroutine fnExcitonDispersion()
   
   
   
-  !do iKcm=iKcm_min,iKcm_max
-  !  print *,"Exciton Disp. --> iKcm=", iKcm
-  !  
-  !  call fnExcitonEnergy(Ef_min, iKcm)
-  !  
-  !  ! save exciton energy and wavefunction
-  !  do ikr=ikr_low,(ikr_low+nX-1)
-  !    write(fh13,10, advance='no') Ex_A1(ikr)
-  !    write(fh14,10, advance='no') Ex0_A2(ikr)
-  !    write(fh15,10, advance='no') Ex1_A2(ikr)
-  !    do ikpr=ikr_low,ikr_high
-  !      write(fh16,11, advance='no') Psi_A1(ikpr,ikr)
-  !      write(fh17,11, advance='no') Psi0_A2(ikpr,ikr)
-  !      write(fh18,11, advance='no') Psi1_A2(ikpr,ikr)
-  !    enddo
-  !  enddo
-  !  write(fh13,10)
-  !  write(fh14,10)
-  !  write(fh15,10)
-  !  write(fh16,10)
-  !  write(fh17,10)
-  !  write(fh18,10)
-  !
-  !enddo
+  do iKcm=iKcm_min,iKcm_max
+    print *,"Exciton Disp. --> iKcm=", iKcm
+    
+    call fnExcitonEnergy(Ef_min, iKcm)
+    
+    ! save exciton energy and wavefunction
+    do ikr=ikr_low,(ikr_low+nX-1)
+      write(fh13,10, advance='no') Ex_A1(ikr)
+      write(fh14,10, advance='no') Ex0_A2(ikr)
+      write(fh15,10, advance='no') Ex1_A2(ikr)
+      do ikpr=ikr_low,ikr_high
+        write(fh16,11, advance='no') Psi_A1(ikpr,ikr)
+        write(fh17,11, advance='no') Psi0_A2(ikpr,ikr)
+        write(fh18,11, advance='no') Psi1_A2(ikpr,ikr)
+      enddo
+    enddo
+    write(fh13,10)
+    write(fh14,10)
+    write(fh15,10)
+    write(fh16,10)
+    write(fh17,10)
+    write(fh18,10)
+  
+  enddo
   
   deallocate(Psi_A1)
   deallocate(Psi0_A2)
