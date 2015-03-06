@@ -6,12 +6,12 @@ subroutine fnInput()
   implicit none
   
   integer i,count,flg_tmp
-  character*20 :: buffer
+  character(len=20) :: buffer
   
   ! set the simulation variables to default values
   n_ch=10
   m_ch=0
-  nkg=501
+  nkg=0501
   nr=200
   E_th=1.5d0
   Kcm_max=1.5d9
@@ -19,38 +19,38 @@ subroutine fnInput()
   i_sub=1
   
   ! update the simulation variables according to input variables
-  count=nargs()
+  count=command_argument_count()
   i=1
   
   do while (i .le. count-1)
-    call getarg(i,buffer)
+    call get_command_argument(i,buffer)
     if (buffer .eq. 'ch') then
       i=i+1
-      call getarg(i,buffer)
+      call get_command_argument(i,buffer)
       read(buffer,*) n_ch
       i=i+1
-      call getarg(i,buffer)
+      call get_command_argument(i,buffer)
       read(buffer,*) m_ch
     elseif (buffer .eq. 'nkg') then
       i=i+1
-      call getarg(i,buffer)
+      call get_command_argument(i,buffer)
       read(buffer,*) nkg
     elseif (buffer .eq. 'nr') then
       i=i+1
-      call getarg(i,buffer)
+      call get_command_argument(i,buffer)
       read(buffer,*) nr
     elseif (buffer .eq. 'E_th') then
       i=i+1
-      call getarg(i,buffer)
+      call get_command_argument(i,buffer)
       read(buffer,*) E_th      
     elseif (buffer .eq. 'Kcm_max') then
       i=i+1
-      call getarg(i,buffer)
+      call get_command_argument(i,buffer)
       read(buffer,*) Kcm_max
       Kcm_max=Kcm_max*1.d9
     elseif (buffer .eq. 'flg_dielectric') then
       i=i+1
-      call getarg(i,buffer)
+      call get_command_argument(i,buffer)
       read(buffer,*) flg_tmp
       if (flg_tmp .eq. 1) then
         flg_dielectric=.true.
@@ -58,16 +58,16 @@ subroutine fnInput()
         flg_dielectric=.false.
       else
         print *, "ERROR in input argument flg_dielectric!"
-        pause
+        read (*,*)
         stop
       endif
     elseif (buffer .eq. 'i_sub') then
       i=i+1
-      call getarg(i,buffer)
+      call get_command_argument(i,buffer)
       read(buffer,*) i_sub 
     else
         print *, "ERROR in input arguments!"
-        pause
+        read(*,*)
         stop
     end if
     i=i+1

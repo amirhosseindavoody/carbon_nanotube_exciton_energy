@@ -1,7 +1,7 @@
 %% This file visualizes the results of the fortran program for CNT bethe salpeter equation
 clear all; clc; fig=10;
-% close all;
-dir='C:\Amirhossein\DataTestFiles\CNT_10_00_0501_0200_1.5_1\';
+close all;
+dir='C:\cygwin64\home\amirhossein\CNT_10_00_0501_0200_1.5_1\';
 eV=1.6e-19;
 
 %% plot CNT unit cell
@@ -64,8 +64,8 @@ S_v=load(FileName);
 fig=fig+1; figure(fig); hold on; box on;
 plot(k_vec,E_c/eV,'-','LineWidth',2);
 plot(k_vec,E_v/eV,'-','LineWidth',2);
-plot(k_vec,(E_c+S_c)/eV,'--','LineWidth',6);
-plot(k_vec,(E_v+S_v)/eV,'--','LineWidth',6);
+plot(k_vec,(E_c+S_c)/eV,'-','LineWidth',3);
+plot(k_vec,(E_v+S_v)/eV,'-','LineWidth',3);
 axis tight;
 
 %% plot eps(0,q)
@@ -91,7 +91,7 @@ Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex_A1(:,i)/eV,'-r','LineWidth',3);
+    plot(Kcm_vec,Ex_A1(:,i)/eV,'-','LineWidth',3);
 end;
 axis tight;
 
@@ -103,7 +103,7 @@ Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex0_A2(:,i)/eV,'*-r','LineWidth',3);
+    plot(Kcm_vec,Ex0_A2(:,i)/eV,'-','LineWidth',3);
 end;
 axis tight;
 
@@ -115,7 +115,7 @@ Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex1_A2(:,i)/eV,'-r','LineWidth',3);
+    plot(Kcm_vec,Ex1_A2(:,i)/eV,'-','LineWidth',3);
 end;
 axis tight;
 

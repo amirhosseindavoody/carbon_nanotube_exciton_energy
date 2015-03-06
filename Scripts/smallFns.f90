@@ -33,8 +33,7 @@ subroutine fnSaveSimInfo()
   write(fh1,13) "flg_dielectric=",flg_dielectric
   write(fh1,12) "i_sub=",i_sub
   
-10 FORMAT (A100)
-11 FORMAT (A10,E16.8,E16.8)   
+10 FORMAT (A100)  
 12 FORMAT (A10,I5) 
 13 FORMAT (A15,L1) 
 14 FORMAT (A10,E16.8)  
@@ -63,3 +62,39 @@ subroutine fnSaveMisc()
 
   return
 end
+
+!**********************************************************************************************************************
+! This subroutine calculates the eigen values and eigen vectors of matrix given the size of it (nl) and gives back eigen vectors in A.
+!**********************************************************************************************************************
+subroutine eig(nl,matrix,A,W)
+	implicit none
+	integer, intent(in) :: nl
+	complex*16, dimension(nl,nl), intent(inout) :: matrix
+	complex*16, dimension(nl,nl), intent(out) :: A
+	complex*16, dimension(2*nl-1) :: WORK
+	character (len=1) :: JOBZ, UPLO
+	integer :: INFO, LDA, LWORK, N
+	real*8, dimension(nl) :: W
+	real*8, dimension(3*nl-2) :: RWORK
+	
+	
+	integer :: i,j
+	character (len=*), parameter :: fmt1 = "(SP,T6,F4.1,F4.1,'i')"
+	character (len=*), parameter :: fmt2 = "(SP,T6,F4.1)"
+	
+	JOBZ = 'N'
+	UPLO = 'L'
+	N = size(matrix,1)
+	A = matrix
+	LDA = N
+	LWORK = 2*size(matrix,1)-1
+	
+	call ZHEEV( JOBZ, UPLO,	N, A, LDA, W, WORK, LWORK, RWORK, INFO )
+	
+	if (INFO .ne. 0) then
+		write(*,"(A50,I1.1)") "ERROR: calculation of eigen value failed , INFO = ", INFO
+		stop
+	end if
+	
+	return
+end subroutine

@@ -5,35 +5,22 @@
 !*******************************************************************************
 
 program CNT_Exciton
-  use comparams
-  implicit none
+	use comparams
+	implicit none
   
-  !call fnTest
+	call fnInput
+	call fnOpenFiles
+	call fnSaveSimInfo
+	call fnPhysConst
+	call fnGeomProp
+	call fnCNTband
+	call fnDielectric
+	call fnSelfEnergy
+	call fnExcitonDispersion
+	call fnSaveMisc
+	call fnCloseFiles
   
-  call fnInput
-  
-  call fnOpenFiles
-  
-  call fnSaveSimInfo
-  
-  call fnPhysConst
-  
-  call fnGeomProp
-  
-  call fnCNTband
-
-  call fnDielectric
-  
-  call fnSelfEnergy
-  
-  call fnExcitonDispersion
-  
-  call fnSaveMisc
-  
-  call fnCloseFiles
-  
-
-  print *,'Finish!!!!'
+	print *,'Finish!!!!'
   
 endprogram
 
