@@ -2,14 +2,14 @@
 clear
 cwd=$(pwd)
 
-n_ch=8
-m_ch=7
+n_ch=08
+m_ch=07
 nkg=1001
 nr=0200
 E_th=1.5
 Kcm_max=0.0
 flg_dielectric=1
-i_sub=1
+i_sub=2
 kappa=7.0
 
 echo "Chirality is ($n_ch , $m_ch)"

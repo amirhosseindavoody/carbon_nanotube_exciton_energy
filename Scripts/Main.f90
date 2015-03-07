@@ -24,7 +24,7 @@ program CNT_Exciton
 	call fnCloseFiles
   
 	call CPU_time(endtime)
-	write(logInput,'("Runt time = ",f6.3," seconds.")'),endtime-starttime
+	write(logInput,'("Runt time = ",f10.3," seconds.")'),endtime-starttime
 	call fnLogFile()
   
 endprogram
