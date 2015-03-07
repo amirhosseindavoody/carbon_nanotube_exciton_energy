@@ -1,6 +1,7 @@
 subroutine fnExcitonDispersion()
 	use comparams
 	use exciton_prop
+	use fileHandle
 	implicit none
 	
 	integer :: iKcm, ikr, ikpr
@@ -27,7 +28,8 @@ subroutine fnExcitonDispersion()
 	
 	
 	do iKcm=iKcm_min,iKcm_max
-		print *,"Exciton Disp. --> iKcm=", iKcm
+		write(logInput,*) "Exciton Disp. --> iKcm=", iKcm
+		call fnLogFile()
 		
 		call fnExcitonEnergy(Ef_min, iKcm)
 		

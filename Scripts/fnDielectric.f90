@@ -1,5 +1,6 @@
 subroutine fnDielectric()
 	use comparams
+	use fileHandle
 	implicit none
 	
 	integer :: ik, mu_k, iq, mu_q, ikq, mu_kq
@@ -11,14 +12,12 @@ subroutine fnDielectric()
 	real*8, dimension(:,:,:), allocatable :: q_vec
 	complex*16, dimension(:,:,:), allocatable :: Cc_k, Cv_k
 	
-	
 	! initialize variables.**********************************************************************************************
 	allocate(PI_q(1-Nu:Nu-1,iq_min:iq_max))
 	allocate(v_q(1-Nu:Nu-1,iq_min:iq_max))
 	allocate(eps_q(1-Nu:Nu-1,iq_min:iq_max))
 	allocate(v_FT(1-Nu:Nu-1,iq_min:iq_max,2,2))
 	allocate(q_vec(1-Nu:Nu-1,iq_min:iq_max,2))
-	!allocate(q_vec(iq_min:iq_max))
 	
 	allocate(Cc_k(2-3*Nu/2:3*Nu/2-1,iq_min+ikc_min:iq_max+ikc_max,2))
 	allocate(Cv_k(2-3*Nu/2:3*Nu/2-1,iq_min+ikc_min:iq_max+ikc_max,2))
@@ -46,7 +45,8 @@ subroutine fnDielectric()
 		enddo
 		
 		do mu_q=1-Nu,Nu-1
-			print *,"mu_q=",mu_q
+			write(logInput,*) "mu_q=", mu_q
+			call fnLogFile()
 			do iq=iq_min,iq_max
 				do mu_k=1-Nu/2,Nu/2
 					do ik=ikc_min,ikc_max
@@ -69,7 +69,8 @@ subroutine fnDielectric()
 		enddo
 		
 		do u=-nr,nr
-			print *,"u=",u
+			write(logInput,*) "u=",u
+			call fnLogFile()
 			do s=1,Nu 
 				deltaR=dble(u)*t_vec+posAA(s,:)
 				v_FT(:,:,1,1)=v_FT(:,:,1,1)+exp(i1*dcmplx(q_vec(:,:,1)*deltaR(1)+q_vec(:,:,2)*deltaR(2)))* &

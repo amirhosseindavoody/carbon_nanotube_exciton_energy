@@ -6,8 +6,11 @@
 
 program CNT_Exciton
 	use comparams
+	use fileHandle
 	implicit none
-  
+	
+	call CPU_time(starttime)
+	
 	call fnInput
 	call fnOpenFiles
 	call fnSaveSimInfo
@@ -20,7 +23,9 @@ program CNT_Exciton
 	call fnSaveMisc
 	call fnCloseFiles
   
-	print *,'Finish!!!!'
+	call CPU_time(endtime)
+	write(logInput,'("Runt time = ",f6.3," seconds.")'),endtime-starttime
+	call fnLogFile()
   
 endprogram
 

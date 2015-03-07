@@ -21,22 +21,27 @@ end
 !**********************************************************************************************************************
 subroutine fnSaveSimInfo()
   use comparams
+  use fileHandle
   implicit none
 
-  write(fh1,10) "SIMULATION PARAMETERS"
-  write(fh1,12) "n_ch=",n_ch
-  write(fh1,12) "m_ch=",m_ch
-  write(fh1,12) "nkg=",nkg
-  write(fh1,12) "nr=",nr
-  write(fh1,14) "E_th=",E_th
-  write(fh1,14) "Kcm_max=",Kcm_max
-  write(fh1,13) "flg_dielectric=",flg_dielectric
-  write(fh1,12) "i_sub=",i_sub
-  
-10 FORMAT (A100)  
-12 FORMAT (A10,I5) 
-13 FORMAT (A15,L1) 
-14 FORMAT (A10,E16.8)  
+  write(logInput,*) "SIMULATION PARAMETERS"
+  call fnLogFile()
+  write(logInput,*) "n_ch=",n_ch
+  call fnLogFile()
+  write(logInput,*) "m_ch=",m_ch
+  call fnLogFile()
+  write(logInput,*) "nkg=",nkg
+  call fnLogFile()
+  write(logInput,*) "nr=",nr
+  call fnLogFile()
+  write(logInput,*) "E_th=",E_th
+  call fnLogFile()
+  write(logInput,*) "Kcm_max=",Kcm_max
+  call fnLogFile()
+  write(logInput,*) "flg_dielectric=",flg_dielectric
+  call fnLogFile()
+  write(logInput,*) "i_sub=",i_sub
+  call fnLogFile()
 
   return
 end
@@ -46,6 +51,7 @@ end
 !**********************************************************************************************************************
 subroutine fnSaveMisc()
   use comparams
+  use fileHandle
   implicit none
 
   write(fh19,10) min_sub(i_sub)
@@ -78,7 +84,6 @@ subroutine eig(nl,matrix,A,W)
 	real*8, dimension(3*nl-2) :: RWORK
 	
 	
-	integer :: i,j
 	character (len=*), parameter :: fmt1 = "(SP,T6,F4.1,F4.1,'i')"
 	character (len=*), parameter :: fmt2 = "(SP,T6,F4.1)"
 	

@@ -3,6 +3,7 @@
 !*******************************************************************************
 subroutine fnPhysConst()
 	use comparams
+	use fileHandle
 	implicit none
 
 	eV=1.6d-19 ![Joules]
@@ -17,18 +18,17 @@ subroutine fnPhysConst()
 	Upp=11.3d0*eV
 	eps0=8.85d-12
 	q0=1.6d-19
-  
-	kappa=2.d0
-  
+
 	E_th=E_th*eV
-  
-  
-	write(fh1,10) "TIGHTBINDING PARAMETERS"
-	write(fh1,11) "e2p [eV]=",e2p/eV
-	write(fh1,11) "t0 [eV]=",t0/eV
-	write(fh1,11) "s0 [eV]=",s0
-  
-10	FORMAT (A100)
-11	FORMAT (A10,E16.8)   
+    
+	write(logInput,*) "TIGHTBINDING PARAMETERS"
+	call fnLogFile()
+	write(logInput,*) "e2p [eV]=",e2p/eV
+	call fnLogFile()
+	write(logInput,*) "t0 [eV]=",t0/eV
+	call fnLogFile()
+	write(logInput,*) "s0 [eV]=",s0
+	call fnLogFile()
+
 	return
 end subroutine

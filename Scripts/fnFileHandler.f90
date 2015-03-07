@@ -2,23 +2,8 @@
 ! This subroutines opens all the files that are used in the simulation
 !*******************************************************************************
 subroutine fnOpenFiles()
-	use comparams
+	use fileHandle
 	implicit none
-  
-	character(len=100) :: dirname
-	character(len=200) :: mkdir_command
-	integer(4) :: istat
-
-	write(dirname,"('../CNT_',I2.2,'_',I2.2,'_',I4.4,'_',I4.4,'_',F3.1,'_',I1.1)") n_ch, m_ch, nkg, nr, E_th, i_sub
-	mkdir_command = "mkdir "//dirname
-	call system(mkdir_command)
-
-	istat=chdir(dirname)
-	if (istat .ne. 0) print *, 'Directory did not change!!!'
-  
-  
-	fh1=10
-	open(unit=fh1,file='sim_info.dat',status="unknown")
   
 	fh2=11
 	open(unit=fh2,file='posA.dat',status="unknown")
@@ -81,10 +66,9 @@ end
 ! This subroutines closes all the files that are used in the simulation
 !*******************************************************************************
 subroutine fnCloseFiles()
-	use comparams
+	use fileHandle
 	implicit none
   
-	close(fh1)
 	close(fh2)
 	close(fh3)
 	close(fh4)
@@ -106,3 +90,24 @@ subroutine fnCloseFiles()
   
 	return
 end
+
+!*******************************************************************************
+! This subroutines opens the log file add new log and closes the file
+!*******************************************************************************
+subroutine fnLogFile()
+	use fileHandle
+	implicit none
+	
+	logical :: exist
+	
+	inquire(file="log.dat",exist=exist)
+	if (exist) then
+		open(logFile, file="log.dat", status="old", position="append", action="write")
+	else
+		open(logFile, file="log.dat", status="new", action="write")
+	end if
+	write(logFile, *) logInput
+	close(logFile)
+
+	return
+end subroutine

@@ -3,6 +3,7 @@
 !**********************************************************************************************************************
 subroutine fnGeomProp()
 	use comparams
+	use fileHandle
 	implicit none
 	integer :: tmpi,i,j,k
 	real*8 :: p1,p2,p,q
@@ -43,7 +44,8 @@ subroutine fnGeomProp()
 		if (q .eq. ceiling(q)) then
 			exit
 		else if (i==floor(p1)) then
-			write(fh1,10) "MC not found"
+			write(logInput,*) "MC not found"
+			call fnLogFile()
 			stop
 		end if
 	end do
@@ -126,23 +128,29 @@ subroutine fnGeomProp()
 	end do
   
 	! write down important informations into the output file.************************************************************
-	write(fh1,10) "GEOMETRICAL PROPERTIES"
-	write(fh1,11) "a1=",a1(1), a1(2)
-	write(fh1,11) "a2=",a2(1), a2(2)
-	write(fh1,11) "b1=",b1(1), b1(2)
-	write(fh1,11) "b2=",b2(1), b2(2)
-	write(fh1,11) "aCC_vec=",aCC_vec(1), aCC_vec(2)
-	write(fh1,11) "ch_vec=",ch_vec(1), ch_vec(2)
-	write(fh1,11) "t_vec=",t_vec(1), t_vec(2)
-	write(fh1,12) "len_ch=",len_ch
-	write(fh1,13) "Nu=",Nu
-	write(fh1,13) "MC=",MC
-  
-
-10	FORMAT (A100)
-11	FORMAT (A10,E16.8,E16.8)   
-12	FORMAT (A10,E16.8)
-13	FORMAT (A10,I5)
+	write(logInput,*) "GEOMETRICAL PROPERTIES"
+	call fnLogFile()
+	write(logInput,*) "a1=",a1(1), a1(2)
+	call fnLogFile()
+	write(logInput,*) "a2=",a2(1), a2(2)
+	call fnLogFile()
+	write(logInput,*) "b1=",b1(1), b1(2)
+	call fnLogFile()
+	write(logInput,*) "b2=",b2(1), b2(2)
+	call fnLogFile()
+	write(logInput,*) "aCC_vec=",aCC_vec(1), aCC_vec(2)
+	call fnLogFile()
+	write(logInput,*) "ch_vec=",ch_vec(1), ch_vec(2)
+	call fnLogFile()
+	write(logInput,*) "t_vec=",t_vec(1), t_vec(2)
+	call fnLogFile()
+	write(logInput,*) "len_ch=",len_ch
+	call fnLogFile()
+	write(logInput,*) "Nu=",Nu
+	call fnLogFile()
+	write(logInput,*) "MC=",MC
+	call fnLogFile()
+ 
 14	FORMAT (E16.8,E16.8)  
    
 	return

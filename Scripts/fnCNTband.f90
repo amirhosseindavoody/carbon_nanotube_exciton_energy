@@ -1,5 +1,6 @@
 subroutine fnCNTband()
 	use comparams
+	use fileHandle
 	implicit none
 	
 	integer :: nkc, imin_sub
@@ -102,7 +103,7 @@ subroutine fnCNTband()
 	ikr_low=-ikr_high                 !the minimum index that the relative wavenumber in the entire simulation.
 	ik_high=ikr_high+iKcm_max         !the maximum index that the wavenumber in the entire simulation.
 	ik_low=-ik_high                   !the minimum index that the wavenumber in the entire simulation.
-	iq_max=2*ikr_high                 !the higher limit of the index in v_FT and esp_q
+	iq_max=max(2*ikr_high,ikc_max)    !the higher limit of the index in v_FT and esp_q
 	iq_min=-iq_max                    !the lower limit of the index in v_FT and esp_q
 	
 	! calculate and save dispersion of the considered subbands **********************************************************

@@ -1,5 +1,6 @@
 subroutine fnSelfEnergy()
 	use comparams
+	use fileHandle
 	implicit none
 	
 	integer :: ik, mu_k, iq, mu_q
@@ -22,7 +23,8 @@ subroutine fnSelfEnergy()
 	
 	! calculate the self energies and the tight-binding energies and coefficients.***************************************
 	do ik=ik_low,ik_high
-		print *,'self-energy: ik=',ik
+		write(logInput,*)'self-energy: ik=',ik
+		call fnLogFile()
 		mu_k=min_sub(i_sub)
 		k=dble(mu_k)*K1+dble(ik)*dk*K2
 		call fnGrapheneEnergy(Ek(1,ik,:),Cc(1,ik,:),Cv(1,ik,:),k)
