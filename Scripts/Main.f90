@@ -5,35 +5,27 @@
 !*******************************************************************************
 
 program CNT_Exciton
-  use comparams
-  implicit none
+	use comparams
+	use fileHandle
+	implicit none
+	
+	call CPU_time(starttime)
+	
+	call fnInput
+	call fnOpenFiles
+	call fnSaveSimInfo
+	call fnPhysConst
+	call fnGeomProp
+	call fnCNTband
+	call fnDielectric
+	call fnSelfEnergy
+	call fnExcitonDispersion
+	call fnSaveMisc
+	call fnCloseFiles
   
-  !call fnTest
-  
-  call fnInput
-  
-  call fnOpenFiles
-  
-  call fnSaveSimInfo
-  
-  call fnPhysConst
-  
-  call fnGeomProp
-  
-  call fnCNTband
-
-  call fnDielectric
-  
-  call fnSelfEnergy
-  
-  call fnExcitonDispersion
-  
-  call fnSaveMisc
-  
-  call fnCloseFiles
-  
-
-  print *,'Finish!!!!'
+	call CPU_time(endtime)
+	write(logInput,'("Runt time = ",f10.3," seconds.")'),endtime-starttime
+	call fnLogFile()
   
 endprogram
 

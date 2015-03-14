@@ -1,7 +1,7 @@
 %% This file visualizes the results of the fortran program for CNT bethe salpeter equation
-clear all; clc; fig=10;
-% close all;
-dir='C:\Amirhossein\DataTestFiles\CNT_10_00_0501_0200_1.5_1\';
+clear all; clc; fig=0;
+close all;
+dir='C:\Users\Amirhossein\Google Drive\Research\Exciton\Data\CNT(10,00)-nkg(0501)-nr(0200)-E_th(1.5)-Kcm_max(0.0)-i_sub(1)-kappa(2.0)\';
 eV=1.6e-19;
 
 %% plot CNT unit cell
@@ -11,8 +11,8 @@ FileName=[dir,'posB.dat'];
 posB=load(FileName);
 
 fig=fig+1; figure(fig); hold on; box on;
-plot(posA(:,1),posA(:,2),'b.','MarkerSize',20);
-plot(posB(:,1),posB(:,2),'r.','MarkerSize',20);
+plot(posA(:,1),posA(:,2),'.','MarkerSize',20);
+plot(posB(:,1),posB(:,2),'.','MarkerSize',20);
 
 % plot(posA(1,1),posA(1,2),'g.','MarkerSize',20);
 % plot(posB(1,1),posB(1,2),'k.','MarkerSize',20);
@@ -64,8 +64,8 @@ S_v=load(FileName);
 fig=fig+1; figure(fig); hold on; box on;
 plot(k_vec,E_c/eV,'-','LineWidth',2);
 plot(k_vec,E_v/eV,'-','LineWidth',2);
-plot(k_vec,(E_c+S_c)/eV,'--','LineWidth',6);
-plot(k_vec,(E_v+S_v)/eV,'--','LineWidth',6);
+plot(k_vec,(E_c+S_c)/eV,'-','LineWidth',3);
+plot(k_vec,(E_v+S_v)/eV,'-','LineWidth',3);
 axis tight;
 
 %% plot eps(0,q)
@@ -80,7 +80,7 @@ q_min=-floor(n_q/2)*dk;
 q_vec=linspace(q_min,q_max,n_q);
 
 fig=fig+1; figure(fig); hold on; box on;
-plot(q_vec,(eps_q(Nu,:)),'-r','LineWidth',3);
+plot(q_vec,(eps_q(Nu,:)),'-','LineWidth',3);
 axis tight;
 
 %% plot exciton energy Ex_A1
@@ -91,7 +91,7 @@ Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex_A1(:,i)/eV,'-r','LineWidth',3);
+    plot(Kcm_vec,Ex_A1(:,i)/eV,'-*','LineWidth',3);
 end;
 axis tight;
 
@@ -103,7 +103,7 @@ Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex0_A2(:,i)/eV,'*-r','LineWidth',3);
+    plot(Kcm_vec,Ex0_A2(:,i)/eV,'-*','LineWidth',3);
 end;
 axis tight;
 
@@ -115,7 +115,7 @@ Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex1_A2(:,i)/eV,'-r','LineWidth',3);
+    plot(Kcm_vec,Ex1_A2(:,i)/eV,'-*','LineWidth',3);
 end;
 axis tight;
 
