@@ -1,7 +1,7 @@
 %% This file visualizes the results of the fortran program for CNT bethe salpeter equation
 clear all; clc; fig=0;
 close all;
-dir='C:\Users\Amirhossein\Google Drive\Research\Exciton\Data\CNT(10,00)-nkg(0501)-nr(0200)-E_th(1.5)-Kcm_max(0.0)-i_sub(1)-kappa(2.0)\';
+dir='C:\Users\Amirhossein\Google Drive\Research\Exciton\Data\CNT(10,00)-nkg(0501)-nr(0200)-E_th(1.5)-Kcm_max(1.5)-i_sub(1)-kappa(2.0)\';
 eV=1.6e-19;
 
 %% plot CNT unit cell
@@ -91,7 +91,7 @@ Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex_A1(:,i)/eV,'-*','LineWidth',3);
+    plot(Kcm_vec,Ex_A1(:,i)/eV,'-','LineWidth',3);
 end;
 axis tight;
 
@@ -115,16 +115,16 @@ Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex1_A2(:,i)/eV,'-*','LineWidth',3);
+    plot(Kcm_vec,Ex1_A2(:,i)/eV,'-','LineWidth',3);
 end;
 axis tight;
 
-return;
+% return;
 %% plot exciton wavefunction in k-space
 FileName=[dir,'Psi_A1.dat'];
 tmp=load(FileName);
-[nKcm,ncol]=size(tmp);
-nk=ncol/nX/2;
+nKcm=size(tmp,1);
+nk=size(tmp,2)/nX/2;
 Psi_A1=zeros(nKcm,nX,nk);
 
 for i=1:nX
@@ -164,12 +164,12 @@ clear tmp;
 iKcm=(nKcm+1)/2;
 fig=fig+1; figure(fig); box on; hold on;
 for iX=1
-    tmp(1,:)=Psi_A1(iKcm,iX,:);
-    plot(kr_vec,abs(tmp),'-b','LineWidth',3);
+%     tmp(1,:)=Psi_A1(iKcm,iX,:);
+%     plot(kr_vec,abs(tmp),'-','LineWidth',3);
     tmp(1,:)=Psi0_A2(iKcm,iX,:);
-    plot(kr_vec,abs(tmp),'-r','LineWidth',3);
-    tmp(1,:)=Psi1_A2(iKcm,iX,:);
-    plot(kr_vec,abs(tmp),'-k','LineWidth',3);
+    plot(kr_vec,abs(tmp),'-','LineWidth',3);
+%     tmp(1,:)=Psi1_A2(iKcm,iX,:);
+%     plot(kr_vec,abs(tmp),'-','LineWidth',3);
 end;
 axis tight;
 clear tmp;

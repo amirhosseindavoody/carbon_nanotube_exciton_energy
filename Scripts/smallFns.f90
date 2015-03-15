@@ -83,11 +83,7 @@ subroutine eig(nl,matrix,A,W)
 	real*8, dimension(nl) :: W
 	real*8, dimension(3*nl-2) :: RWORK
 	
-	
-	character (len=*), parameter :: fmt1 = "(SP,T6,F4.1,F4.1,'i')"
-	character (len=*), parameter :: fmt2 = "(SP,T6,F4.1)"
-	
-	JOBZ = 'N'
+	JOBZ = 'V'
 	UPLO = 'L'
 	N = size(matrix,1)
 	A = matrix

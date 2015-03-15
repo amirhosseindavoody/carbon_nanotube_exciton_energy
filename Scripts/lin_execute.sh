@@ -2,15 +2,15 @@
 clear
 cwd=$(pwd)
 
-n_ch=08
-m_ch=07
-nkg=1001
+n_ch=10
+m_ch=00
+nkg=0501
 nr=0200
 E_th=1.5
-Kcm_max=0.0
+Kcm_max=1.5
 flg_dielectric=1
-i_sub=2
-kappa=7.0
+i_sub=1
+kappa=2.0
 
 echo "Chirality is ($n_ch , $m_ch)"
 echo "Dielectric flag is" $flg_dielectric

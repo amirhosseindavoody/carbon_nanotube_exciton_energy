@@ -90,7 +90,7 @@ subroutine fnExcitonEnergy(Ef_min, iKcm)
 	Kernel=Ke11-Kd11-Kd12
 	call eig(nkr,Kernel,Psi1_A2,Ex1_A2)
 		
-	! sort the subbands
+	!sort the subbands
 	do ikr=ikr_high,ikr_low+1,-1
 		do ikpr=ikr-1,ikr_low,-1
 			if (Ex_A1(ikr) .lt. Ex_A1(ikpr)) then
@@ -121,6 +121,5 @@ subroutine fnExcitonEnergy(Ef_min, iKcm)
 			end if
 		end do
 	end do
-	
 	return
 end
