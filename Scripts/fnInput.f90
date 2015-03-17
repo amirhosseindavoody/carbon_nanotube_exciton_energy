@@ -9,6 +9,8 @@ subroutine fnInput()
   integer, dimension(3) :: date, time
   integer i,count,flg_tmp
   character(len=20) :: buffer
+  real*8 :: Ckappa=0
+  real*8 :: kappa_coeff=0
   
   ! get time and date of start of simulation
   call idate(date)
@@ -32,7 +34,7 @@ subroutine fnInput()
   do while (i .le. count-1)
     call get_command_argument(i,buffer)
     select case (buffer)
-    case ('n_ch')
+    case ('ch')
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) n_ch
@@ -73,20 +75,29 @@ subroutine fnInput()
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) i_sub
-    case ('kappa')
+    case ('Ckappa')
       i=i+1
       call get_command_argument(i,buffer)
-      read(buffer,*) kappa
+      read(buffer,*) Ckappa
+    case ('kappa_coeff')
+      i=i+1
+      call get_command_argument(i,buffer)
+      read(buffer,*) kappa_coeff
     case default
+        print *, buffer
         write(logInput,*) "ERROR in input arguments!"
         call fnLogFile()
         call exit()
     end select
     i=i+1
   end do
+
+  if ((Ckappa .gt. 0.d0 ) .and. (kappa_coeff .gt. 0.d0)) then
+    kappa = Ckappa*kappa_coeff
+  end if
   
   ! write simulation inputs to the log file
-  write(logInput,'("Simulation started at--> DATE=",I2.2,"/",I2.2,"/",I2.2,"  TIME=",I2.2,":",I2.2,":",I2.2)') date, time
+  write(logInput,'("Simulation started at--> DATE=",I2.2,"/",I2.2,"/",I4.4,"  TIME=",I2.2,":",I2.2,":",I2.2)') date, time
   call fnLogFile()
   write(logInput,*) "SIMULATION PARAMETERS"
   call fnLogFile()
