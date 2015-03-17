@@ -31,31 +31,32 @@ subroutine fnInput()
   
   do while (i .le. count-1)
     call get_command_argument(i,buffer)
-    if (buffer .eq. 'ch') then
+    select case (buffer)
+    case ('n_ch')
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) n_ch
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) m_ch
-    elseif (buffer .eq. 'nkg') then
+    case ('nkg')
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) nkg
-    elseif (buffer .eq. 'nr') then
+    case ('nr')
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) nr
-    elseif (buffer .eq. 'E_th') then
+    case('E_th')
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) E_th      
-    elseif (buffer .eq. 'Kcm_max') then
+    case('Kcm_max')
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) Kcm_max
       Kcm_max=Kcm_max*1.d9
-    elseif (buffer .eq. 'flg_dielectric') then
+    case('flg_dielectric')
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) flg_tmp
@@ -65,29 +66,27 @@ subroutine fnInput()
         flg_dielectric=.false.
       else
         write(logInput,*) "ERROR in input argument flg_dielectric!"
-		call fnLogFile()
-        read (*,*)
-        stop
+        call fnLogFile()
+        call exit()
       endif
-    elseif (buffer .eq. 'i_sub') then
+    case('i_sub')
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) i_sub
-	elseif (buffer .eq. 'kappa') then
+    case ('kappa')
       i=i+1
       call get_command_argument(i,buffer)
       read(buffer,*) kappa
-    else
+    case default
         write(logInput,*) "ERROR in input arguments!"
-		call fnLogFile()
-        read(*,*)
-        stop
-    end if
+        call fnLogFile()
+        call exit()
+    end select
     i=i+1
   end do
   
   ! write simulation inputs to the log file
-  write(logInput,*) "Simulation started at: DATE=", date,"    TIME=", time
+  write(logInput,'("Simulation started at--> DATE=",I2.2,"/",I2.2,"/",I2.2,"  TIME=",I2.2,":",I2.2,":",I2.2)') date, time
   call fnLogFile()
   write(logInput,*) "SIMULATION PARAMETERS"
   call fnLogFile()
@@ -101,7 +100,7 @@ subroutine fnInput()
   call fnLogFile()
   write(logInput,*) "E_th=",E_th
   call fnLogFile()
-  write(logInput,*) "Kcm_max=",Kcm_max
+  write(logInput,*) "Kcm_max=",Kcm_max/1.d9
   call fnLogFile()
   write(logInput,*) "flg_dielectric=",flg_dielectric
   call fnLogFile()

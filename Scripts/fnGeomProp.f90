@@ -150,6 +150,8 @@ subroutine fnGeomProp()
 	call fnLogFile()
 	write(logInput,*) "MC=",MC
 	call fnLogFile()
+	write(logInput,*) "dk=",dk
+	call fnLogFile()
  
 14	FORMAT (E16.8,E16.8)  
    

@@ -17,59 +17,6 @@ do while (ib .ne. 0)
 end
 
 !**********************************************************************************************************************
-! This subroutine saves the some of the simulation parameters
-!**********************************************************************************************************************
-subroutine fnSaveSimInfo()
-  use comparams
-  use fileHandle
-  implicit none
-
-  write(logInput,*) "SIMULATION PARAMETERS"
-  call fnLogFile()
-  write(logInput,*) "n_ch=",n_ch
-  call fnLogFile()
-  write(logInput,*) "m_ch=",m_ch
-  call fnLogFile()
-  write(logInput,*) "nkg=",nkg
-  call fnLogFile()
-  write(logInput,*) "nr=",nr
-  call fnLogFile()
-  write(logInput,*) "E_th=",E_th
-  call fnLogFile()
-  write(logInput,*) "Kcm_max=",Kcm_max
-  call fnLogFile()
-  write(logInput,*) "flg_dielectric=",flg_dielectric
-  call fnLogFile()
-  write(logInput,*) "i_sub=",i_sub
-  call fnLogFile()
-
-  return
-end
-    
-!**********************************************************************************************************************
-! This subroutine saves the limits of different types of k-vectors in the simulated exciton energy code.
-!**********************************************************************************************************************
-subroutine fnSaveMisc()
-  use comparams
-  use fileHandle
-  implicit none
-
-  write(fh19,10) min_sub(i_sub)
-  write(fh19,10) ik_max
-  write(fh19,10) iKcm_max
-  write(fh19,10) ikr_high
-  write(fh19,10) ik_high
-  write(fh19,10) iq_max
-  write(fh19,10) nX
-  write(fh19,11) dk
-  
-10 FORMAT (I4.4) 
-11 FORMAT (E16.8)
-
-  return
-end
-
-!**********************************************************************************************************************
 ! This subroutine calculates the eigen values and eigen vectors of matrix given the size of it (nl) and gives back eigen vectors in A.
 !**********************************************************************************************************************
 subroutine eig(nl,matrix,A,W)

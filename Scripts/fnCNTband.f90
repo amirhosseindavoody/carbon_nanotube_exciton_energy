@@ -105,6 +105,20 @@ subroutine fnCNTband()
 	ik_low=-ik_high                   !the minimum index that the wavenumber in the entire simulation.
 	iq_max=max(2*ikr_high,ikc_max)    !the higher limit of the index in v_FT and esp_q
 	iq_min=-iq_max                    !the lower limit of the index in v_FT and esp_q
+
+	! save the index boundaries to the log file. ************************************************************************
+	write(logInput,*) "INDEX BOUNDARIES"
+	call fnLogFile()
+	write(logInput,*) "ik_max=",ik_max
+	call fnLogFile()
+	write(logInput,*) "iKcm_max=",iKcm_max
+	call fnLogFile()
+	write(logInput,*) "ikr_high=",ikr_high
+	call fnLogFile()
+	write(logInput,*) "ik_high=",ik_high
+	call fnLogFile()
+	write(logInput,*) "iq_max=",iq_max
+	call fnLogFile()
 	
 	! calculate and save dispersion of the considered subbands **********************************************************
 	deallocate(E_k)
@@ -147,7 +161,10 @@ subroutine fnCNTband()
 		write(fh6,10, advance='no') E_k(2,ik,1) 
 		write(fh7,10, advance='no') E_k(2,ik,2) 
 	enddo
-	
+
+	! write the index of the considered subband to the log file
+	write(logInput,*) "min_sub(i_sub)=",min_sub(i_sub)
+	call fnLogFile()
 	
 10	FORMAT (E16.8)
 	

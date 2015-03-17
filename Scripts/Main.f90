@@ -4,7 +4,7 @@
 ! Last modified: 3/17/2014
 !*******************************************************************************
 
-program CNT_Exciton
+program cnt_exciton_energy
 	use comparams
 	use fileHandle
 	implicit none
@@ -13,19 +13,17 @@ program CNT_Exciton
 	
 	call fnInput
 	call fnOpenFiles
-	call fnSaveSimInfo
 	call fnPhysConst
 	call fnGeomProp
 	call fnCNTband
 	call fnDielectric
 	call fnSelfEnergy
 	call fnExcitonDispersion
-	call fnSaveMisc
 	call fnCloseFiles
   
 	call CPU_time(endtime)
 	write(logInput,'("Run time = ",f10.3," seconds.")'),endtime-starttime
 	call fnLogFile()
   
-endprogram
+end program cnt_exciton_energy
 

@@ -24,6 +24,9 @@ subroutine fnExcitonDispersion()
 		nX=nX+1
 		endif
 	enddo
+
+	write(logInput,*) "nX=",nX
+	call fnLogFile()
 	
 	
 	
