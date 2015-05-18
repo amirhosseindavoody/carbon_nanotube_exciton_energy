@@ -9,8 +9,8 @@ subroutine fnInput()
   integer, dimension(3) :: date, time
   integer i,count,flg_tmp
   character(len=20) :: buffer
-  real*8 :: Ckappa=0
-  real*8 :: kappa_coeff=0
+  real*8 :: Ckappa=0.d0
+  real*8 :: kappa_coeff=0.d0
   
   ! get time and date of start of simulation
   call idate(date)
@@ -116,6 +116,8 @@ subroutine fnInput()
   write(logInput,*) "flg_dielectric=",flg_dielectric
   call fnLogFile()
   write(logInput,*) "i_sub=",i_sub
+  call fnLogFile()
+  write(logInput,*) "Ckappa=",Ckappa
   call fnLogFile()
   write(logInput,*) "kappa=",kappa
   call fnLogFile()

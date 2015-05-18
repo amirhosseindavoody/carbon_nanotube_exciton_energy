@@ -10,8 +10,7 @@ E_th=1.5
 Kcm_max=1.5
 flg_dielectric=1
 i_sub=1
-#kappa=2.0
-Ckappa=5.5
+Ckappa=5.0
 kappa_coeff=1.211
 
 echo "Chirality is ($n_ch , $m_ch)"
@@ -21,7 +20,6 @@ echo E_th= $E_th
 echo nr= $nr
 echo Kcm_max= $Kcm_max
 echo i_sub= $i_sub
-echo kappa= $kappa
 echo Ckappa= $Ckappa
 echo kappa_coeff= $kappa_coeff
 

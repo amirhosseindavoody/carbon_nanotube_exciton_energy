@@ -1,7 +1,7 @@
 %% This file visualizes the results of the fortran program for CNT bethe salpeter equation
-clear all; clc; fig=0;
-close all;
-dir='C:\Users\Amirhossein\Google Drive\Research\Exciton\Data\CNT(10,00)-nkg(0501)-nr(0200)-E_th(1.5)-Kcm_max(1.5)-i_sub(1)-kappa(2.0)\';
+clear all; clc; fig=10;
+% close all;
+dir='C:\Users\Amirhossein\Google Drive\Research\Exciton\Data\Environmental Effect\CNT-Exciton\CNT(08,07)-nkg(1001)-nr(0200)-E_th(1.5)-Kcm_max(1.5)-i_sub(1)-Ckappa(0.5)\';
 eV=1.6e-19;
 
 %% plot CNT unit cell
@@ -91,7 +91,7 @@ Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex_A1(:,i)/eV,'-','LineWidth',3);
+    plot(Kcm_vec,Ex_A1(:,i)/eV,'-r','LineWidth',3);
 end;
 axis tight;
 
@@ -103,7 +103,7 @@ Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex0_A2(:,i)/eV,'-*','LineWidth',3);
+    plot(Kcm_vec,Ex0_A2(:,i)/eV,'-r','LineWidth',3);
 end;
 axis tight;
 
@@ -119,7 +119,7 @@ for i=1:nX
 end;
 axis tight;
 
-% return;
+return;
 %% plot exciton wavefunction in k-space
 FileName=[dir,'Psi_A1.dat'];
 tmp=load(FileName);
