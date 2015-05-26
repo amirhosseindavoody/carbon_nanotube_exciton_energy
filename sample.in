@@ -1,13 +1,13 @@
 directory, output= /cygdrive/c/Users/amirhossein/Google Drive/Research/Exciton/Data/Environmental Effect/CNT-Exciton/
 
-cnt, n_ch=	8
-cnt, m_ch=	0
+cnt, n_ch=	7
+cnt, m_ch=	6
 cnt, nkg=	1001
 cnt, nr=		200
 cnt, E_th[eV]=	1.5
 cnt, Kcm_max[1/nm]=	1.5
 cnt, i_sub=	1
-cnt, Ckappa=	1.0
-cnt, kappa_coeff=	1.211
+cnt, Ckappa=	2.0
+cnt, kappa_coeff=	1.0
 
 flg, flg_dielectric= true

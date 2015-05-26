@@ -40,11 +40,15 @@ module cnt_class
 		!CNT self energy and tight binding coefficients
 		real*8, dimension(:,:,:), allocatable :: Ek!Tight-binding energy , Ek(mu,k,n) stores the tight-binding energy of the band "mu" with wavevector "k" in conduction band (n=1) or the valence band (n=2).
 		real*8, dimension(:,:,:), allocatable :: Sk!Self-energy 
-		complex*16, dimension(:,:,:), allocatable :: Cc,Cv !Tight-binding wavefunction coefficients
+		complex*16, dimension(:,:,:), allocatable :: Cc,Cv !Cc(mu,k,b) is the conduction band tight-binding wavefunction coefficients where "mu" is the band index (1 is +mu and 2 is -mu), "k" is the wave vector along the CNT axis, "b" is the atom index in graphene unit cell (1 is A type atom) and (2 is B type atom)
 
-		!Exciton wavefunction and energies
+		!A-type exciton wavefunction and energies
 		real*8, dimension(:,:), allocatable :: Ex_A1, Ex0_A2, Ex1_A2 !the first index is subband, the second index is iKcm
 		complex*16, dimension(:,:,:), allocatable :: Psi_A1, Psi0_A2, Psi1_A2 !the first index is ikr, the scond index is the subband, the third index is iKcm
+
+		!E-type exciton wavefunction and energies
+		real*8, dimension(:,:), allocatable :: Ex0_Ep, Ex0_Em, Ex1_Ep, Ex1_Em !the first index is subband, the second index is iKcm
+		complex*16, dimension(:,:,:), allocatable :: Psi0_Ep, Psi0_Em, Psi1_Ep, Psi1_Em !the first index is ikr, the scond index is the subband, the third index is iKcm
 
 		!Target exciton wavefunction and energies
 		real*8, dimension(:,:), allocatable :: Ex_t !the first index is subband, the second index is iKcm

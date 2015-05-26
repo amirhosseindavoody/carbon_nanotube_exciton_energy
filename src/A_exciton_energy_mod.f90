@@ -1,7 +1,7 @@
-module exciton_energy_mod
+module A_exciton_energy_mod
 	implicit none
 	private
-	public :: calculate_exciton_dispersion
+	public :: calculate_A_exciton_dispersion
 
 	real*8, dimension(:), allocatable :: Ef
 	complex*16, dimension(:), allocatable :: Psi_tmp
@@ -11,7 +11,7 @@ module exciton_energy_mod
 	complex*16, dimension(:,:), allocatable :: Psi_A1, Psi0_A2, Psi1_A2 !the first index is ikr, the scond index is the subband
 
 contains
-	subroutine calculate_exciton_dispersion()
+	subroutine calculate_A_exciton_dispersion()
 		use comparams, only: currcnt
 		use write_log_mod, only: writeLog
 		
@@ -26,13 +26,6 @@ contains
 		allocate(currcnt%Ex0_A2(currcnt%ikr_low:currcnt%ikr_high, currcnt%iKcm_min:currcnt%iKcm_max))
 		allocate(currcnt%Ex1_A2(currcnt%ikr_low:currcnt%ikr_high, currcnt%iKcm_min:currcnt%iKcm_max))
 
-		! temporary variables
-		allocate(Psi_A1(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high))
-		allocate(Psi0_A2(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high))
-		allocate(Psi1_A2(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high))
-		allocate(Ex_A1(currcnt%ikr_low:currcnt%ikr_high))
-		allocate(Ex0_A2(currcnt%ikr_low:currcnt%ikr_high))
-		allocate(Ex1_A2(currcnt%ikr_low:currcnt%ikr_high))
 
 		! find the number of exciton bands below the free electron level
 		currcnt%nX=0
@@ -100,11 +93,11 @@ contains
 		close(105)
 		  
 		return
-	end subroutine calculate_exciton_dispersion
+	end subroutine calculate_A_exciton_dispersion
 
 
 	!**************************************************************************************************************************
-	! subroutine to calculate Bloch functions and energy in graphene
+	! subroutine to calculate A-type exciton energy with center of mass k vector iKcm
 	!**************************************************************************************************************************
 
 	subroutine calculate_exciton_energy(Ef_min, iKcm)
@@ -121,6 +114,13 @@ contains
 		mu_cm=0
 		mu_kr=currcnt%min_sub(currcnt%i_sub)
 		nkr=currcnt%ikr_high-currcnt%ikr_low+1
+
+		if (.not. allocated(Psi_A1)) allocate(Psi_A1(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high))
+		if (.not. allocated(Psi0_A2)) allocate(Psi0_A2(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high))
+		if (.not. allocated(Psi1_A2)) allocate(Psi1_A2(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high))
+		if (.not. allocated(Ex_A1)) allocate(Ex_A1(currcnt%ikr_low:currcnt%ikr_high))
+		if (.not. allocated(Ex0_A2)) allocate(Ex0_A2(currcnt%ikr_low:currcnt%ikr_high))
+		if (.not. allocated(Ex1_A2)) allocate(Ex1_A2(currcnt%ikr_low:currcnt%ikr_high))
 		
 		if(.not. allocated(Kd11)) allocate(Kd11(currcnt%ikr_low:currcnt%ikr_high,currcnt%ikr_low:currcnt%ikr_high))
 		if(.not. allocated(Kd12)) allocate(Kd12(currcnt%ikr_low:currcnt%ikr_high,currcnt%ikr_low:currcnt%ikr_high))
@@ -230,4 +230,4 @@ contains
 		return
 	end subroutine calculate_exciton_energy
 
-end module exciton_energy_mod
+end module A_exciton_energy_mod
