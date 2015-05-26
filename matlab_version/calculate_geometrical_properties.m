@@ -55,8 +55,7 @@ for i=0:t1+nC
 end;
 
 % here we rotate the coordinates of atoms, chiral vector, and translational
-% vectors but we do not rotate lattice vectors (a1 and a1) and we do NOT
-% rotate reciprocal lattice vectors (b1 and b2).
+% vectors 
 cosTh=ch_vec(1)/(norm(ch_vec));
 sinTh=ch_vec(2)/(norm(ch_vec));
 Rot=[cosTh,sinTh;-sinTh,cosTh];
@@ -161,6 +160,18 @@ a1_plot=zeros(2,2);
 a1_plot(2,:)=b2/norm(b2);
 plot(a1_plot(:,1),a1_plot(:,2),'--r','LineWidth',3);
 axis equal; axis tight;
+
+fig=fig+1; figure(fig); hold on; box on;
+tmp = a1/norm(a1);
+quiver(0,0,tmp(1),tmp(2),'LineWidth',3);
+tmp = a2/norm(a2);
+quiver(0,0,tmp(1),tmp(2),'LineWidth',3);
+tmp = b1/norm(b1);
+quiver(0,0,tmp(1),tmp(2),'-','LineWidth',3);
+tmp = b2/norm(b2);
+quiver(0,0,tmp(1),tmp(2),'-','LineWidth',3);
+axis equal; axis tight;
+
 
 %% Calculate coordinates of atoms in 3D unit cell
 A_coor=zeros(Nu,3);

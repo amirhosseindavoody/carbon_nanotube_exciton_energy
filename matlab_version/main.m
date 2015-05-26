@@ -7,8 +7,8 @@ close all;
 dir='C:\Users\Amirhossein\Documents\My Dropbox\Research\Exciton\data\';
 
 %% Input simulation parameters
-nC=6; %chiral vector coefficient
-mC=5; %chiral vector coefficient 0<mC<nC
+nC=7; %chiral vector coefficient
+mC=6; %chiral vector coefficient 0<mC<nC
 
 nkg=501; %number of mesh points in the first brillioun zone of graphene. [This number should be set to an odd number.]
 nr=100; %number of mesh points in real space in each dimension
@@ -17,10 +17,10 @@ n_sub=2; %number of subbands considered in calculation of excitonic states
 Kcm_max=1.5e9; %maximum amount of Kcm in units of nanometers.
 flg_dielectric=0; %when set to 1 dielectric function is calculated and stored in file.
 
-
 %% Initialize simulation
 define_physical_constants
 calculate_geometrical_properties
+draw_reciprocal_lattice
 
 filename=[dir,'dielectric','_chir_(',num2str(nC),',',num2str(mC),')_nkg_',num2str(nkg),'_nr_',num2str(nr),...
     '_Eth_',num2str(E_th/eV),'_nsub_',num2str(n_sub),'_s0_',num2str(s0),'_t0_',num2str(t0/eV),'_Kcm-max_',num2str(Kcm_max*1e-9),'.mat'];
