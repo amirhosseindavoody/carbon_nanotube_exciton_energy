@@ -72,10 +72,10 @@ contains
 			
 			! save exciton energy and wavefunction
 			do ikr=(currcnt%ikr_low),(currcnt%ikr_low+currcnt%nX-1)
-			write(100,'(E16.8)', advance='no') Ex0_Ep(ikr)
-			write(101,'(E16.8)', advance='no') Ex0_Em(ikr)
-			write(102,'(E16.8)', advance='no') Ex1_Ep(ikr)
-			write(103,'(E16.8)', advance='no') Ex1_Em(ikr)
+				write(100,'(E16.8)', advance='no') Ex0_Ep(ikr)
+				write(101,'(E16.8)', advance='no') Ex0_Em(ikr)
+				write(102,'(E16.8)', advance='no') Ex1_Ep(ikr)
+				write(103,'(E16.8)', advance='no') Ex1_Em(ikr)
 				do ikpr=currcnt%ikr_low,currcnt%ikr_high
 					write(104,'(E16.8,E16.8)', advance='no') Psi0_Ep(ikpr,ikr)
 					write(105,'(E16.8,E16.8)', advance='no') Psi0_Em(ikpr,ikr)

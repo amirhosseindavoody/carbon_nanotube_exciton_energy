@@ -1,7 +1,7 @@
 directory, output= /cygdrive/c/Users/amirhossein/Google Drive/Research/Exciton/Data/Environmental Effect/CNT-Exciton/
 
-cnt, n_ch=	7
-cnt, m_ch=	6
+cnt, n_ch=	8
+cnt, m_ch=	0
 cnt, nkg=	1001
 cnt, nr=		200
 cnt, E_th[eV]=	1.5

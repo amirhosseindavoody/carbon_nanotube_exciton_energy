@@ -27,7 +27,7 @@ program cnt_exciton_energy
 	call calculate_dielectric_fn()
 	call calculate_self_energy()
 	call calculate_A_exciton_dispersion()
-	call calculate_E_exciton_dispersion()
+! 	call calculate_E_exciton_dispersion()
   
 	call CPU_time(endtime)
 	write(logInput,'("Run time = ",f10.3," seconds.")'),endtime-starttime
