@@ -113,16 +113,16 @@ contains
 		enddo
 		
 		! set the index boundaries for some arrays and kernels. *************************************************************
-		currcnt%ik_max=ik							!the higher limit of k-vector that is below E_th
-		currcnt%ik_min=-ik							!the lower limit of k-vector that is below E_th
+		currcnt%ik_max=ik											!the higher limit of k-vector that is below E_th
+		currcnt%ik_min=-ik											!the lower limit of k-vector that is below E_th
 		currcnt%iKcm_max=floor(currcnt%Kcm_max/currcnt%dk)			!the higher limit of center of mass wave vector that we calculate
-		currcnt%iKcm_min=-currcnt%iKcm_max					!the lower limit of center of mass wave vector that we calculate
+		currcnt%iKcm_min=-currcnt%iKcm_max							!the lower limit of center of mass wave vector that we calculate
 		currcnt%ikr_high=currcnt%iKcm_max-currcnt%ik_min			!the maximum index that the relative wavenumber in the entire simulation.
-		currcnt%ikr_low=-currcnt%ikr_high					!the minimum index that the relative wavenumber in the entire simulation.
+		currcnt%ikr_low=-currcnt%ikr_high							!the minimum index that the relative wavenumber in the entire simulation.
 		currcnt%ik_high=currcnt%ikr_high+currcnt%iKcm_max			!the maximum index that the wavenumber in the entire simulation.
-		currcnt%ik_low=-currcnt%ik_high						!the minimum index that the wavenumber in the entire simulation.
+		currcnt%ik_low=-currcnt%ik_high								!the minimum index that the wavenumber in the entire simulation.
 		currcnt%iq_max=max(2*currcnt%ikr_high,currcnt%ikc_max)		!the higher limit of the index in v_FT and esp_q
-		currcnt%iq_min=-currcnt%iq_max						!the lower limit of the index in v_FT and esp_q
+		currcnt%iq_min=-currcnt%iq_max								!the lower limit of the index in v_FT and esp_q
 
 		! save the index boundaries to the log file. ************************************************************************
 		call writeLog(new_line('A')//"Index boundaries *************************************")

@@ -124,6 +124,12 @@ contains
 			
 		! save eps_q, and v_FT.**********************************************************************************************
 			
+			open(unit=100,file='qVec.dat',status="unknown")
+			do iq=currcnt%iq_min,currcnt%iq_max
+				write(100,'(E16.8)', advance='no') dble(iq)*currcnt%dk
+			end do
+			close(100)
+
 			open(unit=100,file='PI_q.dat',status="unknown")
 			open(unit=101,file='v_FT.dat',status="unknown")
 			open(unit=102,file='eps_q.dat',status="unknown")

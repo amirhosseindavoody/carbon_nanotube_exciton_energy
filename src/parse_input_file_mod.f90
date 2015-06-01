@@ -82,6 +82,8 @@ contains
 							read(value, *) currcnt%m_ch
 						case ('nkg')
 							read(value, *) currcnt%nkg
+						case ('dk/dkx')
+							read(value, *) currcnt%dk_dkx_ratio
 						case ('nr')
 							read(value, *) currcnt%nr
 						case ('E_th[eV]')

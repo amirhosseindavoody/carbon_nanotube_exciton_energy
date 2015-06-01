@@ -66,8 +66,8 @@ contains
 			currcnt%Psi1_A2(:,:,iKcm) = Psi1_A2
 			
 			! save exciton energy and wavefunction
-! 			do ikr=(currcnt%ikr_low),(currcnt%ikr_low+currcnt%nX-1)
-			do ikr=(currcnt%ikr_low),(currcnt%ikr_high)
+			do ikr=(currcnt%ikr_low),(currcnt%ikr_low+currcnt%nX-1)
+! 			do ikr=(currcnt%ikr_low),(currcnt%ikr_high)
 				write(100,'(E16.8)', advance='no') Ex_A1(ikr)
 				write(101,'(E16.8)', advance='no') Ex0_A2(ikr)
 				write(102,'(E16.8)', advance='no') Ex1_A2(ikr)

@@ -79,6 +79,7 @@ contains
 	  
 		! calculate reciprocal lattice of CNT.*******************************************************************************
 		currcnt%dk=norm2(currcnt%b1)/(dble(currcnt%nkg)-1.d0)
+		currcnt%dkx = currcnt%dk/currcnt%dk_dkx_ratio
 		currcnt%K1=(- t2*currcnt%b1+ dble(t1)*currcnt%b2)/(dble(currcnt%Nu))
 		currcnt%K2=(dble(currcnt%m_ch)*currcnt%b1-dble(currcnt%n_ch)*currcnt%b2)/dble(currcnt%Nu)
 		currcnt%K2=currcnt%K2/norm2(currcnt%K2)
@@ -169,6 +170,8 @@ contains
 		write(logInput,*) "MC=",MC
 		call writeLog(trim(logInput))
 		write(logInput,*) "dk=",currcnt%dk
+		call writeLog(trim(logInput))
+		write(logInput,*) "dkx=",currcnt%dkx
 		call writeLog(trim(logInput))
 	   
 		return

@@ -26,7 +26,9 @@ module cnt_class
 		
 		!Reciprocal lattice properties
 		integer :: nkg
-		real*8 :: dk
+		real*8 :: dk !reciprocal lattice mesh size for calculating self-energy, Fourier transform of coulomb interaction v_FT, and dielectric function.
+		real*8 :: dkx !reciprocal lattice mesh size for calculating exciton dispersion. This is used to determine the spacing between calculated exciton spacing: K_cm = iKcm * dkx
+		integer :: dk_dkx_ratio ! this is the ratio of dk and dkx: dk = dkx * dk_dkx_ratio
 		real*8, dimension(2) :: K1, K2
 		
 		!CNT band structure properties
@@ -34,13 +36,14 @@ module cnt_class
 		integer :: ikc_max, ikc_min, ik_max, ik_min, iKcm_max, iKcm_min, ik_high, ik_low, ikr_high, ikr_low, iq_max, iq_min
 		
 		!Dielectric function
-		real*8, dimension(:,:), allocatable :: eps_q
-		complex*16, dimension(:,:,:,:), allocatable :: v_FT ! v_FT(mu,q,n,m) stores the Fourier transform of the Coulomb potential at the wavevector determined by band index "mu" and wavenumber "q" for atoms of type A (n or m = 1) or type B (n or m = 2)
+		real*8, dimension(:,:), allocatable :: eps_q, eps_q_fine
+		complex*16, dimension(:,:,:,:), allocatable :: v_FT, v_FT_fine ! v_FT(mu,q,n,m) stores the Fourier transform of the Coulomb potential at the wavevector determined by band index "mu" and wavenumber "q" for atoms of type A (n or m = 1) or type B (n or m = 2)
 
 		!CNT self energy and tight binding coefficients
-		real*8, dimension(:,:,:), allocatable :: Ek!Tight-binding energy , Ek(mu,k,n) stores the tight-binding energy of the band "mu" with wavevector "k" in conduction band (n=1) or the valence band (n=2).
-		real*8, dimension(:,:,:), allocatable :: Sk!Self-energy 
-		complex*16, dimension(:,:,:), allocatable :: Cc,Cv !Cc(mu,k,b) is the conduction band tight-binding wavefunction coefficients where "mu" is the band index (1 is +mu and 2 is -mu), "k" is the wave vector along the CNT axis, "b" is the atom index in graphene unit cell (1 is A type atom) and (2 is B type atom)
+		! quantities that have _fine at the end are those that are calculated via interpolation of the quantities without _fine at the end.
+		real*8, dimension(:,:,:), allocatable :: Ek, Ek_fine!Tight-binding energy , Ek(mu,k,n) stores the tight-binding energy of the band "mu" with wavevector "k" in conduction band (n=1) or the valence band (n=2).
+		real*8, dimension(:,:,:), allocatable :: Sk, Sk_fine!Self-energy 
+		complex*16, dimension(:,:,:), allocatable :: Cc, Cv, Cc_fine, Cv_fine !Cc(mu,k,b) is the conduction band tight-binding wavefunction coefficients where "mu" is the band index (1 is +mu and 2 is -mu), "k" is the wave vector along the CNT axis, "b" is the atom index in graphene unit cell (1 is A type atom) and (2 is B type atom)
 
 		!A-type exciton wavefunction and energies
 		real*8, dimension(:,:), allocatable :: Ex_A1, Ex0_A2, Ex1_A2 !the first index is subband, the second index is iKcm

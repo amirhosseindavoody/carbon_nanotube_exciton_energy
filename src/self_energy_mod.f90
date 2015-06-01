@@ -90,10 +90,12 @@ contains
 		!save the results.***************************************************************************************************
 		open(unit=100,file='CondSelfEnergy_Sub.dat',status="unknown")
 		open(unit=101,file='ValeSelfEnergy_Sub.dat',status="unknown")
+		open(unit=102,file='kVec.dat',status="unknown")
 
 		do ik=currcnt%ik_low,currcnt%ik_high
 			write(100,'(E16.8)', advance='no') currcnt%Sk(1,ik,1) 
 			write(101,'(E16.8)', advance='no') currcnt%Sk(1,ik,2) 
+			write(102,'(E16.8)', advance='no') dble(ik)*currcnt%dk
 		enddo
 		
 		write(100,*)
@@ -106,6 +108,7 @@ contains
 
 		close(100)
 		close(101)
+		close(102)
 		
 	end subroutine calculate_self_energy
 

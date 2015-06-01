@@ -1,10 +1,11 @@
-directory, output= /cygdrive/c/Users/amirhossein/Google Drive/Research/Exciton/Data/Environmental Effect/CNT-Exciton/
+directory, output= /cygdrive/c/Users/amirhossein/Google Drive/Research/Exciton/Data/Environmental Effect/Mesh-Size-Test/
 
 cnt, n_ch=	8
 cnt, m_ch=	0
 cnt, nkg=	1001
+cnt, dk/dkx=	10
 cnt, nr=		200
-cnt, E_th[eV]=	1.5
+cnt, E_th[eV]=	0.5
 cnt, Kcm_max[1/nm]=	1.5
 cnt, i_sub=	1
 cnt, Ckappa=	2.0

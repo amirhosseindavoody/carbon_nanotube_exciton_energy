@@ -10,6 +10,7 @@ program cnt_exciton_energy
 	use cnt_geometry_mod, only: cnt_geometry
 	use dielectric_fn_mod, only: calculate_dielectric_fn
 	use E_exciton_energy_mod, only: calculate_E_exciton_dispersion
+	use interpolate_mod, only: interpolate_energy, interpolate_dielectric_fn
 	use parse_input_file_mod, only: parse_input_file
 	use self_energy_mod, only: calculate_self_energy
 	use write_log_mod, only: writeLog
@@ -22,11 +23,17 @@ program cnt_exciton_energy
 	call CPU_time(starttime)
 	
 	call parse_input_file()
+	
 	call cnt_geometry()
 	call cnt_band_structure()
+
 	call calculate_dielectric_fn()
+	call interpolate_dielectric_fn()
+
 	call calculate_self_energy()
-	call calculate_A_exciton_dispersion()
+	call interpolate_energy()
+	
+! 	call calculate_A_exciton_dispersion()
 ! 	call calculate_E_exciton_dispersion()
   
 	call CPU_time(endtime)
