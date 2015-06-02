@@ -36,6 +36,7 @@ module cnt_class
 		integer :: ikc_max, ikc_min, ik_max, ik_min, iKcm_max, iKcm_min, ik_high, ik_low, ikr_high, ikr_low, iq_max, iq_min
 		
 		!Dielectric function
+		! quantities that have _fine at the end are those that are calculated via interpolation of the quantities without _fine at the end.
 		real*8, dimension(:,:), allocatable :: eps_q, eps_q_fine
 		complex*16, dimension(:,:,:,:), allocatable :: v_FT, v_FT_fine ! v_FT(mu,q,n,m) stores the Fourier transform of the Coulomb potential at the wavevector determined by band index "mu" and wavenumber "q" for atoms of type A (n or m = 1) or type B (n or m = 2)
 

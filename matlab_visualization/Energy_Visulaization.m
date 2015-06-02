@@ -46,6 +46,7 @@ Ev_tmp=load(FileName);
 [tmp,nkr]=size(Ec_tmp);
 tmp=tmp-1;
 k_vec=Ec_tmp(1,:);
+dk = k_vec(2)-k_vec(1);
 
 E_c=Ec_tmp(2:tmp+1,:);
 E_v=Ev_tmp(2:tmp+1,:);
@@ -79,6 +80,8 @@ FileName=[dir,'ValeBand_fine.dat'];
 E_v=load(FileName);
 FileName=[dir,'kVec_fine.dat'];
 k_vec=load(FileName);
+
+dkx = k_vec(2)-k_vec(1);
 
 % fig=fig+1; figure(fig); hold on; box on;
 plot(k_vec,(E_c+S_c)/eV,'-','LineWidth',2);
@@ -166,7 +169,7 @@ end;
 % fig=fig+1; figure(fig); hold on; box on;
 plot(q_vec,abs(v_FT(Nu,:,1,1)/eV),'-*','LineWidth',3);
 axis tight;
-return;
+% return;
 
 %% plot exciton energy Ex0_Ep
 % FileName=[dir,'Ex0_Ep.dat'];
@@ -223,7 +226,7 @@ return;
 FileName=[dir,'Ex_A1.dat'];
 Ex_A1=load(FileName);
 [nKcm,nX]=size(Ex_A1);
-Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
+Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
@@ -235,19 +238,19 @@ axis tight;
 FileName=[dir,'Ex0_A2.dat'];
 Ex0_A2=load(FileName);
 [nKcm,nX]=size(Ex0_A2);
-Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
+Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex0_A2(:,i)/eV,'-b','LineWidth',3);
+    plot(Kcm_vec,Ex0_A2(:,i)/eV,'-*','LineWidth',3);
 end;
 axis tight;
 
-%% plot exciton energy Ex_A1
+%% plot exciton energy Ex1_A2
 FileName=[dir,'Ex1_A2.dat'];
 Ex1_A2=load(FileName);
 [nKcm,nX]=size(Ex1_A2);
-Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
+Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
 
 fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX

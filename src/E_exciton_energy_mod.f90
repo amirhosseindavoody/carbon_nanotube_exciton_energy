@@ -16,17 +16,21 @@ contains
 		use write_log_mod, only: writeLog
 		
 		integer :: iKcm, ikr, ikpr
+		integer :: iKcm_min_fine, iKcm_max_fine
 		real*8 :: Ef_min
 		character(len=200) :: logInput
 
-		allocate(currcnt%Psi0_Ep(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high, currcnt%iKcm_min:currcnt%iKcm_max))
-		allocate(currcnt%Psi0_Em(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high, currcnt%iKcm_min:currcnt%iKcm_max))
-		allocate(currcnt%Psi1_Ep(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high, currcnt%iKcm_min:currcnt%iKcm_max))
-		allocate(currcnt%Psi1_Em(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high, currcnt%iKcm_min:currcnt%iKcm_max))
-		allocate(currcnt%Ex0_Ep(currcnt%ikr_low:currcnt%ikr_high, currcnt%iKcm_min:currcnt%iKcm_max))
-		allocate(currcnt%Ex0_Em(currcnt%ikr_low:currcnt%ikr_high, currcnt%iKcm_min:currcnt%iKcm_max))
-		allocate(currcnt%Ex1_Ep(currcnt%ikr_low:currcnt%ikr_high, currcnt%iKcm_min:currcnt%iKcm_max))
-		allocate(currcnt%Ex1_Em(currcnt%ikr_low:currcnt%ikr_high, currcnt%iKcm_min:currcnt%iKcm_max))
+		iKcm_max_fine = currcnt%iKcm_max * currcnt%dk_dkx_ratio
+		iKcm_min_fine = currcnt%iKcm_min * currcnt%dk_dkx_ratio
+
+		allocate(currcnt%Psi0_Ep(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high, iKcm_min_fine:iKcm_max_fine))
+		allocate(currcnt%Psi0_Em(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high, iKcm_min_fine:iKcm_max_fine))
+		allocate(currcnt%Psi1_Ep(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high, iKcm_min_fine:iKcm_max_fine))
+		allocate(currcnt%Psi1_Em(currcnt%ikr_low:currcnt%ikr_high, currcnt%ikr_low:currcnt%ikr_high, iKcm_min_fine:iKcm_max_fine))
+		allocate(currcnt%Ex0_Ep(currcnt%ikr_low:currcnt%ikr_high, iKcm_min_fine:iKcm_max_fine))
+		allocate(currcnt%Ex0_Em(currcnt%ikr_low:currcnt%ikr_high, iKcm_min_fine:iKcm_max_fine))
+		allocate(currcnt%Ex1_Ep(currcnt%ikr_low:currcnt%ikr_high, iKcm_min_fine:iKcm_max_fine))
+		allocate(currcnt%Ex1_Em(currcnt%ikr_low:currcnt%ikr_high, iKcm_min_fine:iKcm_max_fine))
 
 		! find the number of exciton bands below the free electron level
 		currcnt%nX=0
@@ -34,7 +38,7 @@ contains
 		Ef_min = 0.d0
 		call calculate_exciton_energy(Ef_min, iKcm)
 
-		do ikr=currcnt%ikr_low,currcnt%ikr_high
+		do ikr=iKcm_min_fine,iKcm_max_fine
 			if (Ef_min .ge. Ex0_Ep(ikr)) then
 				currcnt%nX=currcnt%nX+1
 			endif
@@ -153,23 +157,23 @@ contains
 		Kx=0.d0*Kx
 
 		do ikr=currcnt%ikr_low,currcnt%ikr_high
-			ikc = ikr+iKcm
-			ikv = ikr-iKcm
+			ikc = ikr*currcnt%dk_dkx_ratio+iKcm
+			ikv = ikr*currcnt%dk_dkx_ratio-iKcm
 
-			Ke(ikr,ikr)=dcmplx(currcnt%Ek(1,ikc,1)-currcnt%Ek(2,ikv,2)+currcnt%Sk(1,ikc,1)-currcnt%Sk(2,ikv,2))
-			Ef(ikr)=currcnt%Ek(1,ikc,1)-currcnt%Ek(2,ikv,2)+currcnt%Sk(1,ikc,1)-currcnt%Sk(2,ikv,2)
+			Ke(ikr,ikr)=dcmplx(currcnt%Ek_fine(1,ikc,1)-currcnt%Ek_fine(2,ikv,2)+currcnt%Sk_fine(1,ikc,1)-currcnt%Sk_fine(2,ikv,2))
+			Ef(ikr)=currcnt%Ek_fine(1,ikc,1)-currcnt%Ek_fine(2,ikv,2)+currcnt%Sk_fine(1,ikc,1)-currcnt%Sk_fine(2,ikv,2)
 			do ikpr=ikr,currcnt%ikr_high
-				ikpc=ikpr+iKcm
-				ikpv=ikpr-iKcm
-				Kd(ikr,ikpr)=(conjg(currcnt%Cc(1,ikc,1))*currcnt%Cc(1,ikpc,1)*currcnt%v_FT(0,ikr-ikpr,1,1)*currcnt%Cv(2,ikv,1)*conjg(currcnt%Cv(2,ikpv,1))+ &
-								conjg(currcnt%Cc(1,ikc,1))*currcnt%Cc(1,ikpc,1)*currcnt%v_FT(0,ikr-ikpr,1,2)*currcnt%Cv(2,ikv,2)*conjg(currcnt%Cv(2,ikpv,2))+ &
-								conjg(currcnt%Cc(1,ikc,2))*currcnt%Cc(1,ikpc,2)*currcnt%v_FT(0,ikr-ikpr,2,1)*currcnt%Cv(2,ikv,1)*conjg(currcnt%Cv(2,ikpv,1))+ &
-								conjg(currcnt%Cc(1,ikc,2))*currcnt%Cc(1,ikpc,2)*currcnt%v_FT(0,ikr-ikpr,2,2)*currcnt%Cv(2,ikv,2)*conjg(currcnt%Cv(2,ikpv,2)))/dcmplx(currcnt%kappa*currcnt%eps_q(0,ikr-ikpr))
+				ikpc=ikpr*currcnt%dk_dkx_ratio+iKcm
+				ikpv=ikpr*currcnt%dk_dkx_ratio-iKcm
+				Kd(ikr,ikpr)=(conjg(currcnt%Cc_fine(1,ikc,1))*currcnt%Cc_fine(1,ikpc,1)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,1,1)*currcnt%Cv_fine(2,ikv,1)*conjg(currcnt%Cv_fine(2,ikpv,1))+ &
+							  conjg(currcnt%Cc_fine(1,ikc,1))*currcnt%Cc_fine(1,ikpc,1)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,1,2)*currcnt%Cv_fine(2,ikv,2)*conjg(currcnt%Cv_fine(2,ikpv,2))+ &
+							  conjg(currcnt%Cc_fine(1,ikc,2))*currcnt%Cc_fine(1,ikpc,2)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,2,1)*currcnt%Cv_fine(2,ikv,1)*conjg(currcnt%Cv_fine(2,ikpv,1))+ &
+							  conjg(currcnt%Cc_fine(1,ikc,2))*currcnt%Cc_fine(1,ikpc,2)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,2,2)*currcnt%Cv_fine(2,ikv,2)*conjg(currcnt%Cv_fine(2,ikpv,2)))/dcmplx(currcnt%kappa*currcnt%eps_q_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio))
 					
-				Kx(ikr,ikpr)=(conjg(currcnt%Cc(1,ikc,1))*currcnt%Cv(2,ikv,1)*currcnt%v_FT(2*mu_cm,2*iKcm,1,1)*currcnt%Cc(1,ikpc,1)*conjg(currcnt%Cv(2,ikpv,1))+ &
-								conjg(currcnt%Cc(1,ikc,1))*currcnt%Cv(2,ikv,1)*currcnt%v_FT(2*mu_cm,2*iKcm,1,2)*currcnt%Cc(1,ikpc,2)*conjg(currcnt%Cv(2,ikpv,2))+ &
-								conjg(currcnt%Cc(1,ikc,2))*currcnt%Cv(2,ikv,2)*currcnt%v_FT(2*mu_cm,2*iKcm,2,1)*currcnt%Cc(1,ikpc,1)*conjg(currcnt%Cv(2,ikpv,1))+ &
-								conjg(currcnt%Cc(1,ikc,2))*currcnt%Cv(2,ikv,2)*currcnt%v_FT(2*mu_cm,2*iKcm,2,2)*currcnt%Cc(1,ikpc,2)*conjg(currcnt%Cv(2,ikpv,2)))
+				Kx(ikr,ikpr)=(conjg(currcnt%Cc_fine(1,ikc,1))*currcnt%Cv_fine(2,ikv,1)*currcnt%v_FT_fine(2*mu_cm,2*iKcm,1,1)*currcnt%Cc_fine(1,ikpc,1)*conjg(currcnt%Cv_fine(2,ikpv,1))+ &
+							  conjg(currcnt%Cc_fine(1,ikc,1))*currcnt%Cv_fine(2,ikv,1)*currcnt%v_FT_fine(2*mu_cm,2*iKcm,1,2)*currcnt%Cc_fine(1,ikpc,2)*conjg(currcnt%Cv_fine(2,ikpv,2))+ &
+							  conjg(currcnt%Cc_fine(1,ikc,2))*currcnt%Cv_fine(2,ikv,2)*currcnt%v_FT_fine(2*mu_cm,2*iKcm,2,1)*currcnt%Cc_fine(1,ikpc,1)*conjg(currcnt%Cv_fine(2,ikpv,1))+ &
+							  conjg(currcnt%Cc_fine(1,ikc,2))*currcnt%Cv_fine(2,ikv,2)*currcnt%v_FT_fine(2*mu_cm,2*iKcm,2,2)*currcnt%Cc_fine(1,ikpc,2)*conjg(currcnt%Cv_fine(2,ikpv,2)))
 			enddo
 		enddo
 		
@@ -206,23 +210,23 @@ contains
 		Kx=0.d0*Kx
 
 		do ikr=currcnt%ikr_low,currcnt%ikr_high
-			ikc = ikr+iKcm
-			ikv = ikr-iKcm
+			ikc = ikr*currcnt%dk_dkx_ratio+iKcm
+			ikv = ikr*currcnt%dk_dkx_ratio-iKcm
 
-			Ke(ikr,ikr)=dcmplx(currcnt%Ek(2,ikc,1)-currcnt%Ek(1,ikv,2)+currcnt%Sk(2,ikc,1)-currcnt%Sk(1,ikv,2))
-			Ef(ikr)=currcnt%Ek(2,ikc,1)-currcnt%Ek(1,ikv,2)+currcnt%Sk(2,ikc,1)-currcnt%Sk(1,ikv,2)
+			Ke(ikr,ikr)=dcmplx(currcnt%Ek_fine(2,ikc,1)-currcnt%Ek_fine(1,ikv,2)+currcnt%Sk_fine(2,ikc,1)-currcnt%Sk_fine(1,ikv,2))
+			Ef(ikr)=currcnt%Ek_fine(2,ikc,1)-currcnt%Ek_fine(1,ikv,2)+currcnt%Sk_fine(2,ikc,1)-currcnt%Sk_fine(1,ikv,2)
 			do ikpr=ikr,currcnt%ikr_high
-				ikpc=ikpr+iKcm
-				ikpv=ikpr-iKcm
-				Kd(ikr,ikpr)=(conjg(currcnt%Cc(2,ikc,1))*currcnt%Cc(2,ikpc,1)*currcnt%v_FT(0,ikr-ikpr,1,1)*currcnt%Cv(1,ikv,1)*conjg(currcnt%Cv(1,ikpv,1))+ &
-								conjg(currcnt%Cc(2,ikc,1))*currcnt%Cc(2,ikpc,1)*currcnt%v_FT(0,ikr-ikpr,1,2)*currcnt%Cv(1,ikv,2)*conjg(currcnt%Cv(1,ikpv,2))+ &
-								conjg(currcnt%Cc(2,ikc,2))*currcnt%Cc(2,ikpc,2)*currcnt%v_FT(0,ikr-ikpr,2,1)*currcnt%Cv(1,ikv,1)*conjg(currcnt%Cv(1,ikpv,1))+ &
-								conjg(currcnt%Cc(2,ikc,2))*currcnt%Cc(2,ikpc,2)*currcnt%v_FT(0,ikr-ikpr,2,2)*currcnt%Cv(1,ikv,2)*conjg(currcnt%Cv(1,ikpv,2)))/dcmplx(currcnt%kappa*currcnt%eps_q(0,ikr-ikpr))
+				ikpc=ikpr*currcnt%dk_dkx_ratio+iKcm
+				ikpv=ikpr*currcnt%dk_dkx_ratio-iKcm
+				Kd(ikr,ikpr)=(conjg(currcnt%Cc_fine(2,ikc,1))*currcnt%Cc_fine(2,ikpc,1)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,1,1)*currcnt%Cv_fine(1,ikv,1)*conjg(currcnt%Cv_fine(1,ikpv,1))+ &
+							  conjg(currcnt%Cc_fine(2,ikc,1))*currcnt%Cc_fine(2,ikpc,1)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,1,2)*currcnt%Cv_fine(1,ikv,2)*conjg(currcnt%Cv_fine(1,ikpv,2))+ &
+							  conjg(currcnt%Cc_fine(2,ikc,2))*currcnt%Cc_fine(2,ikpc,2)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,2,1)*currcnt%Cv_fine(1,ikv,1)*conjg(currcnt%Cv_fine(1,ikpv,1))+ &
+							  conjg(currcnt%Cc_fine(2,ikc,2))*currcnt%Cc_fine(2,ikpc,2)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,2,2)*currcnt%Cv_fine(1,ikv,2)*conjg(currcnt%Cv_fine(1,ikpv,2)))/dcmplx(currcnt%kappa*currcnt%eps_q_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio))
 					
-				Kx(ikr,ikpr)=(conjg(currcnt%Cc(2,ikc,1))*currcnt%Cv(1,ikv,1)*currcnt%v_FT(2*mu_cm,2*iKcm,1,1)*currcnt%Cc(2,ikpc,1)*conjg(currcnt%Cv(1,ikpv,1))+ &
-								conjg(currcnt%Cc(2,ikc,1))*currcnt%Cv(1,ikv,1)*currcnt%v_FT(2*mu_cm,2*iKcm,1,2)*currcnt%Cc(2,ikpc,2)*conjg(currcnt%Cv(1,ikpv,2))+ &
-								conjg(currcnt%Cc(2,ikc,2))*currcnt%Cv(1,ikv,2)*currcnt%v_FT(2*mu_cm,2*iKcm,2,1)*currcnt%Cc(2,ikpc,1)*conjg(currcnt%Cv(1,ikpv,1))+ &
-								conjg(currcnt%Cc(2,ikc,2))*currcnt%Cv(1,ikv,2)*currcnt%v_FT(2*mu_cm,2*iKcm,2,2)*currcnt%Cc(2,ikpc,2)*conjg(currcnt%Cv(1,ikpv,2)))
+				Kx(ikr,ikpr)=(conjg(currcnt%Cc_fine(2,ikc,1))*currcnt%Cv_fine(1,ikv,1)*currcnt%v_FT_fine(2*mu_cm,2*iKcm,1,1)*currcnt%Cc_fine(2,ikpc,1)*conjg(currcnt%Cv_fine(1,ikpv,1))+ &
+							  conjg(currcnt%Cc_fine(2,ikc,1))*currcnt%Cv_fine(1,ikv,1)*currcnt%v_FT_fine(2*mu_cm,2*iKcm,1,2)*currcnt%Cc_fine(2,ikpc,2)*conjg(currcnt%Cv_fine(1,ikpv,2))+ &
+							  conjg(currcnt%Cc_fine(2,ikc,2))*currcnt%Cv_fine(1,ikv,2)*currcnt%v_FT_fine(2*mu_cm,2*iKcm,2,1)*currcnt%Cc_fine(2,ikpc,1)*conjg(currcnt%Cv_fine(1,ikpv,1))+ &
+							  conjg(currcnt%Cc_fine(2,ikc,2))*currcnt%Cv_fine(1,ikv,2)*currcnt%v_FT_fine(2*mu_cm,2*iKcm,2,2)*currcnt%Cc_fine(2,ikpc,2)*conjg(currcnt%Cv_fine(1,ikpv,2)))
 			enddo
 		enddo
 		
