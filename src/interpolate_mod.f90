@@ -40,8 +40,8 @@ contains
 		! calculate the self energies and the tight-binding energies and coefficients.***************************************
 		do ik=ik_low_fine,ik_high_fine
 			
-			write(logInput,*)'ik=',ik
-			call writeLog(trim(logInput))
+! 			write(logInput,*)'ik=',ik
+! 			call writeLog(trim(logInput))
 
 			if (mod(ik,currcnt%dk_dkx_ratio) .eq. 0) then
 				currcnt%Ek_fine(:,ik,:) = currcnt%Ek(:,ik/(currcnt%dk_dkx_ratio),:)
@@ -168,8 +168,8 @@ contains
 		! Interpolate eps_q and v_FT
 		do iq=iq_min_fine,iq_max_fine
 			
-			write(logInput,*)'iq=',iq
-			call writeLog(trim(logInput))
+! 			write(logInput,*)'iq=',iq
+! 			call writeLog(trim(logInput))
 
 			if (mod(iq,currcnt%dk_dkx_ratio) .eq. 0) then
 				currcnt%eps_q_fine(:,iq) = currcnt%eps_q(:,iq/(currcnt%dk_dkx_ratio))

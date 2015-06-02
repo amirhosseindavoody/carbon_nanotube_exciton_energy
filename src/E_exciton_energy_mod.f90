@@ -38,15 +38,15 @@ contains
 		Ef_min = 0.d0
 		call calculate_exciton_energy(Ef_min, iKcm)
 
-		do ikr=iKcm_min_fine,iKcm_max_fine
+		do ikr=currcnt%ikr_low,currcnt%ikr_high
 			if (Ef_min .ge. Ex0_Ep(ikr)) then
 				currcnt%nX=currcnt%nX+1
 			endif
 		enddo
 
-		write(logInput,*) "nX=",currcnt%nX
+		write(logInput,*) "nX = ",currcnt%nX
 		call writeLog(new_line('A')//trim(logInput))
-		
+
 		call writeLog(new_line('A')//"Calculating exciton dispersion ********************************")
 		
 
@@ -59,7 +59,7 @@ contains
 		open(unit=106,file='Psi1_Ep.dat',status="unknown")
 		open(unit=107,file='Psi1_Em.dat',status="unknown")
 
-		do iKcm=currcnt%iKcm_min,currcnt%iKcm_max
+		do iKcm=iKcm_min_fine,iKcm_max_fine
 			write(logInput,*) "iKcm=", iKcm
 			call writeLog(trim(logInput))
 			

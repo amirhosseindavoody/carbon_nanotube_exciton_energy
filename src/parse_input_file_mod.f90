@@ -140,6 +140,8 @@ contains
 		call writeLog(trim(logInput))
 		write(logInput,"('nkg = ',I4.4)") currcnt%nkg
 		call writeLog(trim(logInput))
+		write(logInput,"('dk/dkx = ',I4.4)") currcnt%dk_dkx_ratio
+		call writeLog(trim(logInput))
 		write(logInput,"('nr = ',I4.4)") currcnt%nr
 		call writeLog(trim(logInput))
 		write(logInput,"('E_th[eV] = ',F3.1)") currcnt%E_th/eV

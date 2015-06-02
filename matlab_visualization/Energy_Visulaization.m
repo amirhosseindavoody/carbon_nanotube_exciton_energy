@@ -1,7 +1,7 @@
 %% This file visualizes the results of the fortran program for CNT bethe salpeter equation
 clear all; clc; fig=10;
 close all;
-dir='C:\Users\amirhossein\Google Drive\Research\Exciton\Data\Environmental Effect\Mesh-Size-Test\CNT(08,00)-nkg(1001)-nr(0200)-E_th(0.5)-Kcm_max(1.5)-i_sub(1)-Ckappa(2.0)\';
+dir='C:\Users\Amirhossein\Google Drive\Research\Exciton\Data\Environmental Effect\Mesh-Size-Test\CNT(07,00)-nkg(1001)-nr(0200)-E_th(0.5)-Kcm_max(1.5)-i_sub(1)-Ckappa(2.0)\';
 eV=1.6e-19;
 
 %% plot CNT unit cell
@@ -138,7 +138,7 @@ for imu=1:DeltaNu
 end;
 
 fig=fig+1; figure(fig); hold on; box on;
-plot(q_vec,abs(v_FT(Nu,:,1,1)/eV),'-*','LineWidth',3);
+plot(q_vec,abs(v_FT(Nu,:,1,1)/eV),'-','LineWidth',3);
 axis tight;
 % return;
 
@@ -167,94 +167,80 @@ for imu=1:DeltaNu
 end;
 
 % fig=fig+1; figure(fig); hold on; box on;
-plot(q_vec,abs(v_FT(Nu,:,1,1)/eV),'-*','LineWidth',3);
+plot(q_vec,abs(v_FT(Nu,:,1,1)/eV),'-','LineWidth',3);
 axis tight;
 % return;
 
-%% plot exciton energy Ex0_Ep
-% FileName=[dir,'Ex0_Ep.dat'];
-% Ex0_Ep=load(FileName);
-% [nKcm,nX]=size(Ex0_Ep);
-% Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
-% 
+%% plot E-type exciton energy dipersion
+FileName=[dir,'Ex0_Ep.dat'];
+Ex0_Ep=load(FileName);
+[nKcm,nX]=size(Ex0_Ep);
+Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
+
+fig=fig+1; figure(fig); hold on; box on;
+plot(Kcm_vec,Ex0_Ep(:,:)/eV,'-*r','LineWidth',3);
+axis tight;
+
+FileName=[dir,'Ex0_Em.dat'];
+Ex0_Em=load(FileName);
+[nKcm,nX]=size(Ex0_Em);
+Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
+
 % fig=fig+1; figure(fig); hold on; box on;
-% for i=1:nX
-%     plot(Kcm_vec,Ex0_Ep(:,i)/eV,'-k','LineWidth',3);
-% end;
-% axis tight;
-% 
-% %% plot exciton energy Ex0_Em
-% FileName=[dir,'Ex0_Em.dat'];
-% Ex0_Em=load(FileName);
-% [nKcm,nX]=size(Ex0_Em);
-% Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
-% 
-% % fig=fig+1; figure(fig); hold on; box on;
-% for i=1:nX
-%     plot(Kcm_vec,Ex0_Em(:,i)/eV,'-b','LineWidth',3);
-% end;
-% axis tight;
-% 
-% 
-% %% plot exciton energy Ex1_Ep
-% FileName=[dir,'Ex1_Ep.dat'];
-% Ex1_Ep=load(FileName);
-% [nKcm,nX]=size(Ex1_Ep);
-% Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
-% 
-% % fig=fig+1; figure(fig); hold on; box on;
-% for i=1:nX
-%     plot(Kcm_vec,Ex1_Ep(:,i)/eV,'-k','LineWidth',3);
-% end;
-% axis tight;
-% 
-% %% plot exciton energy Ex1_Em
-% FileName=[dir,'Ex1_Em.dat'];
-% Ex1_Em=load(FileName);
-% [nKcm,nX]=size(Ex1_Em);
-% Kcm_vec=dk*(-(nKcm-1)/2:+(nKcm-1)/2);
-% 
-% % fig=fig+1; figure(fig); hold on; box on;
-% for i=1:nX
-%     plot(Kcm_vec,Ex1_Em(:,i)/eV,'-g','LineWidth',3);
-% end;
-% axis tight;
+plot(Kcm_vec,Ex0_Em(:,:)/eV,'-r','LineWidth',3);
+axis tight;
+
+FileName=[dir,'Ex1_Ep.dat'];
+Ex1_Ep=load(FileName);
+[nKcm,nX]=size(Ex1_Ep);
+Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
+
+% fig=fig+1; figure(fig); hold on; box on;
+plot(Kcm_vec,Ex1_Ep(:,:)/eV,'-*k','LineWidth',3);
+axis tight;
+
+FileName=[dir,'Ex1_Em.dat'];
+Ex1_Em=load(FileName);
+[nKcm,nX]=size(Ex1_Em);
+Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
+
+% fig=fig+1; figure(fig); hold on; box on;
+plot(Kcm_vec,Ex1_Em(:,:)/eV,'-k','LineWidth',3);
+axis tight;
 
 % return;
 
-%% plot exciton energy Ex_A1
+%% plot A-type exciton energy dispersion
 FileName=[dir,'Ex_A1.dat'];
 Ex_A1=load(FileName);
 [nKcm,nX]=size(Ex_A1);
 Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
 
-fig=fig+1; figure(fig); hold on; box on;
+% fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex_A1(:,i)/eV,'-b','LineWidth',3);
+    plot(Kcm_vec,Ex_A1(:,i)/eV,'-','LineWidth',3);
 end;
 axis tight;
 
-%% plot exciton energy Ex0_A2
 FileName=[dir,'Ex0_A2.dat'];
 Ex0_A2=load(FileName);
 [nKcm,nX]=size(Ex0_A2);
 Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
 
-fig=fig+1; figure(fig); hold on; box on;
+% fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex0_A2(:,i)/eV,'-*','LineWidth',3);
+    plot(Kcm_vec,Ex0_A2(:,i)/eV,'-','LineWidth',3);
 end;
 axis tight;
 
-%% plot exciton energy Ex1_A2
 FileName=[dir,'Ex1_A2.dat'];
 Ex1_A2=load(FileName);
 [nKcm,nX]=size(Ex1_A2);
 Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
 
-fig=fig+1; figure(fig); hold on; box on;
+% fig=fig+1; figure(fig); hold on; box on;
 for i=1:nX
-    plot(Kcm_vec,Ex1_A2(:,i)/eV,'-b','LineWidth',3);
+    plot(Kcm_vec,Ex1_A2(:,i)/eV,'-','LineWidth',3);
 end;
 axis tight;
 return;
