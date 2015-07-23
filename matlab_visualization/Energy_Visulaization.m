@@ -1,8 +1,21 @@
 %% This file visualizes the results of the fortran program for CNT bethe salpeter equation
-clear all; clc; fig=10;
-close all;
-dir='C:\Users\Amirhossein\Google Drive\Research\Exciton\Data\Environmental Effect\Mesh-Size-Test\CNT(07,00)-nkg(1001)-nr(0200)-E_th(0.5)-Kcm_max(1.5)-i_sub(1)-Ckappa(2.0)\';
+clear all; clc; fig=20;
+% close all;
+dir='C:\Users\Amirhossein\Google Drive\Research\Exciton\Data\Exciton-Energy\CNT(07,06)-nkg(1001)-nr(0200)-E_th(0.5)-Kcm_max(1.5)-i_sub(1)-Ckappa(2.0)\';
 eV=1.6e-19;
+
+colors = [1.0, 0.0, 0.0;
+          0.0, 1.0, 0.0;
+          0.0, 0.0, 1.0;
+          0.0, 0.4, 0.8;
+          1.0, 0.4, 0.0; 
+          0.0, 0.0, 0.0];
+% red
+% green
+% blue
+% dark blue
+% orange
+% black
 
 %% plot CNT unit cell
 FileName=[dir,'posA.dat'];
@@ -57,192 +70,208 @@ plot(k_vec,E_v/eV,'-','LineWidth',3);
 axis tight;
 
 %% plot self-energy corrections
-FileName=[dir,'CondSelfEnergy_Sub.dat'];
-S_c=load(FileName);
-FileName=[dir,'ValeSelfEnergy_Sub.dat'];
-S_v=load(FileName);
+% FileName=[dir,'CondSelfEnergy_Sub.dat'];
+% S_c=load(FileName);
+% FileName=[dir,'ValeSelfEnergy_Sub.dat'];
+% S_v=load(FileName);
+% 
+% fig=fig+1; figure(fig); hold on; box on;
+% plot(k_vec,E_c/eV,'-','LineWidth',2);
+% plot(k_vec,E_v/eV,'-','LineWidth',2);
+% plot(k_vec,(E_c+S_c)/eV,'-','LineWidth',3);
+% plot(k_vec,(E_v+S_v)/eV,'-','LineWidth',3);
+% axis tight;
+% 
+% % plot interpolated self-energy corrections
+% FileName=[dir,'CondSelfEnergy_fine.dat'];
+% S_c=load(FileName);
+% FileName=[dir,'ValeSelfEnergy_fine.dat'];
+% S_v=load(FileName);
+% FileName=[dir,'CondBand_fine.dat'];
+% E_c=load(FileName);
+% FileName=[dir,'ValeBand_fine.dat'];
+% E_v=load(FileName);
+% FileName=[dir,'kVec_fine.dat'];
+% k_vec=load(FileName);
+% 
+% dkx = k_vec(2)-k_vec(1);
+% 
+% % fig=fig+1; figure(fig); hold on; box on;
+% plot(k_vec,(E_c+S_c)/eV,'-','LineWidth',2);
+% plot(k_vec,(E_v+S_v)/eV,'-','LineWidth',2);
+% axis tight;
+% return;
+%% plot eps(0,q)
+% FileName=[dir,'eps_q.dat'];
+% eps_q=load(FileName);
+% n_q=size(eps_q,2);
+% mu_vec= -Nu+1:Nu-1;
+% 
+% FileName=[dir,'qVec.dat'];
+% q_vec=load(FileName);
+% 
+% fig=fig+1; figure(fig); hold on; box on;
+% plot(q_vec,(eps_q(Nu,:)),'-','LineWidth',3);
+% axis tight;
+% 
+% % plot interpolated eps(0,q)
+% FileName=[dir,'eps_q_fine.dat'];
+% eps_q=load(FileName);
+% 
+% FileName=[dir,'qVec_fine.dat'];
+% q_vec=load(FileName);
+% 
+% % fig=fig+1; figure(fig); hold on; box on;
+% plot(q_vec,(eps_q(Nu,:)),'-','LineWidth',3);
+% axis tight;
+% return;
 
-fig=fig+1; figure(fig); hold on; box on;
-plot(k_vec,E_c/eV,'-','LineWidth',2);
-plot(k_vec,E_v/eV,'-','LineWidth',2);
-plot(k_vec,(E_c+S_c)/eV,'-','LineWidth',3);
-plot(k_vec,(E_v+S_v)/eV,'-','LineWidth',3);
-axis tight;
+%% plot v_FT(mu,q)
+% FileName=[dir,'qVec.dat'];
+% q_vec=load(FileName);
+% 
+% FileName=[dir,'v_FT.dat'];
+% v_FT_raw=load(FileName);
+% 
+% [DeltaNu,tmp] = size(v_FT_raw);
+% Nu = (DeltaNu+1)/2;
+% nq = tmp/4/2;
+% v_FT = zeros(DeltaNu,nq,2,2);
+% 
+% for imu=1:DeltaNu
+%     tmp=0;
+%     for iq=1:nq
+%         for i=1:2
+%             for j=1:2
+%                 tmp = tmp+2;
+%                 v_FT(imu,iq,i,j) = v_FT_raw(imu,tmp-1) + 1i*v_FT_raw(imu,tmp);
+%             end;
+%         end;
+%     end;
+% end;
+% 
+% fig=fig+1; figure(fig); hold on; box on;
+% plot(q_vec,abs(v_FT(Nu,:,1,1)/eV),'-','LineWidth',3);
+% axis tight;
+% % return;
+% 
+% % plot interpolated v_FT(mu,q)
+% FileName=[dir,'qVec_fine.dat'];
+% q_vec=load(FileName);
+% 
+% FileName=[dir,'v_FT_fine.dat'];
+% v_FT_raw=load(FileName);
+% 
+% [DeltaNu,tmp] = size(v_FT_raw);
+% Nu = (DeltaNu+1)/2;
+% nq = tmp/4/2;
+% v_FT = zeros(DeltaNu,nq,2,2);
+% 
+% for imu=1:DeltaNu
+%     tmp=0;
+%     for iq=1:nq
+%         for i=1:2
+%             for j=1:2
+%                 tmp = tmp+2;
+%                 v_FT(imu,iq,i,j) = v_FT_raw(imu,tmp-1) + 1i*v_FT_raw(imu,tmp);
+%             end;
+%         end;
+%     end;
+% end;
+% 
+% % fig=fig+1; figure(fig); hold on; box on;
+% plot(q_vec,abs(v_FT(Nu,:,1,1)/eV),'-','LineWidth',3);
+% axis tight;
+% return;
 
-%% plot interpolated self-energy corrections
-FileName=[dir,'CondSelfEnergy_fine.dat'];
-S_c=load(FileName);
-FileName=[dir,'ValeSelfEnergy_fine.dat'];
-S_v=load(FileName);
-FileName=[dir,'CondBand_fine.dat'];
-E_c=load(FileName);
-FileName=[dir,'ValeBand_fine.dat'];
-E_v=load(FileName);
+%% plot E-type exciton energy dipersion
+
+% FileName=[dir,'kVec_fine.dat'];
+% k_vec=load(FileName);
+% 
+% dkx = k_vec(2)-k_vec(1);
+% 
+% FileName=[dir,'Ex0_Ep.dat'];
+% Ex0_Ep=load(FileName);
+% [nKcm,nX]=size(Ex0_Ep);
+% Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
+% 
+% fig=fig+1; figure(fig); hold on; box on;
+% plot(Kcm_vec,Ex0_Ep(:,:)/eV,'-r','LineWidth',3);
+% axis tight;
+% 
+% FileName=[dir,'Ex0_Em.dat'];
+% Ex0_Em=load(FileName);
+% [nKcm,nX]=size(Ex0_Em);
+% Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
+% 
+% % fig=fig+1; figure(fig); hold on; box on;
+% plot(Kcm_vec,Ex0_Em(:,:)/eV,'-r','LineWidth',3);
+% axis tight;
+% 
+% FileName=[dir,'Ex1_Ep.dat'];
+% Ex1_Ep=load(FileName);
+% [nKcm,nX]=size(Ex1_Ep);
+% Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
+% 
+% % fig=fig+1; figure(fig); hold on; box on;
+% plot(Kcm_vec,Ex1_Ep(:,:)/eV,'-k','LineWidth',3);
+% axis tight;
+% 
+% FileName=[dir,'Ex1_Em.dat'];
+% Ex1_Em=load(FileName);
+% [nKcm,nX]=size(Ex1_Em);
+% Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
+% 
+% % fig=fig+1; figure(fig); hold on; box on;
+% plot(Kcm_vec,Ex1_Em(:,:)/eV,'-k','LineWidth',3);
+% axis tight;
+
+% return;
+
+%% plot A-type exciton energy dispersion
+
 FileName=[dir,'kVec_fine.dat'];
 k_vec=load(FileName);
 
 dkx = k_vec(2)-k_vec(1);
 
-% fig=fig+1; figure(fig); hold on; box on;
-plot(k_vec,(E_c+S_c)/eV,'-','LineWidth',2);
-plot(k_vec,(E_v+S_v)/eV,'-','LineWidth',2);
-axis tight;
-% return;
-%% plot eps(0,q)
-FileName=[dir,'eps_q.dat'];
-eps_q=load(FileName);
-n_q=size(eps_q,2);
-mu_vec= -Nu+1:Nu-1;
 
-FileName=[dir,'qVec.dat'];
-q_vec=load(FileName);
-
-fig=fig+1; figure(fig); hold on; box on;
-plot(q_vec,(eps_q(Nu,:)),'-','LineWidth',3);
-axis tight;
-
-%% plot interpolated eps(0,q)
-FileName=[dir,'eps_q_fine.dat'];
-eps_q=load(FileName);
-
-FileName=[dir,'qVec_fine.dat'];
-q_vec=load(FileName);
-
-% fig=fig+1; figure(fig); hold on; box on;
-plot(q_vec,(eps_q(Nu,:)),'-','LineWidth',3);
-axis tight;
-% return;
-
-%% plot v_FT(mu,q)
-FileName=[dir,'qVec.dat'];
-q_vec=load(FileName);
-
-FileName=[dir,'v_FT.dat'];
-v_FT_raw=load(FileName);
-
-[DeltaNu,tmp] = size(v_FT_raw);
-Nu = (DeltaNu+1)/2;
-nq = tmp/4/2;
-v_FT = zeros(DeltaNu,nq,2,2);
-
-for imu=1:DeltaNu
-    tmp=0;
-    for iq=1:nq
-        for i=1:2
-            for j=1:2
-                tmp = tmp+2;
-                v_FT(imu,iq,i,j) = v_FT_raw(imu,tmp-1) + 1i*v_FT_raw(imu,tmp);
-            end;
-        end;
-    end;
-end;
-
-fig=fig+1; figure(fig); hold on; box on;
-plot(q_vec,abs(v_FT(Nu,:,1,1)/eV),'-','LineWidth',3);
-axis tight;
-% return;
-
-%% plot interpolated v_FT(mu,q)
-FileName=[dir,'qVec_fine.dat'];
-q_vec=load(FileName);
-
-FileName=[dir,'v_FT_fine.dat'];
-v_FT_raw=load(FileName);
-
-[DeltaNu,tmp] = size(v_FT_raw);
-Nu = (DeltaNu+1)/2;
-nq = tmp/4/2;
-v_FT = zeros(DeltaNu,nq,2,2);
-
-for imu=1:DeltaNu
-    tmp=0;
-    for iq=1:nq
-        for i=1:2
-            for j=1:2
-                tmp = tmp+2;
-                v_FT(imu,iq,i,j) = v_FT_raw(imu,tmp-1) + 1i*v_FT_raw(imu,tmp);
-            end;
-        end;
-    end;
-end;
-
-% fig=fig+1; figure(fig); hold on; box on;
-plot(q_vec,abs(v_FT(Nu,:,1,1)/eV),'-','LineWidth',3);
-axis tight;
-% return;
-
-%% plot E-type exciton energy dipersion
-FileName=[dir,'Ex0_Ep.dat'];
-Ex0_Ep=load(FileName);
-[nKcm,nX]=size(Ex0_Ep);
-Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
-
-fig=fig+1; figure(fig); hold on; box on;
-plot(Kcm_vec,Ex0_Ep(:,:)/eV,'-*r','LineWidth',3);
-axis tight;
-
-FileName=[dir,'Ex0_Em.dat'];
-Ex0_Em=load(FileName);
-[nKcm,nX]=size(Ex0_Em);
-Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
-
-% fig=fig+1; figure(fig); hold on; box on;
-plot(Kcm_vec,Ex0_Em(:,:)/eV,'-r','LineWidth',3);
-axis tight;
-
-FileName=[dir,'Ex1_Ep.dat'];
-Ex1_Ep=load(FileName);
-[nKcm,nX]=size(Ex1_Ep);
-Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
-
-% fig=fig+1; figure(fig); hold on; box on;
-plot(Kcm_vec,Ex1_Ep(:,:)/eV,'-*k','LineWidth',3);
-axis tight;
-
-FileName=[dir,'Ex1_Em.dat'];
-Ex1_Em=load(FileName);
-[nKcm,nX]=size(Ex1_Em);
-Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
-
-% fig=fig+1; figure(fig); hold on; box on;
-plot(Kcm_vec,Ex1_Em(:,:)/eV,'-k','LineWidth',3);
-axis tight;
-
-% return;
-
-%% plot A-type exciton energy dispersion
-FileName=[dir,'Ex_A1.dat'];
-Ex_A1=load(FileName);
-[nKcm,nX]=size(Ex_A1);
-Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
-
-% fig=fig+1; figure(fig); hold on; box on;
-for i=1:nX
-    plot(Kcm_vec,Ex_A1(:,i)/eV,'-','LineWidth',3);
-end;
-axis tight;
+% FileName=[dir,'Ex_A1.dat'];
+% Ex_A1=load(FileName);
+% [nKcm,nX]=size(Ex_A1);
+% Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
+% 
+% %fig=fig+1; figure(fig); hold on; box on;
+% for i=1:nX
+%     plot(Kcm_vec,Ex_A1(:,i)/eV,'-','LineWidth',3);
+% end;
+% axis tight;
 
 FileName=[dir,'Ex0_A2.dat'];
 Ex0_A2=load(FileName);
 [nKcm,nX]=size(Ex0_A2);
 Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
 
-% fig=fig+1; figure(fig); hold on; box on;
-for i=1:nX
-    plot(Kcm_vec,Ex0_A2(:,i)/eV,'-','LineWidth',3);
+fig=fig+1; figure(fig); hold on; box on; color=colors(5,:);
+plot1=plot(Kcm_vec,Ex0_A2(:,1)/eV,'-','color',color,'LineWidth',3);
+for i=2:nX
+    plot(Kcm_vec,Ex0_A2(:,i)/eV,'-','color',color,'LineWidth',3);
 end;
 axis tight;
+legend(plot1,'(8,6)','Location','SouthEast');
+legend boxoff;
 
-FileName=[dir,'Ex1_A2.dat'];
-Ex1_A2=load(FileName);
-[nKcm,nX]=size(Ex1_A2);
-Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
-
-% fig=fig+1; figure(fig); hold on; box on;
-for i=1:nX
-    plot(Kcm_vec,Ex1_A2(:,i)/eV,'-','LineWidth',3);
-end;
-axis tight;
+% FileName=[dir,'Ex1_A2.dat'];
+% Ex1_A2=load(FileName);
+% [nKcm,nX]=size(Ex1_A2);
+% Kcm_vec=dkx*(-(nKcm-1)/2:+(nKcm-1)/2);
+% 
+% % fig=fig+1; figure(fig); hold on; box on;
+% for i=1:nX
+%     plot(Kcm_vec,Ex1_A2(:,i)/eV,'-','LineWidth',3);
+% end;
+% axis tight;
 return;
 
 %% plot exciton wavefunction in k-space

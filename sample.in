@@ -1,14 +1,14 @@
-directory, output= /cygdrive/c/Users/Amirhossein/Google Drive/Research/Exciton/Data/Environmental Effect/Mesh-Size-Test/
+directory, output= /cygdrive/c/Users/Amirhossein/Google Drive/Research/Exciton/Data/Exciton-Energy/
 
 cnt, n_ch=	7
-cnt, m_ch=	0
+cnt, m_ch=	6
 cnt, nkg=	1001
 cnt, dk/dkx=	10
 cnt, nr=		200
 cnt, E_th[eV]=	0.5
 cnt, Kcm_max[1/nm]=	1.5
-cnt, i_sub=	1
-cnt, Ckappa=	2.0
-cnt, kappa_coeff=	1.0
+cnt, i_sub=	2
+cnt, Ckappa=	3.0
+cnt, kappa_coeff=	1.211
 
 flg, flg_dielectric= true

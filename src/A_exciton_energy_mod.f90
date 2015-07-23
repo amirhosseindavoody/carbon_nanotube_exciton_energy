@@ -43,7 +43,7 @@ contains
 			endif
 		enddo
 
-		write(logInput,*) "nX=",currcnt%nX
+		write(logInput,*) "nX_a = ",currcnt%nX
 		call writeLog(new_line('A')//trim(logInput))
 		
 		call writeLog(new_line('A')//"Calculating exciton dispersion ********************************")
