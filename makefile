@@ -21,6 +21,8 @@ self_energy_mod.o: cnt_band_structure_mod.o comparams.o write_log_mod.o
 
 main: main.o
 	$(FC) $(FCFLAGS) -o $@.exe $(wildcard $(OBJDIR)/*.o) -llapack -lblas
+	@rm -f *.o *.mod
+	@rm -rf $(OBJDIR)
 
 %.o: $(SRCDIR)/%.f90 | $(OBJDIR)
 	$(FC) -c $(FCFLAGS) $< -J$(OBJDIR)

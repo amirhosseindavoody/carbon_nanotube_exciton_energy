@@ -75,7 +75,8 @@ contains
 			currcnt%Psi1_Em(:,:,iKcm) = Psi1_Em
 			
 			! save exciton energy and wavefunction
-			do ikr=(currcnt%ikr_low),(currcnt%ikr_low+currcnt%nX-1)
+! 			do ikr=(currcnt%ikr_low),(currcnt%ikr_low+currcnt%nX-1)
+			do ikr=(currcnt%ikr_low),(currcnt%ikr_high)
 				write(100,'(E16.8)', advance='no') Ex0_Ep(ikr)
 				write(101,'(E16.8)', advance='no') Ex0_Em(ikr)
 				write(102,'(E16.8)', advance='no') Ex1_Ep(ikr)
@@ -106,6 +107,15 @@ contains
 		close(105)
 		close(106)
 		close(107)
+
+		deallocate(currcnt%Psi0_Ep)
+		deallocate(currcnt%Psi0_Em)
+		deallocate(currcnt%Psi1_Ep)
+		deallocate(currcnt%Psi1_Em)
+		deallocate(currcnt%Ex0_Ep)
+		deallocate(currcnt%Ex0_Em)
+		deallocate(currcnt%Ex1_Ep)
+		deallocate(currcnt%Ex1_Em)
 		  
 		return
 	end subroutine calculate_E_exciton_dispersion
