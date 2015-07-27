@@ -1,4 +1,4 @@
-directory, output= /cygdrive/c/Amirhossein/Research/Exciton/Data/Exciton_Energy/
+directory, output= /home/amirhossein/research/exciton/data/exciton-dispersion/
 
 cnt, n_ch=	7
 cnt, m_ch=	5
@@ -8,7 +8,7 @@ cnt, nr=		200
 cnt, E_th[eV]=	0.5
 cnt, Kcm_max[1/nm]=	1.5
 cnt, i_sub=	2
-cnt, Ckappa=	2.0
+cnt, Ckappa=	1.0
 cnt, kappa_coeff=	1.211
 
 flg, flg_dielectric= true
