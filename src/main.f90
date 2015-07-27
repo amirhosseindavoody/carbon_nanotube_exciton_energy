@@ -1,7 +1,7 @@
 !*******************************************************************************
 ! This program calculates the excitonic band structure of single wall carbon nanotubes through simple tight-binding method.
 ! Amirhossein Davoody
-! Last modified: 3/17/2014
+! Last modified: 8/27/2015
 !*******************************************************************************
 
 program cnt_exciton_energy
