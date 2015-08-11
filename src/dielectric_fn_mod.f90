@@ -7,6 +7,7 @@ contains
 	subroutine calculate_dielectric_fn()
 		use cnt_band_structure_mod, only: grapheneEnergy
 		use comparams, only: currcnt, flg_dielectric
+		use math_functions_mod, only: my_norm2
 		use physical_constant_mod, only: i1, pi, q0, Upp, eps0
 		use write_log_mod, only: writeLog
 		
@@ -93,11 +94,11 @@ contains
 				do b=1,currcnt%Nu 
 					deltaR=dble(u)*currcnt%t_vec+currcnt%posAA(b,:)
 					currcnt%v_FT(:,:,1,1)=currcnt%v_FT(:,:,1,1)+exp(i1*dcmplx(q_vec(:,:,1)*deltaR(1)+q_vec(:,:,2)*deltaR(2)))* &
-							dcmplx(Upp/sqrt((tmpr*norm2(deltaR))**2+1.d0))
+							dcmplx(Upp/sqrt((tmpr*my_norm2(deltaR))**2+1.d0))
 					
 					deltaR=dble(u)*currcnt%t_vec+currcnt%posBA(b,:)
 					currcnt%v_FT(:,:,1,2)=currcnt%v_FT(:,:,1,2)+exp(i1*dcmplx(q_vec(:,:,1)*deltaR(1)+q_vec(:,:,2)*deltaR(2)))* &
-							dcmplx(Upp/sqrt((tmpr*norm2(deltaR))**2+1.d0))
+							dcmplx(Upp/sqrt((tmpr*my_norm2(deltaR))**2+1.d0))
 				enddo
 			enddo
 			

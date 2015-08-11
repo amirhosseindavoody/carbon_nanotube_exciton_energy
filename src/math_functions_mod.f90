@@ -1,7 +1,7 @@
 module math_functions_mod
 	implicit none
 	private
-	public :: gcd, bessk0, eig, polint
+	public :: gcd, bessk0, eig, polint, my_norm2
 
 contains
 	!**********************************************************************************************************************
@@ -167,5 +167,17 @@ contains
 		enddo
 		return
 	end subroutine polint
+
+	!**********************************************************************************************************************
+	! This function calculates the magnitude of a 2D real*8 vector
+	!**********************************************************************************************************************
+	
+	real*8 function my_norm2(my_vec)
+		real*8, dimension(2), intent(in) :: my_vec
+		
+		my_norm2 = sqrt(my_vec(1)*my_vec(1)+my_vec(2)*my_vec(2))
+
+		return 
+	end function my_norm2
 
 end module math_Functions_mod

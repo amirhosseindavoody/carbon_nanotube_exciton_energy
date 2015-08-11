@@ -10,7 +10,7 @@ contains
 
 	subroutine cnt_geometry()
 		use comparams, only: currcnt
-		use math_functions_mod, only: gcd
+		use math_functions_mod, only: gcd, my_norm2
 		use physical_constant_mod, only: a_l, pi
 		use write_log_mod, only: writeLog
 
@@ -66,8 +66,8 @@ contains
 		MC=int(dble(currcnt%m_ch)*p-dble(currcnt%n_ch)*q)
 	  
 		! rotate basis vectors so that ch_vec is along x-axis
-		cosTh=currcnt%ch_vec(1)/norm2(currcnt%ch_vec)
-		sinTh=currcnt%ch_vec(2)/norm2(currcnt%ch_vec)
+		cosTh=currcnt%ch_vec(1)/my_norm2(currcnt%ch_vec)
+		sinTh=currcnt%ch_vec(2)/my_norm2(currcnt%ch_vec)
 		Rot=reshape((/ cosTh, -sinTh , sinTh, cosTh /), (/2,2/))
 		currcnt%ch_vec=matmul(Rot,currcnt%ch_vec)
 		currcnt%t_vec=matmul(Rot,currcnt%t_vec)
@@ -78,11 +78,11 @@ contains
 		currcnt%aCC_vec=matmul(Rot,currcnt%aCC_vec)
 	  
 		! calculate reciprocal lattice of CNT.*******************************************************************************
-		currcnt%dk=norm2(currcnt%b1)/(dble(currcnt%nkg)-1.d0)
+		currcnt%dk=my_norm2(currcnt%b1)/(dble(currcnt%nkg)-1.d0)
 		currcnt%dkx = currcnt%dk/currcnt%dk_dkx_ratio
 		currcnt%K1=(- t2*currcnt%b1+ dble(t1)*currcnt%b2)/(dble(currcnt%Nu))
 		currcnt%K2=(dble(currcnt%m_ch)*currcnt%b1-dble(currcnt%n_ch)*currcnt%b2)/dble(currcnt%Nu)
-		currcnt%K2=currcnt%K2/norm2(currcnt%K2)
+		currcnt%K2=currcnt%K2/my_norm2(currcnt%K2)
 	  
 		! calculate coordinates of atoms in the unwarped CNT unit cell.******************************************************
 		allocate(currcnt%posA(currcnt%Nu,2))

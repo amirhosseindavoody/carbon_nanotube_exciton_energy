@@ -6,6 +6,7 @@ module cnt_band_structure_mod
 contains
 	subroutine cnt_band_structure()
 		use comparams, only: currcnt
+		use math_functions_mod, only: my_norm2
 		use physical_constant_mod, only: pi
 		use write_log_mod, only: writeLog
 		implicit none
@@ -23,7 +24,7 @@ contains
 		
 		
 		! calculate CNT energy dispersion.***********************************************************************************
-		currcnt%ikc_max=floor(pi/norm2(currcnt%t_vec)/currcnt%dk)
+		currcnt%ikc_max=floor(pi/my_norm2(currcnt%t_vec)/currcnt%dk)
 		currcnt%ikc_min=-currcnt%ikc_max
 		nkc=2*currcnt%ikc_max+1
 		
