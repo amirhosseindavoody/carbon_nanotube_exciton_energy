@@ -6,7 +6,7 @@ module A_exciton_energy_mod
 	real*8, dimension(:), allocatable :: Ef
 	complex*16, dimension(:), allocatable :: Psi_tmp
 	complex*16, dimension(:,:), allocatable :: Kd11, Kd12, Kx11, Ke11, Kernel, Ktmp
-	
+
 	real*8, dimension(:), allocatable :: Ex_A1, Ex0_A2, Ex1_A2
 	complex*16, dimension(:,:), allocatable :: Psi_A1, Psi0_A2, Psi1_A2 !the first index is ikr, the scond index is the subband
 
@@ -14,7 +14,7 @@ contains
 	subroutine calculate_A_exciton_dispersion()
 		use comparams, only: currcnt
 		use write_log_mod, only: writeLog
-		
+
 		integer :: iKcm, ikr, ikpr
 		integer :: iKcm_min_fine, iKcm_max_fine
 		real*8 :: Ef_min
@@ -45,9 +45,9 @@ contains
 
 		write(logInput,*) "nX_a = ",currcnt%nX
 		call writeLog(new_line('A')//trim(logInput))
-		
+
 		call writeLog(new_line('A')//"Calculating exciton dispersion ********************************")
-		
+
 
 		open(unit=100,file='Ex_A1.dat',status="unknown")
 		open(unit=101,file='Ex0_A2.dat',status="unknown")
@@ -59,7 +59,7 @@ contains
 		do iKcm=iKcm_min_fine,iKcm_max_fine
 			write(logInput,*) "iKcm=", iKcm
 			call writeLog(trim(logInput))
-			
+
 			call calculate_exciton_energy(Ef_min, iKcm)
 
 			currcnt%Ex_A1(:,iKcm) = Ex_A1
@@ -68,7 +68,7 @@ contains
 			currcnt%Psi_A1(:,:,iKcm) = Psi_A1
 			currcnt%Psi0_A2(:,:,iKcm) = Psi0_A2
 			currcnt%Psi1_A2(:,:,iKcm) = Psi1_A2
-			
+
 			! save exciton energy and wavefunction
 ! 			do ikr=(currcnt%ikr_low),(currcnt%ikr_low+currcnt%nX-1)
 			do ikr=(currcnt%ikr_low),(currcnt%ikr_high)
@@ -87,9 +87,9 @@ contains
 			write(103,*)
 			write(104,*)
 			write(105,*)
-		
+
 		enddo
-		
+
 		close(100)
 		close(101)
 		close(102)
@@ -103,7 +103,7 @@ contains
 		deallocate(currcnt%Ex_A1)
 		deallocate(currcnt%Ex0_A2)
 		deallocate(currcnt%Ex1_A2)
-		  
+
 		return
 	end subroutine calculate_A_exciton_dispersion
 
@@ -115,12 +115,12 @@ contains
 	subroutine calculate_exciton_energy(Ef_min, iKcm)
 		use comparams, only: currcnt
 		use math_functions_mod, only: eig
-		
+
 		integer :: nkr
 		integer :: iKcm,mu_cm,mu_kr
 		integer :: ikr, ikc, ikv, ikpr, ikpc, ikpv
 		real*8 :: tmpr, Ef_min
-		
+
 
 		mu_cm=0
 		mu_kr=currcnt%min_sub(currcnt%i_sub)
@@ -132,7 +132,7 @@ contains
 		if (.not. allocated(Ex_A1)) allocate(Ex_A1(currcnt%ikr_low:currcnt%ikr_high))
 		if (.not. allocated(Ex0_A2)) allocate(Ex0_A2(currcnt%ikr_low:currcnt%ikr_high))
 		if (.not. allocated(Ex1_A2)) allocate(Ex1_A2(currcnt%ikr_low:currcnt%ikr_high))
-		
+
 		if(.not. allocated(Kd11)) allocate(Kd11(currcnt%ikr_low:currcnt%ikr_high,currcnt%ikr_low:currcnt%ikr_high))
 		if(.not. allocated(Kd12)) allocate(Kd12(currcnt%ikr_low:currcnt%ikr_high,currcnt%ikr_low:currcnt%ikr_high))
 		if(.not. allocated(Kx11)) allocate(Kx11(currcnt%ikr_low:currcnt%ikr_high,currcnt%ikr_low:currcnt%ikr_high))
@@ -141,13 +141,13 @@ contains
 		if(.not. allocated(Ktmp)) allocate(Ktmp(currcnt%ikr_low:currcnt%ikr_high,currcnt%ikr_low:currcnt%ikr_high))
 		if(.not. allocated(Ef)) allocate(Ef(currcnt%ikr_low:currcnt%ikr_high))
 		if(.not. allocated(Psi_tmp)) allocate(Psi_tmp(currcnt%ikr_low:currcnt%ikr_high))
-		
-			
-		Ke11=0.d0*Ke11
-		Kd11=0.d0*Kd11
-		Kd12=0.d0*Kd12
-		Kx11=0.d0*Kx11
-		
+
+
+		Ke11=(0.d0,0.d0)
+		Kd11=(0.d0,0.d0)
+		Kd12=(0.d0,0.d0)
+		Kx11=(0.d0,0.d0)
+
 		! calculate the kernel matrices
 		do ikr=currcnt%ikr_low,currcnt%ikr_high
 			ikc=ikr*currcnt%dk_dkx_ratio+iKcm
@@ -161,13 +161,13 @@ contains
 								conjg(currcnt%Cc_fine(1,ikc,1))*currcnt%Cc_fine(1,ikpc,1)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,1,2)*currcnt%Cv_fine(1,ikv,2)*conjg(currcnt%Cv_fine(1,ikpv,2))+ &
 								conjg(currcnt%Cc_fine(1,ikc,2))*currcnt%Cc_fine(1,ikpc,2)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,2,1)*currcnt%Cv_fine(1,ikv,1)*conjg(currcnt%Cv_fine(1,ikpv,1))+ &
 								conjg(currcnt%Cc_fine(1,ikc,2))*currcnt%Cc_fine(1,ikpc,2)*currcnt%v_FT_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio,2,2)*currcnt%Cv_fine(1,ikv,2)*conjg(currcnt%Cv_fine(1,ikpv,2)))/dcmplx(currcnt%kappa*currcnt%eps_q_fine(0,(ikr-ikpr)*currcnt%dk_dkx_ratio))
-					
+
 				Kx11(ikr,ikpr)=(conjg(currcnt%Cc_fine(1,ikc,1))*currcnt%Cv_fine(1,ikv,1)*currcnt%v_FT_fine(0,2*iKcm,1,1)*currcnt%Cc_fine(1,ikpc,1)*conjg(currcnt%Cv_fine(1,ikpv,1))+ &
 								conjg(currcnt%Cc_fine(1,ikc,1))*currcnt%Cv_fine(1,ikv,1)*currcnt%v_FT_fine(0,2*iKcm,1,2)*currcnt%Cc_fine(1,ikpc,2)*conjg(currcnt%Cv_fine(1,ikpv,2))+ &
 								conjg(currcnt%Cc_fine(1,ikc,2))*currcnt%Cv_fine(1,ikv,2)*currcnt%v_FT_fine(0,2*iKcm,2,1)*currcnt%Cc_fine(1,ikpc,1)*conjg(currcnt%Cv_fine(1,ikpv,1))+ &
 								conjg(currcnt%Cc_fine(1,ikc,2))*currcnt%Cv_fine(1,ikv,2)*currcnt%v_FT_fine(0,2*iKcm,2,2)*currcnt%Cc_fine(1,ikpc,2)*conjg(currcnt%Cv_fine(1,ikpv,2)))
 			enddo
-			
+
 			do ikpr=currcnt%ikr_high,-ikr,-1
 				ikpc=ikpr*currcnt%dk_dkx_ratio+iKcm
 				ikpv=ikpr*currcnt%dk_dkx_ratio-iKcm
@@ -177,7 +177,7 @@ contains
 								 conjg(currcnt%Cc_fine(1,ikc,2))*currcnt%Cc_fine(2,ikpc,2)*currcnt%v_FT_fine(2*mu_kr,(ikr-ikpr)*currcnt%dk_dkx_ratio,2,2)*currcnt%Cv_fine(1,ikv,2)*conjg(currcnt%Cv_fine(2,ikpv,2)))/dcmplx(currcnt%kappa*currcnt%eps_q_fine(2*mu_kr,(ikr-ikpr)*currcnt%dk_dkx_ratio))
 			enddo
 		enddo
-		
+
 		! when running the code in release mode there the next few lines generated a stack overflow error which forced me to use a dummy variable to resolve this issue.
 		Ktmp=conjg(transpose(Kd11))
 		Kd11=Kd11+Ktmp
@@ -185,27 +185,27 @@ contains
 		Kx11=Kx11+Ktmp
 		Ktmp=conjg(transpose(Kd12))
 		Kd12=Kd12+Ktmp
-		
+
 		do ikr=currcnt%ikr_low,currcnt%ikr_high
 			Kd11(ikr,ikr)=Kd11(ikr,ikr)/2.d0
 			Kx11(ikr,ikr)=Kx11(ikr,ikr)/2.d0
 			Kd12(ikr,ikr)=Kd12(ikr,ikr)/2.d0
 		enddo
-		
+
 		Ef_min=minval(Ef)
-		
+
 		! calculate energy of A1 excitons with spin s=0 and s=1 *************************************************************
 		Kernel=Ke11-Kd11+Kd12
 		call eig(nkr,Kernel,Psi_A1,Ex_A1)
-		 
+
 		! calculate energy of A2 excitons with spin s=0 *********************************************************************
 		Kernel=Ke11+4.d0*Kx11-Kd11-Kd12
 		call eig(nkr,Kernel,Psi0_A2,Ex0_A2)
-		
+
 		! calculate energy of A2 excitons with spin s=1 *********************************************************************
 		Kernel=Ke11-Kd11-Kd12
 		call eig(nkr,Kernel,Psi1_A2,Ex1_A2)
-			
+
 		!sort the subbands
 		do ikr=currcnt%ikr_high,currcnt%ikr_low+1,-1
 			do ikpr=ikr-1,currcnt%ikr_low,-1
@@ -216,8 +216,8 @@ contains
 					Psi_A1(:,ikr)=Psi_A1(:,ikpr)
 					Ex_A1(ikpr)=tmpr
 					Psi_A1(:,ikpr)=Psi_tmp
-				end if 
-					
+				end if
+
 				if (Ex0_A2(ikr) .lt. Ex0_A2(ikpr)) then
 					tmpr=Ex0_A2(ikr)
 					Psi_tmp=Psi0_A2(:,ikr)
@@ -225,8 +225,8 @@ contains
 					Psi0_A2(:,ikr)=Psi0_A2(:,ikpr)
 					Ex0_A2(ikpr)=tmpr
 					Psi0_A2(:,ikpr)=Psi_tmp
-				end if 
-				
+				end if
+
 				if (Ex1_A2(ikr) .lt. Ex1_A2(ikpr)) then
 					tmpr=Ex1_A2(ikr)
 					Psi_tmp=Psi1_A2(:,ikr)

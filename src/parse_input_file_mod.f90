@@ -1,13 +1,13 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Declaration of input parameters
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	
+
 module parse_input_file_mod
 	implicit none
 	private
 	public :: parse_input_file
 
-contains	
+contains
 	!**************************************************************************************************************************
 	! parse the input file
 	!**************************************************************************************************************************
@@ -17,10 +17,10 @@ contains
 		use physical_constant_mod, only: eV
 		use write_log_mod, only: writeLog
 
-		character(len=100) :: filename
-		character(len=200) :: buffer, command, label, value
-		character(len=200) :: outdir
-		character(len=200) :: logInput
+		character(len=1000) :: input_filename
+		character(len=1000) :: buffer, command, label, value
+		character(len=1000) :: outdir
+		character(len=1000) :: logInput
 		integer :: istat=0
 		integer :: ios=0
 		integer :: pos_comma=0, pos_equal=0
@@ -32,11 +32,11 @@ contains
 		end if
 
 
-		call get_command_argument(1,filename)
-		open(unit=100,file=filename,status="old", action="read", iostat=istat)
+		call get_command_argument(1,input_filename)
+		open(unit=100,file=input_filename,status="old", action="read", iostat=istat)
 		if (istat .ne. 0) then
 			write(*,*) ""
-			write(*,*) "Unable to read input file:", filename
+			write(*,*) "Unable to read input file:", input_filename
 			call exit()
 		end if
 
@@ -98,6 +98,12 @@ contains
 							read(value, *) currcnt%Ckappa
 						case ('kappa_coeff')
 							read(value, *) currcnt%kappa_coeff
+						case ('target_exciton_type')
+							read(value, *) currcnt%targetExcitonType
+						case ('length[nm]')
+							read(value, *) currcnt%length
+						case ('center_position[nm]')
+							read(value, *) currcnt%center_position
 						case default
 							write(*,*) "ERROR in 'cnt' input arguments!!!"
 							write(*,*) "simulation STOPPED!!!"
@@ -130,7 +136,7 @@ contains
 		write(currcnt%directory,"( A, 'CNT(', I2.2, ',', I2.2, ')-nkg(', I4.4, ')-nr(', I4.4, ')-E_th(', F3.1, ')-Kcm_max(', F3.1, ')-i_sub(', I1.1, ')-Ckappa(', F3.1, ')/' )") trim(outdir), currcnt%n_ch, currcnt%m_ch, currcnt%nkg, currcnt%nr, currcnt%E_th/eV, currcnt%Kcm_max*1.d-9, currcnt%i_sub, currcnt%Ckappa
 
 		! create the output directory and change the working director to that one.
-		call create_outdir(currcnt%directory)
+		call create_outdir(currcnt%directory, input_filename)
 
 		! write simulation settings to the log file
 		call writeLog(new_line('A')//"Simulation properties *****************")
@@ -162,15 +168,16 @@ contains
 	!*******************************************************************************
 	! This subroutines changes the working directory to the output directory for saving files
 	!*******************************************************************************
-	
-	subroutine create_outdir(outdir)
+
+	subroutine create_outdir(outdir, input_filename)
 		use write_log_mod, only: writeLog
 
 		character(len=*), intent(in) :: outdir
+		character(len=*), intent(in) :: input_filename
 		integer :: istat=0
-		character(len=300) :: command
+		character(len=1000) :: command
 		integer, dimension(3) :: date, time
-		character(len=100) :: logInput
+		character(len=1000) :: logInput
 
 		! specifiy the output directory
 		write(command,'("rm -rf ''",A,"''")') trim(outdir) !remove the directory if it already exists
@@ -178,10 +185,15 @@ contains
 		write(command,'("mkdir ''",A,"''")') trim(outdir) !create the directory again
 		call system(trim(command))
 
+		! copy the input files to the output directory
+		write(command,'(A)') "cp '"//trim(input_filename)//"' '"//trim(outdir)//"'"
+		call system(trim(command))
+
 		istat=chdir(trim(outdir))
 		if (istat .ne. 0) then
-			write(*,*) "Directory did not changed!!!"
-			write(*,*) "Simulation stopped!!!"
+			write(*,'(A)') "Directory did not changed:"
+			write(*,'(A)') trim(outdir)
+			write(*,'(A)') "Simulation stopped!!!"
 			call exit()
 		end if
 
@@ -193,8 +205,8 @@ contains
 		write(logInput,'("Simulation started at--> DATE=",I2.2,"/",I2.2,"/",I4.4,"  TIME=",I2.2,":",I2.2,":",I2.2)') date, time
 		call writeLog(logInput)
 
-		return	
+		return
 	end subroutine create_outdir
 
-	
+
 end module parse_input_file_mod
