@@ -19,10 +19,11 @@ contains
 		else
 			open(logFile, file="log.dat", status="new", action="write")
 		end if
-		write(logFile, *) message
+		write(logFile, '(A)') trim(message)
 		close(logFile)
 
-		return
+		write(*, '(A)') trim(message)
+
 	end subroutine writeLog
-	
+
 end module write_log_mod

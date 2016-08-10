@@ -133,34 +133,35 @@ contains
 		end if
 
 		! create the output directory in which the cnt information is saved
-		write(currcnt%directory,"( A, 'CNT(', I2.2, ',', I2.2, ')-nkg(', I4.4, ')-nr(', I4.4, ')-E_th(', F3.1, ')-Kcm_max(', F3.1, ')-i_sub(', I1.1, ')-Ckappa(', F3.1, ')/' )") trim(outdir), currcnt%n_ch, currcnt%m_ch, currcnt%nkg, currcnt%nr, currcnt%E_th/eV, currcnt%Kcm_max*1.d-9, currcnt%i_sub, currcnt%Ckappa
+		! write(currcnt%directory,"( A, 'CNT(', I2.2, ',', I2.2, ')-nkg(', I4.4, ')-nr(', I4.4, ')-E_th(', F3.1, ')-Kcm_max(', F3.1, ')-i_sub(', I1.1, ')-Ckappa(', F3.1, ')/' )") trim(outdir), currcnt%n_ch, currcnt%m_ch, currcnt%nkg, currcnt%nr, currcnt%E_th/eV, currcnt%Kcm_max*1.d-9, currcnt%i_sub, currcnt%Ckappa
+		write(currcnt%directory,'(A, A, I0, A, I0, A, I0, A, I0, A, I0, A, F0.1, A, F0.1, A, I0, A, F0.1, A)') trim(outdir), "exciton_", currcnt%n_ch, "_", currcnt%m_ch, "_nkg_", currcnt%nkg, "_dk_ratio_", currcnt%dk_dkx_ratio, "_nr_", currcnt%nr, "_Eth_", currcnt%E_th/eV, "_Kcm_max_", currcnt%Kcm_max*1.d-9, "_sub_", currcnt%i_sub, "_Ckappa_", currcnt%Ckappa, "/"
 
 		! create the output directory and change the working director to that one.
 		call create_outdir(currcnt%directory, input_filename)
 
 		! write simulation settings to the log file
 		call writeLog(new_line('A')//"Simulation properties *****************")
-		write(logInput,"('n_ch = ',I2.2)") currcnt%n_ch
+		write(logInput,"('n_ch = ',I0)") currcnt%n_ch
 		call writeLog(trim(logInput))
-		write(logInput,"('m_ch = ',I2.2)") currcnt%m_ch
+		write(logInput,"('m_ch = ',I0)") currcnt%m_ch
 		call writeLog(trim(logInput))
-		write(logInput,"('nkg = ',I4.4)") currcnt%nkg
+		write(logInput,"('nkg = ',I0)") currcnt%nkg
 		call writeLog(trim(logInput))
-		write(logInput,"('dk/dkx = ',I4.4)") currcnt%dk_dkx_ratio
+		write(logInput,"('dk/dkx = ',I0)") currcnt%dk_dkx_ratio
 		call writeLog(trim(logInput))
-		write(logInput,"('nr = ',I4.4)") currcnt%nr
+		write(logInput,"('nr = ',I0)") currcnt%nr
 		call writeLog(trim(logInput))
-		write(logInput,"('E_th[eV] = ',F3.1)") currcnt%E_th/eV
+		write(logInput,"('E_th[eV] = ',F0.1)") currcnt%E_th/eV
 		call writeLog(trim(logInput))
-		write(logInput,"('Kcm_max[1/nm] = ',F3.1)") currcnt%Kcm_max*1.d-9
+		write(logInput,"('Kcm_max[1/nm] = ',F0.1)") currcnt%Kcm_max*1.d-9
 		call writeLog(trim(logInput))
-		write(logInput,"('i_sub = ',I1.1)") currcnt%i_sub
+		write(logInput,"('i_sub = ',I0)") currcnt%i_sub
 		call writeLog(trim(logInput))
-		write(logInput,"('Ckappa = ',F3.1)") currcnt%Ckappa
+		write(logInput,"('Ckappa = ',F0.3)") currcnt%Ckappa
 		call writeLog(trim(logInput))
-		write(logInput,"('kappa_coeff = ',F5.3)") currcnt%kappa_coeff
+		write(logInput,"('kappa_coeff = ',F0.3)") currcnt%kappa_coeff
 		call writeLog(trim(logInput))
-		write(logInput,"('kappa = ',F5.3)") currcnt%kappa
+		write(logInput,"('kappa = ',F0.3)") currcnt%kappa
 		call writeLog(trim(logInput))
 
 	end subroutine parse_input_file
@@ -202,7 +203,7 @@ contains
 		call itime(time)
 
 		! write simulation inputs to the log file
-		write(logInput,'("Simulation started at--> DATE=",I2.2,"/",I2.2,"/",I4.4,"  TIME=",I2.2,":",I2.2,":",I2.2)') date, time
+		write(logInput,'("Simulation started at--> DATE=",I0,"/",I0,"/",I0,"  TIME=",I0,":",I0,":",I0)') date, time
 		call writeLog(logInput)
 
 		return

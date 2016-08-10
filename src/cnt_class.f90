@@ -66,7 +66,7 @@ module cnt_class
 		real*8 :: Kcm_max
 
 		!directory that the CNT information is stored
-		character(len=200) :: directory
+		character(len=1000) :: directory
 
 	end type cnt
 
