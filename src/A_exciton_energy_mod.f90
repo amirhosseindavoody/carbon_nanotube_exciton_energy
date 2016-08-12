@@ -43,21 +43,62 @@ contains
 			endif
 		enddo
 
-		write(logInput,*) "nX_a = ",currcnt%nX
+		write(logInput,'(A, I0)') "nX_a = ",currcnt%nX
 		call writeLog(new_line('A')//trim(logInput))
 
-		call writeLog(new_line('A')//"Calculating exciton dispersion ********************************")
+		call writeLog(new_line('A')//"calculating exciton dispersion ********************************")
 
 
-		open(unit=100,file='Ex_A1.dat',status="unknown")
-		open(unit=101,file='Ex0_A2.dat',status="unknown")
-		open(unit=102,file='Ex1_A2.dat',status="unknown")
-		open(unit=103,file='Psi_A1.dat',status="unknown")
-		open(unit=104,file='Psi0_A2.dat',status="unknown")
-		open(unit=105,file='Psi1_A2.dat',status="unknown")
+! 		open(unit=100,file='Ex_A1.dat',status="unknown")
+! 		open(unit=101,file='Ex0_A2.dat',status="unknown")
+! 		open(unit=102,file='Ex1_A2.dat',status="unknown")
+! 		open(unit=103,file='Psi_A1.dat',status="unknown")
+! 		open(unit=104,file='Psi0_A2.dat',status="unknown")
+! 		open(unit=105,file='Psi1_A2.dat',status="unknown")
+
+! 		do iKcm=iKcm_min_fine,iKcm_max_fine
+! 			write(logInput,'(A, I0)') "a-type exciton: iKcm= ", iKcm
+! 			call writeLog(trim(logInput))
+
+! 			call calculate_exciton_energy(Ef_min, iKcm)
+
+! 			currcnt%Ex_A1(:,iKcm) = Ex_A1
+! 			currcnt%Ex0_A2(:,iKcm) = Ex0_A2
+! 			currcnt%Ex1_A2(:,iKcm) = Ex1_A2
+! 			currcnt%Psi_A1(:,:,iKcm) = Psi_A1
+! 			currcnt%Psi0_A2(:,:,iKcm) = Psi0_A2
+! 			currcnt%Psi1_A2(:,:,iKcm) = Psi1_A2
+
+! 			! save exciton energy and wavefunction
+! ! 			do ikr=(currcnt%ikr_low),(currcnt%ikr_low+currcnt%nX-1)
+! 			do ikr=(currcnt%ikr_low),(currcnt%ikr_high)
+! 				write(100,'(E16.8)', advance='no') Ex_A1(ikr)
+! 				write(101,'(E16.8)', advance='no') Ex0_A2(ikr)
+! 				write(102,'(E16.8)', advance='no') Ex1_A2(ikr)
+! 				do ikpr=currcnt%ikr_low,currcnt%ikr_high
+! 					write(103,'(E16.8,E16.8)', advance='no') Psi_A1(ikpr,ikr)
+! 					write(104,'(E16.8,E16.8)', advance='no') Psi0_A2(ikpr,ikr)
+! 					write(105,'(E16.8,E16.8)', advance='no') Psi1_A2(ikpr,ikr)
+! 				enddo
+! 			enddo
+! 			write(100,*)
+! 			write(101,*)
+! 			write(102,*)
+! 			write(103,*)
+! 			write(104,*)
+! 			write(105,*)
+
+! 		enddo
+
+! 		close(100)
+! 		close(101)
+! 		close(102)
+! 		close(103)
+! 		close(104)
+! 		close(105)
 
 		do iKcm=iKcm_min_fine,iKcm_max_fine
-			write(logInput,*) "iKcm=", iKcm
+			write(logInput,'(A, I0)') "a-type exciton: iKcm=", iKcm
 			call writeLog(trim(logInput))
 
 			call calculate_exciton_energy(Ef_min, iKcm)
@@ -69,33 +110,31 @@ contains
 			currcnt%Psi0_A2(:,:,iKcm) = Psi0_A2
 			currcnt%Psi1_A2(:,:,iKcm) = Psi1_A2
 
-			! save exciton energy and wavefunction
-! 			do ikr=(currcnt%ikr_low),(currcnt%ikr_low+currcnt%nX-1)
-			do ikr=(currcnt%ikr_low),(currcnt%ikr_high)
-				write(100,'(E16.8)', advance='no') Ex_A1(ikr)
-				write(101,'(E16.8)', advance='no') Ex0_A2(ikr)
-				write(102,'(E16.8)', advance='no') Ex1_A2(ikr)
-				do ikpr=currcnt%ikr_low,currcnt%ikr_high
-					write(103,'(E16.8,E16.8)', advance='no') Psi_A1(ikpr,ikr)
-					write(104,'(E16.8,E16.8)', advance='no') Psi0_A2(ikpr,ikr)
-					write(105,'(E16.8,E16.8)', advance='no') Psi1_A2(ikpr,ikr)
-				enddo
-			enddo
-			write(100,*)
-			write(101,*)
-			write(102,*)
-			write(103,*)
-			write(104,*)
-			write(105,*)
-
 		enddo
 
+		open(unit=100, file='Ex_A1.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Ex_A1
 		close(100)
-		close(101)
-		close(102)
-		close(103)
-		close(104)
-		close(105)
+
+		open(unit=100, file='Ex0_A2.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Ex0_A2
+		close(100)
+
+		open(unit=100, file='Ex1_A2.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Ex1_A2
+		close(100)
+
+		open(unit=100, file='Psi_A1.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Psi_A1
+		close(100)
+
+		open(unit=100, file='Psi0_A2.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Psi0_A2
+		close(100)
+
+		open(unit=100, file='Psi1_A2.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Psi1_A2
+		close(100)
 
 		deallocate(currcnt%Psi_A1)
 		deallocate(currcnt%Psi0_A2)

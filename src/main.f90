@@ -37,7 +37,7 @@ program cnt_exciton_energy
 	call calculate_E_exciton_dispersion()
   
 	call CPU_time(endtime)
-	write(logInput,'("Run time = ",f10.3," seconds.")'),endtime-starttime
+	write(logInput,'("Run time = ",f0.3," seconds.")'),endtime-starttime
 	call writeLog(trim(logInput))
 
 end program cnt_exciton_energy

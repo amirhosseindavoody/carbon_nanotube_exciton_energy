@@ -150,7 +150,7 @@ contains
 				w=c(i+1)-d(i)
 				den=ho-hp
 				if(den .eq. 0) then
-					write(*,*) "Faliure in polint"
+					write(*,'(A)') "Faliure in polint"
 					call exit()
 				endif
 				den = w/den

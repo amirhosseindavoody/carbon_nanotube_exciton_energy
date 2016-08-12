@@ -154,29 +154,29 @@ contains
 		call writeLog(trim(logInput))
 
 		call writeLog(new_line('A')//"geometrical properties **********************************")
-		write(logInput,*) "a1=",currcnt%a1(1), currcnt%a1(2)
+		write(logInput,'(SP, A, E9.2, E9.2)') "a1=",currcnt%a1(1), currcnt%a1(2)
 		call writeLog(trim(logInput))
-		write(logInput,*) "a2=",currcnt%a2(1), currcnt%a2(2)
+		write(logInput,'(SP, A, E9.2, E9.2)') "a2=",currcnt%a2(1), currcnt%a2(2)
 		call writeLog(trim(logInput))
-		write(logInput,*) "b1=",currcnt%b1(1), currcnt%b1(2)
+		write(logInput,'(SP, A, E9.2, E9.2)') "b1=",currcnt%b1(1), currcnt%b1(2)
 		call writeLog(trim(logInput))
-		write(logInput,*) "b2=",currcnt%b2(1), currcnt%b2(2)
+		write(logInput,'(SP, A, E9.2, E9.2)') "b2=",currcnt%b2(1), currcnt%b2(2)
 		call writeLog(trim(logInput))
-		write(logInput,*) "aCC_vec=",currcnt%aCC_vec(1), currcnt%aCC_vec(2)
+		write(logInput,'(SP, A, E9.2, E9.2)') "aCC_vec=",currcnt%aCC_vec(1), currcnt%aCC_vec(2)
 		call writeLog(trim(logInput))
-		write(logInput,*) "ch_vec=",currcnt%ch_vec(1), currcnt%ch_vec(2)
+		write(logInput,'(SP, A, E9.2, E9.2)') "ch_vec=",currcnt%ch_vec(1), currcnt%ch_vec(2)
 		call writeLog(trim(logInput))
-		write(logInput,*) "t_vec=",currcnt%t_vec(1), currcnt%t_vec(2)
+		write(logInput,'(SP, A, E9.2, E9.2)') "t_vec=",currcnt%t_vec(1), currcnt%t_vec(2)
 		call writeLog(trim(logInput))
-		write(logInput,*) "len_ch=",currcnt%len_ch
+		write(logInput,'(SP, A, E9.2)') "len_ch=",currcnt%len_ch
 		call writeLog(trim(logInput))
-		write(logInput,*) "Nu=",currcnt%Nu
+		write(logInput,'(A, I0)') "Nu=",currcnt%Nu
 		call writeLog(trim(logInput))
-		write(logInput,*) "MC=",MC
+		write(logInput,'(A, I0)') "MC=",MC
 		call writeLog(trim(logInput))
-		write(logInput,*) "dk=",currcnt%dk
+		write(logInput,'(A, E9.2)') "dk= ",currcnt%dk
 		call writeLog(trim(logInput))
-		write(logInput,*) "dkx=",currcnt%dkx
+		write(logInput,'(A, E9.2)') "dkx=",currcnt%dkx
 		call writeLog(trim(logInput))
 
 		return

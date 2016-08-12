@@ -44,23 +44,72 @@ contains
 			endif
 		enddo
 
-		write(logInput,*) "nX_e = ",currcnt%nX
+		write(logInput,'(A, I0)') "nX_e = ",currcnt%nX
 		call writeLog(new_line('A')//trim(logInput))
 
-		call writeLog(new_line('A')//"Calculating exciton dispersion ********************************")
+		call writeLog(new_line('A')//"calculating exciton dispersion ********************************")
 		
 
-		open(unit=100,file='Ex0_Ep.dat',status="unknown")
-		open(unit=101,file='Ex0_Em.dat',status="unknown")
-		open(unit=102,file='Ex1_Ep.dat',status="unknown")
-		open(unit=103,file='Ex1_Em.dat',status="unknown")
-		open(unit=104,file='Psi0_Ep.dat',status="unknown")
-		open(unit=105,file='Psi0_Em.dat',status="unknown")
-		open(unit=106,file='Psi1_Ep.dat',status="unknown")
-		open(unit=107,file='Psi1_Em.dat',status="unknown")
+! 		open(unit=100,file='Ex0_Ep.dat',status="unknown")
+! 		open(unit=101,file='Ex0_Em.dat',status="unknown")
+! 		open(unit=102,file='Ex1_Ep.dat',status="unknown")
+! 		open(unit=103,file='Ex1_Em.dat',status="unknown")
+! 		open(unit=104,file='Psi0_Ep.dat',status="unknown")
+! 		open(unit=105,file='Psi0_Em.dat',status="unknown")
+! 		open(unit=106,file='Psi1_Ep.dat',status="unknown")
+! 		open(unit=107,file='Psi1_Em.dat',status="unknown")
+
+! 		do iKcm=iKcm_min_fine,iKcm_max_fine
+! 			write(logInput,'(A, I0)') "e-type exciton: iKcm= ", iKcm
+! 			call writeLog(trim(logInput))
+			
+! 			call calculate_exciton_energy(Ef_min, iKcm)
+
+! 			currcnt%Ex0_Ep(:,iKcm) = Ex0_Ep
+! 			currcnt%Ex0_Em(:,iKcm) = Ex0_Em
+! 			currcnt%Ex1_Ep(:,iKcm) = Ex1_Ep
+! 			currcnt%Ex1_Em(:,iKcm) = Ex1_Em
+! 			currcnt%Psi0_Ep(:,:,iKcm) = Psi0_Ep
+! 			currcnt%Psi0_Em(:,:,iKcm) = Psi0_Em
+! 			currcnt%Psi1_Ep(:,:,iKcm) = Psi1_Ep
+! 			currcnt%Psi1_Em(:,:,iKcm) = Psi1_Em
+			
+! 			! save exciton energy and wavefunction
+! ! 			do ikr=(currcnt%ikr_low),(currcnt%ikr_low+currcnt%nX-1)
+! 			do ikr=(currcnt%ikr_low),(currcnt%ikr_high)
+! 				write(100,'(E16.8)', advance='no') Ex0_Ep(ikr)
+! 				write(101,'(E16.8)', advance='no') Ex0_Em(ikr)
+! 				write(102,'(E16.8)', advance='no') Ex1_Ep(ikr)
+! 				write(103,'(E16.8)', advance='no') Ex1_Em(ikr)
+! 				do ikpr=currcnt%ikr_low,currcnt%ikr_high
+! 					write(104,'(E16.8,E16.8)', advance='no') Psi0_Ep(ikpr,ikr)
+! 					write(105,'(E16.8,E16.8)', advance='no') Psi0_Em(ikpr,ikr)
+! 					write(106,'(E16.8,E16.8)', advance='no') Psi1_Ep(ikpr,ikr)
+! 					write(107,'(E16.8,E16.8)', advance='no') Psi1_Em(ikpr,ikr)
+! 				enddo
+! 			enddo
+! 			write(100,*)
+! 			write(101,*)
+! 			write(102,*)
+! 			write(103,*)
+! 			write(104,*)
+! 			write(105,*)
+! 			write(106,*)
+! 			write(107,*)
+		
+! 		enddo
+		
+! 		close(100)
+! 		close(101)
+! 		close(102)
+! 		close(103)
+! 		close(104)
+! 		close(105)
+! 		close(106)
+! 		close(107)
 
 		do iKcm=iKcm_min_fine,iKcm_max_fine
-			write(logInput,*) "iKcm=", iKcm
+			write(logInput,'(A, I0)') "e-type exciton: iKcm= ", iKcm
 			call writeLog(trim(logInput))
 			
 			call calculate_exciton_energy(Ef_min, iKcm)
@@ -73,40 +122,40 @@ contains
 			currcnt%Psi0_Em(:,:,iKcm) = Psi0_Em
 			currcnt%Psi1_Ep(:,:,iKcm) = Psi1_Ep
 			currcnt%Psi1_Em(:,:,iKcm) = Psi1_Em
-			
-			! save exciton energy and wavefunction
-! 			do ikr=(currcnt%ikr_low),(currcnt%ikr_low+currcnt%nX-1)
-			do ikr=(currcnt%ikr_low),(currcnt%ikr_high)
-				write(100,'(E16.8)', advance='no') Ex0_Ep(ikr)
-				write(101,'(E16.8)', advance='no') Ex0_Em(ikr)
-				write(102,'(E16.8)', advance='no') Ex1_Ep(ikr)
-				write(103,'(E16.8)', advance='no') Ex1_Em(ikr)
-				do ikpr=currcnt%ikr_low,currcnt%ikr_high
-					write(104,'(E16.8,E16.8)', advance='no') Psi0_Ep(ikpr,ikr)
-					write(105,'(E16.8,E16.8)', advance='no') Psi0_Em(ikpr,ikr)
-					write(106,'(E16.8,E16.8)', advance='no') Psi1_Ep(ikpr,ikr)
-					write(107,'(E16.8,E16.8)', advance='no') Psi1_Em(ikpr,ikr)
-				enddo
-			enddo
-			write(100,*)
-			write(101,*)
-			write(102,*)
-			write(103,*)
-			write(104,*)
-			write(105,*)
-			write(106,*)
-			write(107,*)
 		
 		enddo
-		
+
+		open(unit=100, file='Ex0_Ep.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Ex0_Ep
 		close(100)
-		close(101)
-		close(102)
-		close(103)
-		close(104)
-		close(105)
-		close(106)
-		close(107)
+
+		open(unit=100, file='Ex0_Em.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Ex0_Em
+		close(100)
+
+		open(unit=100, file='Ex1_Ep.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Ex1_Ep
+		close(100)
+
+		open(unit=100, file='Ex1_Em.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Ex1_Em
+		close(100)
+
+		open(unit=100, file='Psi0_Ep.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Psi0_Ep
+		close(100)
+
+		open(unit=100, file='Psi0_Em.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Psi0_Em
+		close(100)
+
+		open(unit=100, file='Psi1_Ep.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Psi1_Ep
+		close(100)
+
+		open(unit=100, file='Psi1_Em.dat', status="unknown", form='unformatted')
+		write(100) currcnt%Psi1_Em
+		close(100)
 
 		deallocate(currcnt%Psi0_Ep)
 		deallocate(currcnt%Psi0_Em)

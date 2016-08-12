@@ -26,8 +26,8 @@ contains
 		integer :: pos_comma=0, pos_equal=0
 
 		if (command_argument_count() .ne. 1) then
-			write(*,*) "Input format ERROR!"
-			write(*,*) "Correct input format is: main.exe inputfile.in"
+			write(*,'(A)') "Input format ERROR!"
+			write(*,'(A)') "Correct input format is: main.exe inputfile.in"
 			call exit()
 		end if
 
@@ -35,8 +35,8 @@ contains
 		call get_command_argument(1,input_filename)
 		open(unit=100,file=input_filename,status="old", action="read", iostat=istat)
 		if (istat .ne. 0) then
-			write(*,*) ""
-			write(*,*) "Unable to read input file:", input_filename
+			write(*,*) 
+			write(*,'(A, A)') "Unable to read input file:", input_filename
 			call exit()
 		end if
 
@@ -105,8 +105,8 @@ contains
 						case ('center_position[nm]')
 							read(value, *) currcnt%center_position
 						case default
-							write(*,*) "ERROR in 'cnt' input arguments!!!"
-							write(*,*) "simulation STOPPED!!!"
+							write(*,'(A)') "ERROR in 'cnt' input arguments!!!"
+							write(*,'(A)') "simulation STOPPED!!!"
 							call exit()
 						end select
 					case ('flg')
@@ -114,14 +114,14 @@ contains
 						case ('flg_dielectric')
 							read(value, *) flg_dielectric
 						case default
-							write(*,*) "ERROR in 'flg' input arguments!!!"
-							write(*,*) "simulation STOPPED!!!"
+							write(*,'(A)') "ERROR in 'flg' input arguments!!!"
+							write(*,'(A)') "simulation STOPPED!!!"
 							call exit()
 						end select
 					end select
 				end if
 			else if (ios .gt. 0) then
-				write (*,*) "Error in reading input file!"
+				write (*,'(A)') "Error in reading input file!"
 				call exit()
 			end if
 		end do
@@ -133,7 +133,6 @@ contains
 		end if
 
 		! create the output directory in which the cnt information is saved
-		! write(currcnt%directory,"( A, 'CNT(', I2.2, ',', I2.2, ')-nkg(', I4.4, ')-nr(', I4.4, ')-E_th(', F3.1, ')-Kcm_max(', F3.1, ')-i_sub(', I1.1, ')-Ckappa(', F3.1, ')/' )") trim(outdir), currcnt%n_ch, currcnt%m_ch, currcnt%nkg, currcnt%nr, currcnt%E_th/eV, currcnt%Kcm_max*1.d-9, currcnt%i_sub, currcnt%Ckappa
 		write(currcnt%directory,'(A, A, I0, A, I0, A, I0, A, I0, A, I0, A, F0.1, A, F0.1, A, I0, A, F0.1, A)') trim(outdir), "exciton_", currcnt%n_ch, "_", currcnt%m_ch, "_nkg_", currcnt%nkg, "_dk_ratio_", currcnt%dk_dkx_ratio, "_nr_", currcnt%nr, "_Eth_", currcnt%E_th/eV, "_Kcm_max_", currcnt%Kcm_max*1.d-9, "_sub_", currcnt%i_sub, "_Ckappa_", currcnt%Ckappa, "/"
 
 		! create the output directory and change the working director to that one.

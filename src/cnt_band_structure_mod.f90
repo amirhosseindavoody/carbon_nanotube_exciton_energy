@@ -127,15 +127,15 @@ contains
 
 		! save the index boundaries to the log file. ************************************************************************
 		call writeLog(new_line('A')//"Index boundaries *************************************")
-		write(logInput,*) "ik_max=",currcnt%ik_max
+		write(logInput,'(A, I0)') "ik_max=",currcnt%ik_max
 		call writeLog(trim(logInput))
-		write(logInput,*) "iKcm_max=",currcnt%iKcm_max
+		write(logInput,'(A, I0)') "iKcm_max=",currcnt%iKcm_max
 		call writeLog(trim(logInput))
-		write(logInput,*) "ikr_high=",currcnt%ikr_high
+		write(logInput,'(A, I0)') "ikr_high=",currcnt%ikr_high
 		call writeLog(trim(logInput))
-		write(logInput,*) "ik_high=",currcnt%ik_high
+		write(logInput,'(A, I0)') "ik_high=",currcnt%ik_high
 		call writeLog(trim(logInput))
-		write(logInput,*) "iq_max=",currcnt%iq_max
+		write(logInput,'(A, I0)') "iq_max=",currcnt%iq_max
 		call writeLog(trim(logInput))
 		
 		! clean some variables that will be used for other purposes.

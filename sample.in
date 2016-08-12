@@ -1,9 +1,9 @@
 directory, output= /home/amirhossein/research/exciton/data/exciton_dispersion/
 
-cnt, n_ch=	11
+cnt, n_ch=	10
 cnt, m_ch=	0
 cnt, nkg=	1001
-cnt, dk/dkx=	40
+cnt, dk/dkx=	30
 cnt, nr=		200
 cnt, E_th[eV]=	0.5
 cnt, Kcm_max[1/nm]=	1.5

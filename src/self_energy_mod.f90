@@ -35,7 +35,7 @@ contains
 		! calculate the self energies and the tight-binding energies and coefficients.***************************************
 		do ik=currcnt%ik_low,currcnt%ik_high
 			
-			write(logInput,*)'ik=',ik
+			write(logInput,'(A, I0)')'ik=',ik
 			call writeLog(trim(logInput))
 			
 			mu_k=currcnt%min_sub(currcnt%i_sub)

@@ -62,7 +62,7 @@ contains
 			call writeLog(new_line('A')//"Calculating PI_q ************************")
 
 			do mu_q=1-currcnt%Nu,currcnt%Nu-1
-				write(logInput,*) "mu_q=", mu_q
+				write(logInput,'(A, I0)') "mu_q=", mu_q
 				call writeLog(trim(logInput))
 				do iq=currcnt%iq_min,currcnt%iq_max
 					do mu_k=1-currcnt%Nu/2,currcnt%Nu/2
@@ -89,7 +89,7 @@ contains
 
 			tmpr = 4.d0*pi*eps0/(q0**2)*Upp
 			do u=-currcnt%nr,currcnt%nr
-				write(logInput,*) "u=",u
+				write(logInput,'(A, I0)') "u=",u
 				call writeLog(trim(logInput))
 				do b=1,currcnt%Nu 
 					deltaR=dble(u)*currcnt%t_vec+currcnt%posAA(b,:)
