@@ -5,7 +5,10 @@
 module parse_input_file_mod
 	implicit none
 	private
-	public :: parse_input_file
+
+	character(len=1000) :: tmp_output_directory
+
+	public :: parse_input_file, finalize_output_directory_name
 
 contains
 	!**************************************************************************************************************************
@@ -98,8 +101,8 @@ contains
 							read(value, *) currcnt%Ckappa
 						case ('kappa_coeff')
 							read(value, *) currcnt%kappa_coeff
-						case ('target_exciton_type')
-							read(value, *) currcnt%targetExcitonType
+						case ('selected_exciton')
+							read(value, *) currcnt%selected_exciton_name
 						case ('length[nm]')
 							read(value, *) currcnt%length
 						case ('center_position[nm]')
@@ -132,11 +135,14 @@ contains
 			currcnt%kappa = currcnt%Ckappa*currcnt%kappa_coeff
 		end if
 
-		! create the output directory in which the cnt information is saved
+		! create the name of temporary output directory in which the cnt information is saved
+		write(tmp_output_directory,'(A, A, I0, A, I0, A, I0, A, I0, A, I0, A, F0.1, A, F0.1, A, I0, A, F0.1, A)') trim(outdir), "r.exciton_", currcnt%n_ch, "_", currcnt%m_ch, "_nkg_", currcnt%nkg, "_dk_ratio_", currcnt%dk_dkx_ratio, "_nr_", currcnt%nr, "_Eth_", currcnt%E_th/eV, "_Kcm_max_", currcnt%Kcm_max*1.d-9, "_sub_", currcnt%i_sub, "_Ckappa_", currcnt%Ckappa, "/"
+
+		! create the output directory which is the name of the final output directory. the name of the output directory will be changed from tmp_output_directory to cnt%directory when the simulation is finished
 		write(currcnt%directory,'(A, A, I0, A, I0, A, I0, A, I0, A, I0, A, F0.1, A, F0.1, A, I0, A, F0.1, A)') trim(outdir), "exciton_", currcnt%n_ch, "_", currcnt%m_ch, "_nkg_", currcnt%nkg, "_dk_ratio_", currcnt%dk_dkx_ratio, "_nr_", currcnt%nr, "_Eth_", currcnt%E_th/eV, "_Kcm_max_", currcnt%Kcm_max*1.d-9, "_sub_", currcnt%i_sub, "_Ckappa_", currcnt%Ckappa, "/"
 
 		! create the output directory and change the working director to that one.
-		call create_outdir(currcnt%directory, input_filename)
+		call create_outdir(tmp_output_directory, input_filename)
 
 		! write simulation settings to the log file
 		call writeLog(new_line('A')//"Simulation properties *****************")
@@ -205,8 +211,42 @@ contains
 		write(logInput,'("Simulation started at--> DATE=",I0,"/",I0,"/",I0,"  TIME=",I0,":",I0,":",I0)') date, time
 		call writeLog(logInput)
 
-		return
 	end subroutine create_outdir
+
+
+	!***************************************************************************
+	! -	this subroutine renames the output directory from a temporary name to a
+	!	final name that indicates the simulation has run successfully.
+	!***************************************************************************
+	subroutine finalize_output_directory_name()
+		use comparams, only: currcnt
+
+		logical :: folder_exists
+		character(len=1000) :: command
+		integer :: istat
+
+		! remove the final output directory if it already exists
+		folder_exists = .true.
+		inquire(file=trim(currcnt%directory)//'/.', exist=folder_exists)
+
+		if (folder_exists) then
+			write(command, "(A, A)") "rm -r ", trim(currcnt%directory)
+			call system(trim(command))
+		end if
+
+		!rename the temporary output directory to the final output directory
+		write(command, '(A, A, A, A)') "mv ", trim(tmp_output_directory), " ", trim(currcnt%directory)
+		call system(trim(command))
+
+		!change the working directory to the final output directory
+		istat=chdir(trim(currcnt%directory))
+		if (istat .ne. 0) then
+			write(*,'(A)') "Directory did not changed!!!"
+			write(*,'(A)') "Simulation stopped!!!"
+			call exit()
+		end if
+
+	end subroutine finalize_output_directory_name
 
 
 end module parse_input_file_mod

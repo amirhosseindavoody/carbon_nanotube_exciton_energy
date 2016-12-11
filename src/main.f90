@@ -11,7 +11,7 @@ program cnt_exciton_energy
 	use dielectric_fn_mod, only: calculate_dielectric_fn
 	use E_exciton_energy_mod, only: calculate_E_exciton_dispersion
 	use interpolate_mod, only: interpolate_energy, interpolate_dielectric_fn
-	use parse_input_file_mod, only: parse_input_file
+	use parse_input_file_mod, only: parse_input_file, finalize_output_directory_name
 	use self_energy_mod, only: calculate_self_energy
 	use write_log_mod, only: writeLog
 	
@@ -35,6 +35,8 @@ program cnt_exciton_energy
 
 	call calculate_A_exciton_dispersion()
 	call calculate_E_exciton_dispersion()
+
+	call finalize_output_directory_name()
   
 	call CPU_time(endtime)
 	write(logInput,'("Run time = ",f0.3," seconds.")'),endtime-starttime

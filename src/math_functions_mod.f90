@@ -114,6 +114,9 @@ contains
 
 	!**********************************************************************************************************************
 	! This subroutine interpolated arrays xa and ya using polynomial interpolation technique.
+	! Given arrays xa and ya, each of length n, and given a value x, this routine returns a value y, and an error estimate.
+	! if P(x) is athe polynomial of degree n-1 such that P(xa) = ya, for all values of arrays xa and ya, then the returned
+	! value y = P(x).
 	!**********************************************************************************************************************
 	
 	subroutine polint(xa, ya, n, x, y, dy)
