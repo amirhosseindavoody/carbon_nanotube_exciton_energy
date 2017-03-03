@@ -18,7 +18,7 @@ program cnt_exciton_energy
 	implicit none
 	
 	real :: starttime,endtime !time and date of simulation
-	character(len=200) :: logInput
+	character(len=1000) :: logInput
 
 	call CPU_time(starttime)
 	
@@ -39,7 +39,7 @@ program cnt_exciton_energy
 	call finalize_output_directory_name()
   
 	call CPU_time(endtime)
-	write(logInput,'("Run time = ",f0.3," seconds.")'),endtime-starttime
+	write(logInput,'(A, F0.3, A)') "run time = ",endtime-starttime," seconds."
 	call writeLog(trim(logInput))
 
 end program cnt_exciton_energy
