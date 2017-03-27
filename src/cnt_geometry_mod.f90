@@ -49,21 +49,21 @@ contains
 		p1=max((dble(currcnt%Nu)/dble(currcnt%n_ch)+1.d0/dble(t1))/(dble(currcnt%m_ch)/dble(currcnt%n_ch)- dble(t2)/dble(t1)),(1.d0/dble(currcnt%n_ch)+1.d0/dble(t1))/(dble(currcnt%m_ch)/dble(currcnt%n_ch)-dble(t2)/dble(t1)))
 		p2=min((dble(currcnt%Nu)/dble(currcnt%n_ch)+1.d0/dble(t1))/(dble(currcnt%m_ch)/dble(currcnt%n_ch)- dble(t2)/dble(t1)),(1.d0/dble(currcnt%n_ch)+1.d0/dble(t1))/(dble(currcnt%m_ch)/dble(currcnt%n_ch)-dble(t2)/dble(t1)))
 
-		do i=ceiling(p2),floor(p1)
-			p=dble(i)
-			q=dble(t2)/dble(t1)*p+1.d0/dble(t1)
-			if (q .eq. dble(ceiling(q))) then
-				exit
-			else if (i==floor(p1)) then
-				call writeLog("MC not found")
-				call exit()
-			end if
-		end do
+		! do i=ceiling(p2),floor(p1)
+		! 	p=dble(i)
+		! 	q=dble(t2)/dble(t1)*p+1.d0/dble(t1)
+		! 	if (q .eq. dble(ceiling(q))) then
+		! 		exit
+		! 	else if (i==floor(p1)) then
+		! 		call writeLog("MC not found")
+		! 		call exit()
+		! 	end if
+		! end do
 
-		call gcd(tmpi,int(abs(p)),int(abs(q)))
-		p=p/dble(tmpi)
-		q=q/dble(tmpi)
-		MC=int(dble(currcnt%m_ch)*p-dble(currcnt%n_ch)*q)
+		! call gcd(tmpi,int(abs(p)),int(abs(q)))
+		! p=p/dble(tmpi)
+		! q=q/dble(tmpi)
+		! MC=int(dble(currcnt%m_ch)*p-dble(currcnt%n_ch)*q)
 
 		! rotate basis vectors so that ch_vec is along x-axis
 		cosTh=currcnt%ch_vec(1)/my_norm2(currcnt%ch_vec)

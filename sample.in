@@ -13,5 +13,6 @@ cnt, kappa_coeff=	1.0
 cnt, selected_exciton=	A2_singlet
 cnt, length[nm]=	10
 cnt, center_position[nm]=	0
+cnt, length[unit cells]= 10
 
 flg, flg_dielectric= true
