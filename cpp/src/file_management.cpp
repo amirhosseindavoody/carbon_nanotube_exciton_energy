@@ -102,7 +102,7 @@ void file_management::parse_xml(std::vector<cnt> &cnts)
 	int n = tree.get<int>("document.cnt.chirality.n");
 	int m = tree.get<int>("document.cnt.chirality.m");
 	int length = tree.get<int>("document.cnt.length.value");
-	cnts.push_back(cnt(name.c_str(), n, m, length));
+	cnts.push_back(cnt(name, n, m, length));
 
 	return;
 }

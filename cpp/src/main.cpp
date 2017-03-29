@@ -5,6 +5,7 @@
 #include "cnt.h"
 #include "constants.h"
 #include "write_log.h"
+#include "nr3.h"
 
 int main(int argc, char *argv[])
 {
@@ -31,6 +32,11 @@ int main(int argc, char *argv[])
 
 	cnts[0].geometry();
 	cnts[0].electron();
+
+	double a= 2.0;
+	double b = nr::sqr(a);
+
+	std::cout << "a = " << a << " , b = " << b << "\n";
 
 
 	// // create cnt objects and load their information
