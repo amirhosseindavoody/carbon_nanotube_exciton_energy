@@ -1,9 +1,9 @@
 CC=g++
 CC+= -Wno-deprecated-declarations
 
-# CFLAGS = -I./ -I./eigen/ -std=c++14
 CFLAGS = -I./ -I./lib/ -I./boost_1_63_0/ -I./eigen3.3.3/ -I./my_math/ -std=c++14
-LFLAGS = -lgsl -lgslcblas -lm -std=c++14
+# LFLAGS = -lgsl -lgslcblas -lm -std=c++14
+LFLAGS = -lm -std=c++14
 
 SRCDIR = ./src
 OBJDIR = ./obj

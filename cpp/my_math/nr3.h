@@ -65,6 +65,22 @@ template<class T>
 inline void swap(T &a, T &b)
 	{T dum=a; a=b; b=dum;}
 
+// // greatest common divisor
+inline int gcd ( const int a, const int b ) 
+{ 
+  int c;
+  int aa = a;
+  int bb = b;
+  while ( aa != 0 ) 
+  { 
+     c = aa; 
+     aa = bb%aa; 
+     bb = c; 
+  } 
+  return bb; 
+}
+
+
 // exception handling
 
 #ifndef _USENRERRORCLASS_

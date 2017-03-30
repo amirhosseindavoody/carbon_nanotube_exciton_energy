@@ -27,7 +27,6 @@ cnt::cnt(const std::string &in_name, const int in_n, const int in_m, const int i
 
 }
 
-
 void cnt::geometry()
 {
 
@@ -51,17 +50,17 @@ void cnt::geometry()
 	std::cout << "aCC_vec = " << aCC_vec[0] << " , " << aCC_vec[1] << std::endl;
 
 	
-	// // calculate chirality and translational vectors of CNT unit cell
-	// ch_vec = (double)n * a1 + (double)m * a2;
-	// ch_len = a_l*sqrt(pow((double)n,2)+pow((double)m,2)+(double)n*m);
-	// radius = ch_len/2.0/constants::pi;
+	// calculate chirality and translational vectors of CNT unit cell
+	ch_vec = (double)n * a1 + (double)m * a2;
+	ch_len = a_l*sqrt(pow((double)n,2)+pow((double)m,2)+(double)n*m);
+	radius = ch_len/2.0/constants::pi;
 
-	// int dR = boost::math::gcd(2*n+m,n+2*m);
-	// int t1 = +(2*m+n)/dR;
-	// int t2 = -(2*n+m)/dR;
-	// t_vec = (double)t1*a1 + (double)t2*a2;
+	int dR = nr::gcd(2*n+m,n+2*m);
+	int t1 = +(2*m+n)/dR;
+	int t2 = -(2*n+m)/dR;
+	t_vec = (double)t1*a1 + (double)t2*a2;
 
-	// Nu = 2*(pow(n,2)+pow(m,2)+n*m)/dR;
+	Nu = 2*(pow(n,2)+pow(m,2)+n*m)/dR;
 
 	// // rotate basis vectors so that ch_vec is along the x_axis
 	// double cos_theta = ch_vec[0]/ublas::norm_2(ch_vec);
