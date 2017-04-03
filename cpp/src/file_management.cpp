@@ -1,19 +1,15 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
-// #include <dirent.h>
-// #include <regex>
-// #include <list>
+#include <dirent.h>
+#include <regex>
 #include <vector>
 #include <sys/stat.h> // used for checking status of folders and files and see if they exist
 #include <unistd.h> // used for changing the working directory in the program: chdir
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
+#include "rapidxml.hpp"
+#include "rapidxml_utils.hpp"
 
-
-// #include "rapidxml.hpp"
-// #include "rapidxml_utils.hpp"
 #include "file_management.h"
 #include "cnt.h"
 
@@ -86,22 +82,25 @@ std::string file_management::get_output_directory()
 // parse the input xml file and creat the cnt objects with input properties
 void file_management::parse_xml(std::vector<cnt> &cnts)
 {
-	namespace pt = boost::property_tree;
-
 	std::string filename = get_input_directory() + "input.xml";
 
-	// Create empty property tree object
-	pt::ptree tree;
+	rapidxml::xml_document<> doc; //create xml object
+	rapidxml::file<> xmlFile(filename.c_str()); //open file
+	doc.parse<0>(xmlFile.data()); //parse contents of file
 
-	// Parse the XML into the property tree.
-	pt::read_xml(filename, tree);
-	std::string outdir = tree.get<std::string>("document.output_directory");
+	rapidxml::xml_node<>* node = doc.first_node(); //gets the node "Document" or the root node
+
+	node = node->first_node("output_directory");
+	std::string outdir = node->value();
 	set_output_directory(outdir.c_str());
 
-	std::string name = tree.get<std::string>("document.cnt.name");
-	int n = tree.get<int>("document.cnt.chirality.n");
-	int m = tree.get<int>("document.cnt.chirality.m");
-	int length = tree.get<int>("document.cnt.length.value");
+	node = node->next_sibling("cnt");
+	std::string name = node->first_node("name")->value();
+	int n = atoi(node->first_node("chirality")->first_node("n")->value());
+	int m = atoi(node->first_node("chirality")->first_node("m")->value());
+	int length = atoi(node->first_node("length")->first_node("value")->value());
+
+	// std::cout << "outdir = " << outdir << " , name = " << name << " , n = " << n << " , m = " << m << " , length = " << length << std::endl;
 	cnts.push_back(cnt(name, n, m, length));
 
 	return;

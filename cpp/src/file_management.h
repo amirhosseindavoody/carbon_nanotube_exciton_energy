@@ -7,11 +7,8 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <regex>
-#include <list>
 #include <vector>
 #include <memory>
-
-#include <boost/property_tree/xml_parser.hpp>
 
 #include "cnt.h"
 

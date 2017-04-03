@@ -10,7 +10,7 @@ Stores all relevant information for a carbon nanotube
 
 #include "cnt.h"
 #include "constants.h"
-// #include "write_log.h"
+#include "write_log.h"
 #include "nr3.h"
 
 cnt::cnt(const std::string &in_name, const int in_n, const int in_m, const int in_length)

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
-#include <unistd.h>
 #include <fstream>
 
 void write_log(std::string input)

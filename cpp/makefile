@@ -1,7 +1,7 @@
 CC=g++
 CC+= -Wno-deprecated-declarations
 
-CFLAGS = -I./ -I./lib/ -I./boost_1_63_0/ -I./eigen3.3.3/ -I./my_math/ -std=c++14
+CFLAGS = -I./ -I./lib/ -I./my_math/ -std=c++14
 # LFLAGS = -lgsl -lgslcblas -lm -std=c++14
 LFLAGS = -lm -std=c++14
 
@@ -16,8 +16,11 @@ object:
 main: object
 	$(CC) -o $@.exe $(OBJDIR)/*.o $(LFLAGS)
 
+new: clean main
+
 # Utility targets
 .PHONY: clean
 clean:
+	@reset
 	@rm -f *.o *.exe
 	@rm -rf $(OBJDIR)

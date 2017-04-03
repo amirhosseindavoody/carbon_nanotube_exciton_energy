@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
-#include <unistd.h> // used for changing the working directory in the program: chdir
+#include <fstream>
 
 //method declarations
 void write_log(std::string input);
