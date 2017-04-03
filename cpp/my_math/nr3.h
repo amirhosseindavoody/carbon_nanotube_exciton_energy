@@ -136,12 +136,16 @@ public:
 	NRvector & operator=(NRvector &&rhs);	//Move assignment
 	typedef T value_type; // make T available externally
 	inline T & operator[](const int i);	//i'th element
-	inline const T & operator[](const int i) const;
+	inline const T & operator[](const int i) const; //i'th element
+	inline T & operator()(const int i);	//i'th element
+	inline const T & operator()(const int i) const; //i'th element
 	inline int size() const; // gets size of the array
 	void resize(int newn); // resize (contents not preserved)
 	void assign(int newn, const T &a); // resize and assign a constant value
-	NRvector operator+(const NRvector &other) const;	// Addition operator
-	NRvector operator*(const T &a) const;	// Multiply by number operator
+	NRvector operator+(const NRvector &other) const;	// addition operator
+	NRvector operator-(const NRvector &other) const;	// subtract operator
+	NRvector operator*(const T &a) const;	// multiply by number operator
+	NRvector operator/(const T &a) const;	// divide by number operator
 	T norm2() const; // norm of the vector
 	template<class TT>
 	friend NRvector<TT> operator*(const NRmatrix<TT>& mat, const NRvector<TT>& vec); // matrix-vector multiplication
@@ -209,10 +213,8 @@ NRvector<T> & NRvector<T>::operator=(const NRvector<T> &rhs)
 // Move assignment
 template <class T>
 NRvector<T> & NRvector<T>::operator=(NRvector<T> &&rhs)
-// postcondition: normal assignment via copying has been performed;
-//		if vector and rhs were different sizes, vector
-//		has been resized to match the size of rhs
 {
+	// std::cout << "vector move assignment!" << std::endl;
 	if (this != &rhs)
 	{
 		if (v != NULL) delete [] (v);
@@ -239,6 +241,30 @@ if (i<0 || i>=nn) {
 //i'th element
 template <class T>
 inline const T & NRvector<T>::operator[](const int i) const	//subscripting
+{
+#ifdef _CHECKBOUNDS_
+if (i<0 || i>=nn) {
+	throw("NRvector subscript out of bounds");
+}
+#endif
+	return v[i];
+}
+
+//i'th element
+template <class T>
+inline T & NRvector<T>::operator()(const int i)	//subscripting
+{
+#ifdef _CHECKBOUNDS_
+if (i<0 || i>=nn) {
+	throw("NRvector subscript out of bounds");
+}
+#endif
+	return v[i];
+}
+
+//i'th element
+template <class T>
+inline const T & NRvector<T>::operator()(const int i) const	//subscripting
 {
 #ifdef _CHECKBOUNDS_
 if (i<0 || i>=nn) {
@@ -278,7 +304,7 @@ void NRvector<T>::assign(int newn, const T& a)
 	for (int i=0;i<nn;i++) v[i] = a;
 }
 
-// Addition operator
+// addition operator
 template <class T>
 NRvector<T> NRvector<T>::operator+(const NRvector<T> &other) const
 {
@@ -292,7 +318,21 @@ NRvector<T> NRvector<T>::operator+(const NRvector<T> &other) const
 	return res;
 }
 
-// Multiply by vector by number
+// subtract operator
+template <class T>
+NRvector<T> NRvector<T>::operator-(const NRvector<T> &other) const
+{
+	if (v==NULL) throw("error: empty vector!");
+	if (other.v==NULL) throw("error: empty vector!");
+	if (nn != other.nn) throw("vector dimensions mismatch!");
+
+	NRvector<T> res(nn);
+	for (int i = 0; i<nn; i++) res[i] = v[i] - other[i];
+
+	return res;
+}
+
+// Multiply vector by number
 template <class T>
 NRvector<T> NRvector<T>::operator*(const T &a) const
 {
@@ -311,6 +351,18 @@ inline NRvector<T> operator*(const T &a, const NRvector<T> &vec)
 	return vec * a;
 }
 
+// divide vector by number
+template <class T>
+NRvector<T> NRvector<T>::operator/(const T &a) const
+{
+	if (v==NULL) throw("error:empty vector!");
+
+	NRvector<T> res(nn);
+	for (int i = 0; i<nn; i++) res[i] = v[i]/a;
+
+	return res;
+}
+
 // norm of the vector
 template<class T>
 T NRvector<T>::norm2() const
@@ -318,9 +370,9 @@ T NRvector<T>::norm2() const
 	if (v==NULL) throw("vector is empty!");
 
 	T sum = 0;
-	for (int i=0; i<nn; i++) sum += v[i];
+	for (int i=0; i<nn; i++) sum += v[i]*v[i];
 
-	return sum;
+	return sqrt(sum);
 }
 
 template <class T>
@@ -347,9 +399,9 @@ public:
 	NRmatrix(int n, int m, const T &a);	//Initialize to constant
 	NRmatrix(int n, int m, const T *a);	// Initialize to array
 	NRmatrix(const NRmatrix &rhs);		// Copy constructor
-	NRmatrix(const NRmatrix &&rhs);		// move constructor
+	NRmatrix(NRmatrix &&rhs);		// move constructor
 	NRmatrix & operator=(const NRmatrix &rhs);	//copy assignment
-	NRmatrix & operator=(const NRmatrix &&rhs);	//move assignment
+	NRmatrix & operator=(NRmatrix &&rhs);	//move assignment
 	typedef T value_type; // make T available externally
 	inline T* operator[](const int i);	//subscripting: pointer to row i
 	inline const T* operator[](const int i) const; //subscripting: pointer to row i
@@ -399,7 +451,7 @@ NRmatrix<T>::NRmatrix(int n, int m, const T *a) : nn(n), mm(m), v(n>0 ? new T*[n
 
 // Copy constructor
 template <class T>
-NRmatrix<T>::NRmatrix(const NRmatrix &rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? new T*[nn] : NULL)
+NRmatrix<T>::NRmatrix(const NRmatrix<T> &rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? new T*[nn] : NULL)
 {
 	int i,j,nel=mm*nn;
 	if (v) v[0] = nel>0 ? new T[nel] : NULL;
@@ -409,7 +461,7 @@ NRmatrix<T>::NRmatrix(const NRmatrix &rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? ne
 
 // move constructor
 template <class T>
-NRmatrix<T>::NRmatrix(const NRmatrix &&rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? rhs.v : NULL)
+NRmatrix<T>::NRmatrix(NRmatrix<T> &&rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? rhs.v : NULL)
 {
 	rhs.nn = 0;
 	rhs.mm = 0;
@@ -444,11 +496,10 @@ NRmatrix<T> & NRmatrix<T>::operator=(const NRmatrix<T> &rhs)
 
 //move assignment
 template <class T>
-NRmatrix<T> & NRmatrix<T>::operator=(const NRmatrix<T> &&rhs)
-// postcondition: normal assignment via copying has been performed;
-//		if matrix and rhs were different sizes, matrix
-//		has been resized to match the size of rhs
+NRmatrix<T> & NRmatrix<T>::operator=(NRmatrix<T> &&rhs)
 {
+	// std::cout << "matrix move assignment!" << std::endl;
+
 	if (this != &rhs) {
 		if (v != NULL) {
 			delete[] (v[0]);
@@ -774,6 +825,9 @@ typedef NRmatrix<Uchar> mat_uchar, mat_uchar_O, mat_uchar_IO;
 
 typedef const NRmatrix<Doub> mat_doub_I;
 typedef NRmatrix<Doub> mat_doub, mat_doub_O, mat_doub_IO;
+
+typedef const NRmatrix<Complex> mat_complex_I;
+typedef NRmatrix<Complex> mat_complex, mat_complex_O, mat_complex_IO;
 
 typedef const NRmatrix<Bool> mat_bool_I;
 typedef NRmatrix<Bool> mat_bool, mat_bool_O, mat_bool_IO;

@@ -53,6 +53,7 @@ void cnt::geometry()
 	// calculate chirality and translational vectors of CNT unit cell
 	ch_vec = (double)n * a1 + (double)m * a2;
 	ch_len = a_l*sqrt(pow((double)n,2)+pow((double)m,2)+(double)n*m);
+
 	radius = ch_len/2.0/constants::pi;
 
 	int dR = nr::gcd(2*n+m,n+2*m);
@@ -71,159 +72,153 @@ void cnt::geometry()
 	rot(0,1) = sin_theta;
 	rot(1,1) = cos_theta;
 
-	std::cout << "ch_vec = " << ch_vec[0] << " , " << ch_vec[1] << std::endl;
 	ch_vec = rot*ch_vec;
-	std::cout << "ch_vec = " << ch_vec[0] << " , " << ch_vec[1] << std::endl;
+	t_vec = rot*t_vec;
+	a1 = rot*a1;
+	a2 = rot*a2;
+	b1 = rot*b1;
+	b2 = rot*b2;
+	aCC_vec = rot*aCC_vec;
+	
+	// calculate reciprocal lattice of CNT
+	K1 = (-(double)t2*b1 + (double)t1*b2)/((double)Nu);
+	K2 = ((double)m*b1-(double)n*b2)/((double)Nu);
+	dk_l = K1/((double)length_in_cnt_unit_cell);
 
-	// ch_vec = ublas::prod(rot,ch_vec);
-	// t_vec = ublas::prod(rot,t_vec);
-	// a1 = ublas::prod(rot,a1);
-	// a2 = ublas::prod(rot,a2);
-	// b1 = ublas::prod(rot,b1);
-	// b2 = ublas::prod(rot,b2);
-	// aCC_vec = ublas::prod(rot,aCC_vec);
+	// calculate positions of atoms in the cnt unit cell
+	pos_a.assign(Nu,2,0.0);
+	pos_b.assign(Nu,2,0.0);
 
-	// // calculate reciprocal lattice of CNT
-	// K1 = (-t2*b1 + t1*b2)/((double)Nu);
-	// K2 = ((double)m*b1-(double)n*b2)/((double)Nu);
-	// dk_l = K1/((double)length_in_cnt_unit_cell);
+	int k =0;
 
-	// // calculate positions of atoms in the cnt unit cell
-	// pos_a.resize(Nu,2);
-	// pos_b.resize(Nu,2);
+	for (int i=0; i<=t1+n; i++)
+	{
+		for (int j=t2; j<=m; j++)
+		{
+			bool flag1 = (double)(t2*i)/(double)t1 <= (double)j;
+			bool flag2 = (double)(m*i)/(double)n >= (double)j;
+			bool flag3 = (double)(t2*(i-n))/(double)(t1) > (double)(j-m);
+			bool flag4 = (double)(m*(i-t1))/(double)(n) < (double)(j-t2);
 
-	// int k =0;
+			if(flag1 && flag2 && flag3 && flag4)
+			{
+				pos_a(k,0) = (double)i*a1(0) + (double)j*a2(0);
+				pos_a(k,1) = (double)i*a1(1) + (double)j*a2(1);
+				pos_b(k,0) = pos_a(k,0)+aCC_vec(0);
+				pos_b(k,1) = pos_a(k,1)+aCC_vec(1);
 
-	// for (int i=0; i<=t1+n; i++)
-	// {
-	// 	for (int j=t2; j<=m; j++)
-	// 	{
-	// 		bool flag1 = (double)(t2*i)/(double)t1 <= (double)j;
-	// 		bool flag2 = (double)(m*i)/(double)n >= (double)j;
-	// 		bool flag3 = (double)(t2*(i-n))/(double)(t1) > (double)(j-m);
-	// 		bool flag4 = (double)(m*(i-t1))/(double)(n) < (double)(j-t2);
+				if(pos_a(k,0) > ch_vec(0))	pos_a(k,0) -= ch_vec(0);
+				if(pos_a(k,0) < 0.0)	pos_a(k,0) += ch_vec(0);
+				if(pos_a(k,1) > ch_vec(1))	pos_a(k,1) -= ch_vec(1);
+				if(pos_a(k,1) < 0.0)	pos_a(k,1) += ch_vec(1);
 
-	// 		if(flag1 && flag2 && flag3 && flag4)
-	// 		{
-	// 			pos_a(k,0) = (double)i*a1(0) + (double)j*a2(0);
-	// 			pos_a(k,1) = (double)i*a1(1) + (double)j*a2(1);
-	// 			pos_b(k,0) = pos_a(k,0)+aCC_vec(0);
-	// 			pos_b(k,1) = pos_a(k,1)+aCC_vec(1);
-
-	// 			if(pos_a(k,0) > ch_vec(0))	pos_a(k,0) -= ch_vec(0);
-	// 			if(pos_a(k,0) < 0.0)	pos_a(k,0) += ch_vec(0);
-	// 			if(pos_a(k,1) > ch_vec(1))	pos_a(k,1) -= ch_vec(1);
-	// 			if(pos_a(k,1) < 0.0)	pos_a(k,1) += ch_vec(1);
-
-	// 			if(pos_b(k,0) > ch_vec(0))	pos_b(k,0) -= ch_vec(0);
-	// 			if(pos_b(k,0) < 0.0)	pos_b(k,0) += ch_vec(0);
-	// 			if(pos_b(k,1) > ch_vec(1))	pos_b(k,1) -= ch_vec(1);
-	// 			if(pos_b(k,1) < 0.0)	pos_b(k,1) += ch_vec(1);
+				if(pos_b(k,0) > ch_vec(0))	pos_b(k,0) -= ch_vec(0);
+				if(pos_b(k,0) < 0.0)	pos_b(k,0) += ch_vec(0);
+				if(pos_b(k,1) > ch_vec(1))	pos_b(k,1) -= ch_vec(1);
+				if(pos_b(k,1) < 0.0)	pos_b(k,1) += ch_vec(1);
 				
-	// 			k++;
-	// 		}
-	// 	}
-	// }
+				k++;
+			}
+		}
+	}
 
-	// if (k != Nu) 
-	// {
-	// 	cout << "error in finding position of atoms in cnt unit cell!!!" << endl;
-	// 	cout << "Nu = " << Nu << "  ,  k = " << k << endl;
-	// 	exit(1);
-	// }
+	if (k != Nu) 
+	{
+		cout << "error in finding position of atoms in cnt unit cell!!!" << endl;
+		cout << "Nu = " << Nu << "  ,  k = " << k << endl;
+		exit(1);
+	}
 
-	// // // calculate distances between atoms in a warped cnt unit cell.
-	// // pos_aa.resize(Nu,2);
-	// // pos_ab.resize(Nu,2);
-	// // pos_ba.resize(Nu,2);
-	// // pos_bb.resize(Nu,2);
+	// // calculate distances between atoms in a warped cnt unit cell.
+	// pos_aa.assign(Nu,2,0.0);
+	// pos_ab.assign(Nu,2,0.0);
+	// pos_ba.assign(Nu,2,0.0);
+	// pos_bb.assign(Nu,2,0.0);
 
-	// // for (int i=0; i<Nu; i++)
-	// // {
-	// // 	pos_aa(i,0) = pos_a(i,0)-pos_a(0,0);
-	// // 	pos_aa(i,1) = pos_a(i,1)-pos_a(0,1);
-
-	// // 	pos_ab(i,0) = pos_a(i,0)-pos_b(0,0);
-	// // 	pos_ab(i,1) = pos_a(i,1)-pos_b(0,1);
-
-	// // 	pos_ba(i,0) = pos_b(i,0)-pos_a(0,0);
-	// // 	pos_ba(i,1) = pos_b(i,1)-pos_a(0,1);
-
-	// // 	pos_bb(i,0) = pos_b(i,0)-pos_b(0,0);
-	// // 	pos_bb(i,1) = pos_b(i,1)-pos_b(0,1);
-
-	// // 	if(pos_aa(i,0) > ch_vec(0)/2)	pos_aa(i,0) -= ch_vec(0);
-	// // 	if(pos_ab(i,0) > ch_vec(0)/2)	pos_ab(i,0) -= ch_vec(0);
-	// // 	if(pos_ba(i,0) > ch_vec(0)/2)	pos_ba(i,0) -= ch_vec(0);
-	// // 	if(pos_bb(i,0) > ch_vec(0)/2)	pos_bb(i,0) -= ch_vec(0);
-	// // }
-
-	// // put position of all atoms in a single variable in 2d space(unrolled graphene sheet)
-	// pos_2d.resize(2*Nu,2);
 	// for (int i=0; i<Nu; i++)
 	// {
-	// 	pos_2d(i,0) = pos_a(i,0);
-	// 	pos_2d(i+Nu,0) = pos_b(i,0);
-	// 	pos_2d(i,1) = pos_a(i,1);
-	// 	pos_2d(i+Nu,1) = pos_b(i,1);
+	// 	pos_aa(i,0) = pos_a(i,0)-pos_a(0,0);
+	// 	pos_aa(i,1) = pos_a(i,1)-pos_a(0,1);
+
+	// 	pos_ab(i,0) = pos_a(i,0)-pos_b(0,0);
+	// 	pos_ab(i,1) = pos_a(i,1)-pos_b(0,1);
+
+	// 	pos_ba(i,0) = pos_b(i,0)-pos_a(0,0);
+	// 	pos_ba(i,1) = pos_b(i,1)-pos_a(0,1);
+
+	// 	pos_bb(i,0) = pos_b(i,0)-pos_b(0,0);
+	// 	pos_bb(i,1) = pos_b(i,1)-pos_b(0,1);
+
+	// 	if(pos_aa(i,0) > ch_vec(0)/2)	pos_aa(i,0) -= ch_vec(0);
+	// 	if(pos_ab(i,0) > ch_vec(0)/2)	pos_ab(i,0) -= ch_vec(0);
+	// 	if(pos_ba(i,0) > ch_vec(0)/2)	pos_ba(i,0) -= ch_vec(0);
+	// 	if(pos_bb(i,0) > ch_vec(0)/2)	pos_bb(i,0) -= ch_vec(0);
 	// }
 
-	// // calculate position of all atoms in the 3d space (rolled graphene sheet)
-	// pos_3d.resize(2*Nu,3);
-	// for (int i=0; i<pos_3d.size1(); i++)
-	// {
-	// 	pos_3d(i,0) = radius*cos(pos_2d(i,0)/radius);
-	// 	pos_3d(i,1) = pos_2d(i,1);
-	// 	pos_3d(i,2) = radius*sin(pos_2d(i,0)/radius);
-	// }
+	// put position of all atoms in a single variable in 2d space(unrolled graphene sheet)
+	pos_2d.assign(2*Nu,2,0.0);
+	for (int i=0; i<Nu; i++)
+	{
+		pos_2d(i,0) = pos_a(i,0);
+		pos_2d(i+Nu,0) = pos_b(i,0);
+		pos_2d(i,1) = pos_a(i,1);
+		pos_2d(i+Nu,1) = pos_b(i,1);
+	}
 
-	// //make 3d t_vec
-	// t_vec_3d.resize(3);
-	// t_vec_3d(0) = 0;
-	// t_vec_3d(1) = t_vec(1);
-	// t_vec_3d(2) = 0;
+	// calculate position of all atoms in the 3d space (rolled graphene sheet)
+	pos_3d.assign(2*Nu,3,0.0);
+	for (int i=0; i<pos_3d.nrows(); i++)
+	{
+		pos_3d(i,0) = radius*cos(pos_2d(i,0)/radius);
+		pos_3d(i,1) = pos_2d(i,1);
+		pos_3d(i,2) = radius*sin(pos_2d(i,0)/radius);
+	}
+
+	//make 3d t_vec
+	t_vec_3d.assign(3,0.0);
+	t_vec_3d(1) = t_vec(1);
 
 
-	// // save coordinates of atoms in 2d space
-	// ofstream file;
-	// file.open(name+".pos_2d.dat", ios::trunc);
+	// save coordinates of atoms in 2d space
+	ofstream file;
+	file.open(name+".pos_2d.dat", ios::trunc);
 
-	// if (file.is_open())
-	// {
-	// 	file << std::scientific;
-	// 	file << std::showpos;
-	// 	file << pos_2d.size1() << "\t" << pos_2d.size2() << endl;
-	// 	for (int i=0; i<pos_2d.size1(); i++)
-	// 	{
-	// 		file << pos_2d(i,0) << "\t" << pos_2d(i,1) << "\n";
-	// 	}
-	// }
-	// else
-	// {
-	// 	write_log("error: could not creat output file!");
-	// 	exit(EXIT_FAILURE);
-	// }
-	// file.close();
+	if (file.is_open())
+	{
+		file << std::scientific;
+		file << std::showpos;
+		file << pos_2d.nrows() << "\t" << pos_2d.ncols() << endl;
+		for (int i=0; i<pos_2d.nrows(); i++)
+		{
+			file << pos_2d(i,0) << "\t" << pos_2d(i,1) << "\n";
+		}
+	}
+	else
+	{
+		write_log("error: could not creat output file!");
+		exit(EXIT_FAILURE);
+	}
+	file.close();
 
-	// // save coordinates of atoms in 3d space
-	// file.open(name+".pos_3d.dat", ios::trunc);
+	// save coordinates of atoms in 3d space
+	file.open(name+".pos_3d.dat", ios::trunc);
 
-	// if (file.is_open())
-	// {
-	// 	file << std::scientific;
-	// 	file << std::showpos;
-	// 	file << pos_3d.size1() << "\t" << pos_3d.size2() << endl;
-	// 	for (int i=0; i<pos_3d.size1(); i++)
-	// 	{
-	// 		file << pos_3d(i,0) << "\t" << pos_3d(i,1) << "\t" << pos_3d(i,2) << "\n";
-	// 	}
-	// }
-	// else
-	// {
-	// 	write_log("error: could not creat output file!");
-	// 	exit(EXIT_FAILURE);
-	// }
-	// file.close();
+	if (file.is_open())
+	{
+		file << std::scientific;
+		file << std::showpos;
+		file << pos_3d.nrows() << "\t" << pos_3d.ncols() << endl;
+		for (int i=0; i<pos_3d.nrows(); i++)
+		{
+			file << pos_3d(i,0) << "\t" << pos_3d(i,1) << "\t" << pos_3d(i,2) << "\n";
+		}
+	}
+	else
+	{
+		write_log("error: could not creat output file!");
+		exit(EXIT_FAILURE);
+	}
+	file.close();
 
 }
 

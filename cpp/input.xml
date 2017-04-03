@@ -4,7 +4,7 @@
 		<name>cnt1</name>
 		<chirality>
 			<n>10</n>
-			<m>0</m>
+			<m>3</m>
 		</chirality>
 		<length>
 			<units>cnt_unit_cell</units>

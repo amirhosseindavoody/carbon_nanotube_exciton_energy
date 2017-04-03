@@ -44,12 +44,12 @@ private:
 	nr::vec_doub K2; // cnt reciprocal lattice vector along the cnt axis
 	nr::vec_doub dk_l; // delta_k in the longitudinal direction with respect to cnt axis
 
-	nr::vec_doub pos_a, pos_b; // position of atoms in A and B sites
-	nr::vec_doub pos_2d, pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space
-	// nr::vec_doub pos_aa, pos_ab, pos_ba, pos_bb; // distance between atoms and A and B sites which conserves lattice symmetry.
+	nr::mat_doub pos_a, pos_b; // position of atoms in A and B sites
+	nr::mat_doub pos_2d, pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space
+	// nr::mat_doub pos_aa, pos_ab, pos_ba, pos_bb; // distance between atoms and A and B sites which conserves lattice symmetry.
 
-	// boost::numeric::ublas::matrix<double> ek;
-	// boost::numeric::ublas::matrix<std::complex<double>> psi;
+	nr::mat_doub ek;
+	// nr::mat_complex psi;
 
 
 public:
