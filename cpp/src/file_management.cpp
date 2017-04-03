@@ -30,7 +30,8 @@ void file_management::set_input_directory(const char *input)
 	struct stat buf;
 	if (stat(input_directory.c_str(),&buf) != 0)
 	{
-		std::cout << "error: incorrect result directory path!!!" << std::endl;;
+		std::cout << input_directory << std::endl;
+		std::cout << "error: incorrect result directory path!!!" << std::endl;
 		std::exit(EXIT_FAILURE);
 	}
 

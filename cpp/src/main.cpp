@@ -38,6 +38,14 @@ int main(int argc, char *argv[])
 
 	std::cout << "a = " << a << " , b = " << b << "\n";
 
+	// int *ip = new int[10];
+	// int &ir = *ip;
+
+	// for (int i=0; i<10; i++) std::cout << ip[i] << "  ";
+	// std::cout << std::endl;
+	// for (int i=0; i<10; i++) std::cout << (&ir)[i] << "  ";
+	// std::cout << std::endl;
+
 
 	// // create cnt objects and load their information
 	// vector<CNT> cnt_list;

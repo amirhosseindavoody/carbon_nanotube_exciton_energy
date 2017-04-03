@@ -62,14 +62,18 @@ void cnt::geometry()
 
 	Nu = 2*(pow(n,2)+pow(m,2)+n*m)/dR;
 
-	// // rotate basis vectors so that ch_vec is along the x_axis
-	// double cos_theta = ch_vec[0]/ublas::norm_2(ch_vec);
-	// double sin_theta = ch_vec[1]/ublas::norm_2(ch_vec);
-	// ublas::matrix <double> rot(2,2); // rotation matrix
-	// rot(0,0) = cos_theta;
-	// rot(1,0) = -sin_theta;
-	// rot(0,1) = sin_theta;
-	// rot(1,1) = cos_theta;
+	// rotate basis vectors so that ch_vec is along the x_axis
+	double cos_theta = ch_vec[0]/ch_vec.norm2();
+	double sin_theta = ch_vec[1]/ch_vec.norm2();
+	nr::mat_doub rot(2,2); // rotation matrix
+	rot(0,0) = cos_theta;
+	rot(1,0) = -sin_theta;
+	rot(0,1) = sin_theta;
+	rot(1,1) = cos_theta;
+
+	std::cout << "ch_vec = " << ch_vec[0] << " , " << ch_vec[1] << std::endl;
+	ch_vec = rot*ch_vec;
+	std::cout << "ch_vec = " << ch_vec[0] << " , " << ch_vec[1] << std::endl;
 
 	// ch_vec = ublas::prod(rot,ch_vec);
 	// t_vec = ublas::prod(rot,t_vec);
