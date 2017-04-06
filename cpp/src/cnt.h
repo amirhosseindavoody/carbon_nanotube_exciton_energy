@@ -7,7 +7,7 @@
 #include <complex>
 
 #include "constants.h"
-#include "nr3.h"
+#include "nr.h"
 
 class cnt
 {

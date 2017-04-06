@@ -1,26 +1,21 @@
 CC=g++
 CC+= -Wno-deprecated-declarations
 
-CFLAGS = -I./ -I./lib/ -I./my_math/ -std=c++14
-# LFLAGS = -lgsl -lgslcblas -lm -std=c++14
+CFLAGS = -I./ -I../ -std=c++14
 LFLAGS = -llapack -lblas -lm -std=c++14
 
-SRCDIR = ./src
-OBJDIR = ./obj
+SRCDIR = .
+OBJDIR = .
 
 object:
-	@mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) -c $(SRCDIR)/*.cpp
-	@mv -f ./*.o $(OBJDIR)
 
-main: object
+test_eigen: object
 	$(CC) -o $@.exe $(OBJDIR)/*.o $(LFLAGS)
-
-new: clean main
 
 # Utility targets
 .PHONY: clean
 clean:
 	@reset
 	@rm -f *.o *.exe
-	@rm -rf $(OBJDIR)
+	# @rm -rf $(OBJDIR)

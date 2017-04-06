@@ -5,7 +5,7 @@
 #include "cnt.h"
 #include "constants.h"
 #include "write_log.h"
-#include "nr3.h"
+#include "nr.h"
 
 int main(int argc, char *argv[])
 {
@@ -32,14 +32,6 @@ int main(int argc, char *argv[])
 
 	cnts[0].geometry();
 	cnts[0].electron();
-
-	double a= 2.0;
-	double b = nr::sqr(a);
-
-	std::cout << "a = " << a << " , b = " << b << "\n";
-
-	// int *ip = new int[10];
-	// int &ir = *ip;
 
 	// for (int i=0; i<10; i++) std::cout << ip[i] << "  ";
 	// std::cout << std::endl;

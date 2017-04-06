@@ -1,5 +1,5 @@
-#ifndef _NR3_H_
-#define _NR3_H_
+#ifndef _vector_matrix_h_
+#define _vector_matrix_h_
 
 #define _CHECKBOUNDS_ 1
 //#define _USESTDVECTOR_ 1
@@ -411,6 +411,11 @@ public:
 	inline int ncols() const; // number of columns
 	void resize(int newn, int newm); // resize (contents not preserved)
 	void assign(int newn, int newm, const T &a); // resize and assign a constant value
+	NRmatrix operator+(const NRmatrix& other) const; // matrix-matrix addition
+	NRmatrix operator-(const NRmatrix& other) const; // matrix-matrix addition
+	NRmatrix operator*(const T& num) const; // matrix-number multiplication
+	NRmatrix operator/(const T& num) const; // matrix-number multiplication
+	NRmatrix operator*(const NRmatrix& other) const; // matrix-matrix multiplication
 	template<class TT>
 	friend NRvector<TT> operator*(const NRmatrix<TT>& mat, const NRvector<TT>& vec); // matrix-vector multiplication
 	~NRmatrix();
@@ -463,6 +468,7 @@ NRmatrix<T>::NRmatrix(const NRmatrix<T> &rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ?
 template <class T>
 NRmatrix<T>::NRmatrix(NRmatrix<T> &&rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? rhs.v : NULL)
 {
+	// std::cout << "matrix move constructor!" << std::endl;
 	rhs.nn = 0;
 	rhs.mm = 0;
 	rhs.v = NULL;
@@ -499,7 +505,6 @@ template <class T>
 NRmatrix<T> & NRmatrix<T>::operator=(NRmatrix<T> &&rhs)
 {
 	// std::cout << "matrix move assignment!" << std::endl;
-
 	if (this != &rhs) {
 		if (v != NULL) {
 			delete[] (v[0]);
@@ -624,6 +629,110 @@ void NRmatrix<T>::assign(int newn, int newm, const T& a)
 	for (i=0; i< nn; i++) for (j=0; j<mm; j++) v[i][j] = a;
 }
 
+// matrix-matrix addition
+template<class T>
+NRmatrix<T> NRmatrix<T>::operator+(const NRmatrix<T>& other) const
+{
+	if (v == NULL) throw("error: empty matrix!");
+	if (other.v == NULL) throw("error: empty matrix!");
+	if ((nn != other.nn)||(mm!=other.mm)) throw("error: matrix dimensions mismatch!")
+	NRmatrix<T> res(nn,mm);
+
+	for (int i=0; i<res.nn; i++)
+	{
+		for (int j=0; j<res.mm; j++)
+		{
+			res.v[i][j] = v[i][j]+other.v[i][j];
+		}	
+	}
+	return res;
+}
+
+// matrix-matrix subtraction
+template<class T>
+NRmatrix<T> NRmatrix<T>::operator-(const NRmatrix<T>& other) const
+{
+	if (v == NULL) throw("error: empty matrix!");
+	if (other.v == NULL) throw("error: empty matrix!");
+	if ((nn != other.nn)||(mm!=other.mm)) throw("error: matrix dimensions mismatch!")
+	NRmatrix<T> res(nn,mm);
+
+	for (int i=0; i<res.nn; i++)
+	{
+		for (int j=0; j<res.mm; j++)
+		{
+			res.v[i][j] = v[i][j]-other.v[i][j];
+		}	
+	}
+	return res;
+}
+
+// matrix-number multiplication
+template<class T>
+NRmatrix<T> NRmatrix<T>::operator*(const T& num) const
+{
+	if (v == NULL) throw("error: empty matrix!");	
+	NRmatrix<T> res(nn,mm);
+
+	for (int i=0; i<res.nn; i++)
+	{
+		for (int j=0; j<res.mm; j++)
+		{
+			res.v[i][j] = num*v[i][j];
+		}	
+	}
+	return res;
+}
+
+template<class T>
+inline NRmatrix<T> operator*(const T& num, const NRmatrix<T>& mat)
+{
+	return mat*num;
+}
+
+// matrix-number division
+template<class T>
+NRmatrix<T> NRmatrix<T>::operator/(const T& num) const
+{
+	if (v == NULL) throw("error: empty matrix!");	
+	NRmatrix<T> res(nn,mm);
+
+	for (int i=0; i<res.nn; i++)
+	{
+		for (int j=0; j<res.mm; j++)
+		{
+			res.v[i][j] = v[i][j]/num;
+		}	
+	}
+	return res;
+}
+
+// matrix-matrix multiplication
+template<class T>
+NRmatrix<T> NRmatrix<T>::operator*(const NRmatrix<T>& other) const
+{
+	if (v == NULL) throw("error: empty matrix!");
+	if (other.v == NULL) throw("error: empty matrix!");
+	if (mm != other.nn) throw("multiplication error: size mismatch!");
+	
+	NRmatrix<T> res(nn,other.mm);
+	T sum = static_cast<T>(0);
+
+	for (int i=0; i<res.nn; i++)
+	{
+		for (int j=0; j<res.mm; j++)
+		{
+			sum = static_cast<T>(0);
+			for (int k=0; k<mm; k++)
+			{
+				sum += v[i][k]*other.v[k][j];
+			}
+			res.v[i][j] = sum;
+		}	
+	}
+	return res;
+}
+
 // deconstructor
 template <class T>
 NRmatrix<T>::~NRmatrix()
@@ -634,7 +743,7 @@ NRmatrix<T>::~NRmatrix()
 	}
 }
 
-// matrix-vector operations
+// matrix-vector multiplication
 template<class T>
 NRvector<T> operator*(const NRmatrix<T>& mat, const NRvector<T>& vec)
 {
@@ -656,7 +765,6 @@ NRvector<T> operator*(const NRmatrix<T>& mat, const NRvector<T>& vec)
 	}
 	return res;
 }
-
 
 // definition of 3D matrix class
 template <class T>
@@ -754,14 +862,14 @@ typedef unsigned char Uchar;
 typedef double Doub; // default floating type
 typedef long double Ldoub;
 
-typedef complex<double> Complex; // default complex type
+typedef std::complex<double> Complex; // default complex type
 
 typedef bool Bool;
 
 // NaN: uncomment one of the following 3 methods of defining a global NaN
 // you can test by verifying that (NaN != NaN) is true
 
-static const Doub NaN = numeric_limits<Doub>::quiet_NaN();
+static const Doub NaN = std::numeric_limits<Doub>::quiet_NaN();
 
 //Uint proto_nan[2]={0xffffffff, 0x7fffffff};
 //double NaN = *( double* )proto_nan;
@@ -854,5 +962,5 @@ turn_on_floating_exceptions yes_turn_on_floating_exceptions;
 
 }
 
-#endif /* _NR3_H_ */
+#endif // _vector_matrix_h_
 

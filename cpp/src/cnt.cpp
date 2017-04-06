@@ -11,7 +11,7 @@ Stores all relevant information for a carbon nanotube
 #include "cnt.h"
 #include "constants.h"
 #include "write_log.h"
-#include "nr3.h"
+#include "nr.h"
 
 cnt::cnt(const std::string &in_name, const int in_n, const int in_m, const int in_length)
 {
@@ -224,85 +224,48 @@ void cnt::geometry()
 
 void cnt::electron()
 {
-	// namespace ublas = boost::numeric::ublas;
 
-	// // make the list of 1st nearest neighbor atoms
-	// ublas::matrix<int> nn_list(2*Nu,3); // contains index of the nearest neighbor atom
-	// ublas::matrix<int> nn_tvec_index(2*Nu,3); // contains the index of the cnt unit cell that the nearest neigbor atom is in.
-	// for (int i=0; i<pos_3d.size1(); i++)
-	// {
-	// 	int k=0;
-	// 	for (int j=0; j<pos_3d.size1(); j++)
-	// 	{
-	// 		for (int l=-1; l<=1; l++)
-	// 		{
-	// 			double dx = pos_3d(i,0) - pos_3d(j,0) + (double)l*t_vec_3d(0);
-	// 			double dy = pos_3d(i,1) - pos_3d(j,1) + (double)l*t_vec_3d(1);
-	// 			double dz = pos_3d(i,2) - pos_3d(j,2) + (double)l*t_vec_3d(2);
-	// 			double dR = sqrt(dx*dx+dy*dy+dz*dz);
-	// 			if ( (i!=j) && (dR<(1.4*a_cc)) )
-	// 			{
-	// 				nn_list(i,k) = j;
-	// 				nn_tvec_index(i,k) = l;
-	// 				k++;
-	// 			}
-	// 		}
-	// 	}
-	// }
+	// make the list of 1st nearest neighbor atoms
+	nr::mat_int nn_list(2*Nu,3,0); // contains index of the nearest neighbor atom
+	nr::mat_int nn_tvec_index(2*Nu,3,0); // contains the index of the cnt unit cell that the nearest neigbor atom is in.
+	for (int i=0; i<pos_3d.nrows(); i++)
+	{
+		int k=0;
+		for (int j=0; j<pos_3d.nrows(); j++)
+		{
+			for (int l=-1; l<=1; l++)
+			{
+				double dx = pos_3d(i,0) - pos_3d(j,0) + (double)l*t_vec_3d(0);
+				double dy = pos_3d(i,1) - pos_3d(j,1) + (double)l*t_vec_3d(1);
+				double dz = pos_3d(i,2) - pos_3d(j,2) + (double)l*t_vec_3d(2);
+				double dR = sqrt(dx*dx+dy*dy+dz*dz);
+				if ( (i!=j) && (dR<(1.4*a_cc)) )
+				{
+					nn_list(i,k) = j;
+					nn_tvec_index(i,k) = l;
+					k++;
+				}
+			}
+		}
+	}
 
-	// // ublas::vector<std::complex<double>> C(2*Nu);
-	// // ublas::matrix<std::complex<double>> H(2*Nu,2*Nu);
-	// // ublas::matrix<std::complex<double>> S(2*Nu,2*Nu);
+	nr::vec_complex C(2*Nu,0.0);
+	nr::mat_complex H(2*Nu,2*Nu,0.0);
+	nr::mat_complex S(2*Nu,2*Nu,0.0);
 	
-	// // double t_len = ublas::norm_2(t_vec_3d);
+	double t_len = t_vec_3d.norm2();
 
-	// // C.clear();
-	// // H.clear();
-	// // S.clear();
+	for (int i=0; i<2*Nu; i++)
+	{
+		H(i,i) = (e2p,0.e0);
+		for (int k=0; k<3; k++)
+		{
+			int j = nn_list(i,k);
+			int l = nn_tvec_index(i,k);
 
-
-	// // for (int i=0; i<2*Nu; i++)
-	// // {
-	// // 	H(i,i) = (e2p,0.e0);
-	// // 	for (int k=0; k<3; k++)
-	// // 	{
-	// // 		int j = nn_list(i,k);
-	// // 		int l = nn_tvec_index(i,k);
-
-	// // 		H(i,j) = (t0,0.e0)*exp(1i*((double)l*t_len,0.e0));
-	// // 		S(i,j) = (s0,0.e0)*exp(1i*((double)l*t_len,0.e0));
-	// // 	}
-	// // }
-
-	// // Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic> m(2,2);
-	// // m.resize(2,2);
-
-	// // my_math::c_vector c(2*Nu);
-	// // my_math::c_matrix H(2*Nu, 2*Nu);
-	// // my_math::c_matrix S(2*Nu, 2*Nu);
-	
-	// // // double t_len = ublas::norm_2(t_vec_3d);
-
-	// // // C.clear();
-	// // // H.clear();
-	// // // S.clear();
-
-	// // std::cout << "C rows = " << c.size1() << std::endl;
-	// // std::cout << "C size = " << H.size1() << "x" << H.size2() << std::endl;
-
-
-	// // for (int i=0; i<2*Nu; i++)
-	// // {
-	// // 	H(i,i) = (e2p,0.e0);
-	// // 	for (int k=0; k<3; k++)
-	// // 	{
-	// // 		int j = nn_list(i,k);
-	// // 		int l = nn_tvec_index(i,k);
-
-	// // 		H(i,j) = (t0,0.e0)*exp(1i*((double)l*t_len,0.e0));
-	// // 		S(i,j) = (s0,0.e0)*exp(1i*((double)l*t_len,0.e0));
-	// // 	}
-	// // }
-
+			H(i,j) = (t0,0.e0)*exp(1i*((double)l*t_len,0.e0));
+			S(i,j) = (s0,0.e0)*exp(1i*((double)l*t_len,0.e0));
+		}
+	}
 
 }
