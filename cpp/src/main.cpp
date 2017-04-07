@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 	std::time_t start_time = std::time(nullptr);
 	std::cout << std::endl << "start time:" << std::endl << std::asctime(std::localtime(&start_time)) << std::endl;
 
-	vector<cnt> cnts;
+	std::vector<cnt> cnts;
 
 
 	if (argc != 2)

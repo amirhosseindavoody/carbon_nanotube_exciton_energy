@@ -6,7 +6,7 @@
 namespace nr
 {
 	// print complex matrix
-	inline void print_mat(nr::mat_complex& X, std::string name="matrix_complex")
+	inline void print(nr::mat_complex& X, std::string name="matrix_complex")
 	{
 		std::cout << name <<" = " << std::endl;
 		for (int i=0; i<X.nrows(); i++)
@@ -22,7 +22,7 @@ namespace nr
 	}
 
 	// print double matrix
-	inline void print_mat(nr::mat_doub& X, std::string name="matrix_double")
+	inline void print(nr::mat_doub& X, std::string name="matrix_double")
 	{
 		std::cout << name <<" = " << std::endl;
 		for (int i=0; i<X.nrows(); i++)
@@ -38,7 +38,7 @@ namespace nr
 	}
 
 	// print double vector
-	inline void print_vec(nr::vec_doub& V, std::string name="vector_double")
+	inline void print(nr::vec_doub& V, std::string name="vector_double")
 	{
 		std::cout << name <<" = " << std::endl;
 		for (int i=0; i<V.size(); i++)

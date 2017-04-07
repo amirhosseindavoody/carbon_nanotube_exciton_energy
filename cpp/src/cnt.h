@@ -48,7 +48,7 @@ private:
 	nr::mat_doub pos_2d, pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space
 	// nr::mat_doub pos_aa, pos_ab, pos_ba, pos_bb; // distance between atoms and A and B sites which conserves lattice symmetry.
 
-	nr::mat_doub ek;
+	// nr::mat_doub ek;
 	// nr::mat_complex psi;
 
 

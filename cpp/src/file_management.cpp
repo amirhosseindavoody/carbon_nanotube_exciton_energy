@@ -114,7 +114,7 @@ void file_management::change_working_directory(const char *path)
 	struct stat buf;
 	if (stat(path,&buf) == 0)
 	{
-		stringstream command;
+		std::stringstream command;
 		command << "rm -f -r " << path;
 		system(command.str().c_str());
 	}

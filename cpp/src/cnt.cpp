@@ -45,11 +45,6 @@ void cnt::geometry()
 
 	aCC_vec = 1.0/3.0*(a1+a2);
 
-	std::cout << "a1 = " << a1[0] << " , " << a1[1] << std::endl;
-	std::cout << "a2 = " << a2[0] << " , " << a2[1] << std::endl;
-	std::cout << "aCC_vec = " << aCC_vec[0] << " , " << aCC_vec[1] << std::endl;
-
-	
 	// calculate chirality and translational vectors of CNT unit cell
 	ch_vec = (double)n * a1 + (double)m * a2;
 	ch_len = a_l*sqrt(pow((double)n,2)+pow((double)m,2)+(double)n*m);
@@ -83,7 +78,7 @@ void cnt::geometry()
 	// calculate reciprocal lattice of CNT
 	K1 = (-(double)t2*b1 + (double)t1*b2)/((double)Nu);
 	K2 = ((double)m*b1-(double)n*b2)/((double)Nu);
-	dk_l = K1/((double)length_in_cnt_unit_cell);
+	dk_l = K2/((double)length_in_cnt_unit_cell);
 
 	// calculate positions of atoms in the cnt unit cell
 	pos_a.assign(Nu,2,0.0);
@@ -124,8 +119,8 @@ void cnt::geometry()
 
 	if (k != Nu) 
 	{
-		cout << "error in finding position of atoms in cnt unit cell!!!" << endl;
-		cout << "Nu = " << Nu << "  ,  k = " << k << endl;
+		std::cout << "error in finding position of atoms in cnt unit cell!!!" << std::endl;
+		std::cout << "Nu = " << Nu << "  ,  k = " << k << std::endl;
 		exit(1);
 	}
 
@@ -180,14 +175,14 @@ void cnt::geometry()
 
 
 	// save coordinates of atoms in 2d space
-	ofstream file;
-	file.open(name+".pos_2d.dat", ios::trunc);
+	std::ofstream file;
+	file.open(name+".pos_2d.dat", std::ios::trunc);
 
 	if (file.is_open())
 	{
 		file << std::scientific;
 		file << std::showpos;
-		file << pos_2d.nrows() << "\t" << pos_2d.ncols() << endl;
+		file << pos_2d.nrows() << "\t" << pos_2d.ncols() << std::endl;
 		for (int i=0; i<pos_2d.nrows(); i++)
 		{
 			file << pos_2d(i,0) << "\t" << pos_2d(i,1) << "\n";
@@ -201,13 +196,13 @@ void cnt::geometry()
 	file.close();
 
 	// save coordinates of atoms in 3d space
-	file.open(name+".pos_3d.dat", ios::trunc);
+	file.open(name+".pos_3d.dat", std::ios::trunc);
 
 	if (file.is_open())
 	{
 		file << std::scientific;
 		file << std::showpos;
-		file << pos_3d.nrows() << "\t" << pos_3d.ncols() << endl;
+		file << pos_3d.nrows() << "\t" << pos_3d.ncols() << std::endl;
 		for (int i=0; i<pos_3d.nrows(); i++)
 		{
 			file << pos_3d(i,0) << "\t" << pos_3d(i,1) << "\t" << pos_3d(i,2) << "\n";
@@ -235,9 +230,9 @@ void cnt::electron()
 		{
 			for (int l=-1; l<=1; l++)
 			{
-				double dx = pos_3d(i,0) - pos_3d(j,0) + (double)l*t_vec_3d(0);
-				double dy = pos_3d(i,1) - pos_3d(j,1) + (double)l*t_vec_3d(1);
-				double dz = pos_3d(i,2) - pos_3d(j,2) + (double)l*t_vec_3d(2);
+				double dx = pos_3d(i,0) - (pos_3d(j,0) + (double)l*t_vec_3d(0));
+				double dy = pos_3d(i,1) - (pos_3d(j,1) + (double)l*t_vec_3d(1));
+				double dz = pos_3d(i,2) - (pos_3d(j,2) + (double)l*t_vec_3d(2));
 				double dR = sqrt(dx*dx+dy*dy+dz*dz);
 				if ( (i!=j) && (dR<(1.4*a_cc)) )
 				{
@@ -249,23 +244,53 @@ void cnt::electron()
 		}
 	}
 
-	nr::vec_complex C(2*Nu,0.0);
-	nr::mat_complex H(2*Nu,2*Nu,0.0);
-	nr::mat_complex S(2*Nu,2*Nu,0.0);
+	nr::mat_complex H(2*Nu, 2*Nu, 0.0);
+	nr::mat_complex S(2*Nu, 2*Nu, 0.0);
+	nr::vec_doub E(2*Nu,0.0);
+	nr::mat_complex C(2*Nu, 2*Nu, 0.0);
 	
 	double t_len = t_vec_3d.norm2();
 
-	for (int i=0; i<2*Nu; i++)
-	{
-		H(i,i) = (e2p,0.e0);
-		for (int k=0; k<3; k++)
-		{
-			int j = nn_list(i,k);
-			int l = nn_tvec_index(i,k);
+	// save energy bands
+	std::ofstream file;
+	file.open(name+".electron_energy.dat", std::ios::app);
 
-			H(i,j) = (t0,0.e0)*exp(1i*((double)l*t_len,0.e0));
-			S(i,j) = (s0,0.e0)*exp(1i*((double)l*t_len,0.e0));
+	for (int n=0; n<=length_in_cnt_unit_cell; n++)
+	{
+		double wave_vec = double(n)*dk_l.norm2();
+
+		H.assign(2*Nu, 2*Nu, 0.0);
+		S.assign(2*Nu, 2*Nu, 0.0);
+
+		typedef std::complex<double> cmplx;
+		for (int i=0; i<2*Nu; i++)
+		{
+			H(i,i) = (e2p,0.e0);
+			for (int k=0; k<3; k++)
+			{
+				int j = nn_list(i,k);
+				int l = nn_tvec_index(i,k);
+
+				H(i,j) = H(i,j)+cmplx(t0,0.e0)*exp(cmplx(0.0,wave_vec*double(l)*t_len));
+				S(i,j) = S(i,j)+cmplx(s0,0.e0)*exp(cmplx(0.0,wave_vec*double(l)*t_len));
+			}
 		}
+
+		nr::eig_sym(E, C, H);
+		
+		file << std::scientific;
+		file << std::showpos;
+		file << wave_vec << "\t";
+
+		for (int i=0; i<E.size(); i++)
+		{
+			file << std::scientific;
+			file << std::showpos;
+			file << E(i)/t0 << "\t";
+		}
+		file << "\n";
+
 	}
+	file.close();
 
 }

@@ -149,6 +149,8 @@ public:
 	T norm2() const; // norm of the vector
 	template<class TT>
 	friend NRvector<TT> operator*(const NRmatrix<TT>& mat, const NRvector<TT>& vec); // matrix-vector multiplication
+	template<class TT>
+	friend TT dot_prod(const NRvector<TT> first, const NRvector<TT> second); // dot product of two vectors
 	~NRvector();
 };
 
@@ -375,6 +377,22 @@ T NRvector<T>::norm2() const
 	return sqrt(sum);
 }
 
+// dot product of two vectors
+template<class T>
+inline T dot_prod(const NRvector<T> first, const NRvector<T> second)
+{
+	if (first.v == NULL) throw("error: vector is empty!");
+	if (second.v == NULL) throw("error: vector is empty!");
+	if (first.nn != second.nn) throw("error: vector dimensions mismatch!")
+
+	T sum = static_cast<T>(0);
+	for (int i=0; i<first.nn; i++)
+	{
+		sum += first.v[i]*second.v[i];
+	}
+	return sum;
+}
+
 template <class T>
 NRvector<T>::~NRvector()
 {
@@ -458,6 +476,7 @@ NRmatrix<T>::NRmatrix(int n, int m, const T *a) : nn(n), mm(m), v(n>0 ? new T*[n
 template <class T>
 NRmatrix<T>::NRmatrix(const NRmatrix<T> &rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? new T*[nn] : NULL)
 {
+	// std::cout << "matrix copy constructor!" << std::endl;
 	int i,j,nel=mm*nn;
 	if (v) v[0] = nel>0 ? new T[nel] : NULL;
 	for (i=1; i< nn; i++) v[i] = v[i-1] + mm;
@@ -481,6 +500,7 @@ NRmatrix<T> & NRmatrix<T>::operator=(const NRmatrix<T> &rhs)
 //		if matrix and rhs were different sizes, matrix
 //		has been resized to match the size of rhs
 {
+	// std::cout << "matrix copy assignment!" << std::endl;
 	if (this != &rhs) {
 		int i,j,nel;
 		if (nn != rhs.nn || mm != rhs.mm) {
