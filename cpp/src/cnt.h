@@ -25,6 +25,7 @@ private:
 
 	int n, m; // chirailty parameters
 	int length_in_cnt_unit_cell; // length of cnt in units of cnt unit cell.
+	int nk; // number of k vector elements corresponding to the length of the cnt.
 	std::string name; //cnt name
 
 	nr::vec_doub a1, a2; // real space lattice primitive vectors
@@ -48,8 +49,10 @@ private:
 	nr::mat_doub pos_2d, pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space
 	// nr::mat_doub pos_aa, pos_ab, pos_ba, pos_bb; // distance between atoms and A and B sites which conserves lattice symmetry.
 
-	// nr::mat_doub ek;
-	// nr::mat_complex psi;
+	nr::mat_doub el_energy; // energy of electronic states
+	nr::mat_complex el_psi; // electronic wave functions corresponding to electronic states
+
+	nr::vec_doub epsilon; // static dielectric function
 
 
 public:
@@ -57,6 +60,7 @@ public:
 
 	void geometry(); // calculates position of atoms
 	void electron(); // electron dispersion energies
+	void dielectric(); // calculate static dielectric function
 };
 
 #endif

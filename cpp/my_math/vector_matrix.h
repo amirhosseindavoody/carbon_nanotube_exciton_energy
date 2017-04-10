@@ -1,7 +1,12 @@
 #ifndef _vector_matrix_h_
 #define _vector_matrix_h_
 
-#define _CHECKBOUNDS_ 1
+// check bounds when accessing elements in vectors and matrices
+#define _CHECKBOUNDS_ 1	
+// check if vectors and matrices are empty when operating on these objects
+#define _CHECKEMPTY_ 1
+// check if dimensions matches in algebraic operations on matrices and vectors
+#define _CHECKDIMENSIONS_ 1 
 //#define _USESTDVECTOR_ 1
 //#define _USENRERRORCLASS_ 1
 //#define _TURNONFPES_ 1
@@ -140,6 +145,7 @@ public:
 	inline T & operator()(const int i);	//i'th element
 	inline const T & operator()(const int i) const; //i'th element
 	inline int size() const; // gets size of the array
+	inline const bool empty() const; // check if vector is empty
 	void resize(int newn); // resize (contents not preserved)
 	void assign(int newn, const T &a); // resize and assign a constant value
 	NRvector operator+(const NRvector &other) const;	// addition operator
@@ -281,6 +287,13 @@ template <class T>
 inline int NRvector<T>::size() const
 {
 	return nn;
+}
+
+// check if vector is empty
+template <class T>
+inline const bool NRvector<T>::empty() const
+{
+	return (v == NULL);
 }
 
 // resize the vector do not vector values
@@ -427,6 +440,7 @@ public:
 	inline const T& operator()(const int i, const int j) const; //subscripting: reference to element at (i,j)
 	inline int nrows() const; // number of rows
 	inline int ncols() const; // number of columns
+	inline const bool empty() const; // check if matrix is empty
 	void resize(int newn, int newm); // resize (contents not preserved)
 	void assign(int newn, int newm, const T &a); // resize and assign a constant value
 	NRmatrix operator+(const NRmatrix& other) const; // matrix-matrix addition
@@ -610,6 +624,13 @@ inline int NRmatrix<T>::ncols() const
 	return mm;
 }
 
+// check if matrix is empty
+template <class T>
+inline const bool NRmatrix<T>::empty() const
+{
+	return (v == NULL);
+} 
+
 // resize (contents not preserved)
 template <class T>
 void NRmatrix<T>::resize(int newn, int newm)
@@ -767,21 +788,26 @@ NRmatrix<T>::~NRmatrix()
 template<class T>
 NRvector<T> operator*(const NRmatrix<T>& mat, const NRvector<T>& vec)
 {
-	if (vec.v == NULL) throw("error: empty vector!");
-	if (mat.v == NULL) throw("error: empty matrix!");
-	if (vec.nn != mat.mm) throw("multiplication error: size mismatch!");
+	#ifdef _CHECKEMPTY_
+	if (vec.empty()) throw("error: empty vector!");
+	if (mat.empty()) throw("error: empty matrix!");
+	#endif // end _CHECKEMPTY_
+
+	#ifdef _CHECKDIMENSIONS_
+	if (vec.size() != mat.ncols()) throw("multiplication error: size mismatch!");
+	#endif // end _CHECKDIMENSIONS_
 	
-	NRvector<T> res(mat.nn);
+	NRvector<T> res(mat.nrows());
 	T sum = static_cast<T>(0);
 
-	for (int i=0; i<res.nn; i++)
+	for (int i=0; i<res.size(); i++)
 	{
 		sum = static_cast<T>(0);
-		for (int j=0; j<vec.nn; j++)
+		for (int j=0; j<vec.size(); j++)
 		{
-			sum += mat.v[i][j]*vec.v[j];
+			sum += mat(i,j)*vec(j);
 		}
-		res.v[i] = sum;
+		res(i) = sum;
 	}
 	return res;
 }
