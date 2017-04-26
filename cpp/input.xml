@@ -3,8 +3,8 @@
 	<cnt>
 		<name>cnt1</name>
 		<chirality>
-			<n>5</n>
-			<m>5</m>
+			<n>10</n>
+			<m>0</m>
 		</chirality>
 		<length>
 			<units>cnt_unit_cell</units>

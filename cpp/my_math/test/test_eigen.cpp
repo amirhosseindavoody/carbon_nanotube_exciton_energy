@@ -18,9 +18,10 @@ int main(int argc, char *argv[])
 	X(0,1) = std::complex<double>(+0.0,+2.0);
 	X(1,0) = std::complex<double>(+0.0,-2.0);
 	X(1,1) = std::complex<double>(-3.0,+0.0);
-	nr::print_mat(X, "X");
+	nr::print(X, "X");
 
 	nr::eig_sym(eigval, eigvec, X);
+	
 	// change phase of eigen vectors for better appearance
 	for (int i=0; i<eigvec.nrows(); i++)
 	{
@@ -30,21 +31,30 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	// check eigen vector normalization and orthogonality
+	for (int i=0; i<eigvec.ncols(); i++)
+	{
+		std::complex<double> sum(0.0,0.0);
+		for (int j=0; j<eigvec.nrows(); j++)
+		{
+			sum += std::conj(eigvec(j,i)) * eigvec(j,0);
+		}
+		std::cout << i << " , sum = " << std::abs(sum) << std::endl;
+	}
 
-
-	nr::print_vec(eigval, "eigval");
-	nr::print_mat(eigvec, "eigvec");
+	nr::print(eigval, "eigval");
+	nr::print(eigvec, "eigvec");
 
 	nr::mat_complex lambda(n,n,0.0);
 	for (int i=0; i<lambda.nrows(); i++)
 	{
 		lambda(i,i) = eigval(i);
 	}
-	nr::print_mat(lambda, "lambda");
+	nr::print(lambda, "lambda");
 
 	nr::mat_complex test(X.nrows(),X.ncols());
 	test = (X*eigvec-eigvec*lambda);
-	nr::print_mat(test, "test");
+	nr::print(test, "test");
 
 	std::cout << "if the matrix test is approximately zero then the eigen value solution was successful!" << std::endl;
 	
