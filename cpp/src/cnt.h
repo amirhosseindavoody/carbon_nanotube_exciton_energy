@@ -24,7 +24,7 @@ private:
 	const double Upp = 11.3 * constants::eV; // constant used in the Ohno potential
 
 	int n, m; // chirailty parameters
-	int length_in_cnt_unit_cell; // length of cnt in units of cnt unit cell.
+	int number_of_cnt_unit_cells; // length of cnt in units of cnt unit cell.
 	int nk; // number of k vector elements corresponding to the length of the cnt.
 	std::string name; //cnt name
 

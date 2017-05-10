@@ -18,8 +18,8 @@ cnt::cnt(const std::string &in_name, const int in_n, const int in_m, const int i
 	name = in_name;
 	n = in_n;
 	m = in_m;
-	length_in_cnt_unit_cell = in_length;
-	nk = length_in_cnt_unit_cell;
+	number_of_cnt_unit_cells = in_length;
+	nk = number_of_cnt_unit_cells;
 
 	a1.assign(2,0.0);
 	a2.assign(2,0.0);
@@ -79,7 +79,7 @@ void cnt::geometry()
 	// calculate reciprocal lattice of CNT
 	K1 = (-(double)t2*b1 + (double)t1*b2)/((double)Nu);
 	K2 = ((double)m*b1-(double)n*b2)/((double)Nu);
-	dk_l = K2/((double)length_in_cnt_unit_cell);
+	dk_l = K2/((double)number_of_cnt_unit_cells);
 
 	// calculate positions of atoms in the cnt unit cell
 	pos_a.assign(Nu,2,0.0);
@@ -250,7 +250,7 @@ void cnt::electron()
 	nr::vec_doub E(2*Nu,0.0);
 	nr::mat_complex C(2*Nu, 2*Nu, 0.0);
 
-	int NK = nk;
+	int NK = 2*nk;
 
 	el_energy.assign(2*Nu, NK, 0.0);
 	el_psi.assign((2*Nu)*(2*Nu), NK, 0.0);
@@ -316,7 +316,7 @@ void cnt::electron()
 		// 	}
 		// }
 
-		// save electron energy and wavefunction info in member variables
+		// save electron energy and wavefunction data in member variables
 		for (int i=0; i<C.ncols(); i++)
 		{
 			el_energy(i,n) = E(i);
@@ -334,109 +334,116 @@ void cnt::electron()
 
 void cnt::dielectric()
 {
-	epsilon.assign(nk, 0.0);
 
 
+	// calculate v_q
 
-	nr::vec_doub PI(2*nk,0.0);
-	typedef std::complex<double> cmplx;
-
-	for (int iq=0; iq<2*nk; iq++)
-	{
-		cmplx num1, num2;
-		double denom1, denom2;
-
-		for (int ik=0; ik<nk; ik++)
-		{
-			int ik_p = iq+ik;
-			while(ik_p>=nk)	ik_p = ik_p-nk;
-
-			for (int alpha_v=0; alpha_v<Nu; alpha_v++)
-			{
-				for (int alpha_c=Nu; alpha_c<2*Nu; alpha_c++)
-				{
-					num1 = cmplx(0.0,0.0);
-					num2 = cmplx(0.0,0.0);
-					for(int b=0; b<2*Nu; b++)
-					{
-						num1 += std::conj(el_psi(alpha_v*(2*Nu)+b,ik)) * el_psi(alpha_c*(2*Nu)+b,ik_p);
-						num2 += std::conj(el_psi(alpha_c*(2*Nu)+b,ik)) * el_psi(alpha_v*(2*Nu)+b,ik_p);
-					}
-					denom1 = el_energy(alpha_c,ik_p)-el_energy(alpha_v,ik);
-					denom2 = el_energy(alpha_c,ik)-el_energy(alpha_v,ik_p);
-
-					PI(iq) += std::norm(num1)/denom1 + std::norm(num2)/denom2;
-				}
-			}
-		}
-
-		std::cout << "calculating dielectric function: PI(" << iq << ") = " << PI(iq) << std::endl;
-	}
-
-	PI = 2.0*PI;
-
-	// open file to save electron energy bands
-	std::ofstream file;
-	file.open(name+".pi.dat", std::ios::app);
-
-	file << std::scientific;
-	file << std::showpos;
-	for (int i=0; i<PI.size(); i++)
-	{
-		double wave_vec = double(i)*dk_l.norm2();
-
-		file << std::scientific;
-		file << std::showpos;
-		file << wave_vec << "\t";
-		file << PI(i) << "\n";
-	}
-	file.close();
-
-	// nr::mat_complex v_q((2*Nu)*(2*Nu),nk, 0.0);
-	nr::vec_complex v_q(2*nk, 0.0);
+	int Nq = nk;
+	nr::mat_complex v_q((2*Nu)*(2*Nu), Nq, 0.0);
 
 	double t_len = t_vec_3d.norm2();
-	double factor = 4*constants::pi*constants::eps0*Upp/nr::sqr(constants::q0);
-	for(int iq = 0; iq<2*nk; iq++)
+	double factor = nr::sqr(4*constants::pi*constants::eps0*Upp/nr::sqr(constants::q0));
+	for(int iq = 0; iq<Nq; iq++)
 	{
 		double wave_vec = iq*dk_l.norm2();
-		for (int i=0; i<length_in_cnt_unit_cell; i++)
+		for (int i=-int(number_of_cnt_unit_cells/2); i<int(number_of_cnt_unit_cells/2); i++)
 		{
 			for (int b=0; b<2*Nu; b++)
 			{
 				for (int bp=0; bp<2*Nu; bp++)
 				{
-					double I = Upp/sqrt(1+nr::sqr(factor*t_len*double(i)));
-					// v_q(b*(2*Nu)+bp, iq) += cmplx(1.0/double(length_in_cnt_unit_cell))*exp(cmplx(0.0,wave_vec*double(i)*t_len))*I;
-					v_q(iq) += cmplx(1.0/double(length_in_cnt_unit_cell))*exp(cmplx(0.0,wave_vec*double(i)*t_len))*I;
+					double dx = pos_3d(b,0) - (pos_3d(bp,0) + double(i)*t_vec_3d(0));
+					double dy = pos_3d(b,1) - (pos_3d(bp,1) + double(i)*t_vec_3d(1));
+					double dz = pos_3d(b,2) - (pos_3d(bp,2) + double(i)*t_vec_3d(2));
+					double dR2 = dx*dx+dy*dy+dz*dz;
+
+					double I = Upp/sqrt(1+factor*dR2);
+					// v_q(b*(2*Nu)+bp, iq) += cmplx(1.0/double(number_of_cnt_unit_cells))*exp(cmplx(0.0,wave_vec*double(i)*t_len))*I;
 				}
 			}
 		}
-		std::cout << "calculating dielectric function: v_q(" << iq << ") = " << v_q(iq) << std::endl;
+		// std::cout << "calculating dielectric function: v_q(" << iq << ") = " << v_q(iq) << std::endl;
 	}
 
-	v_q = v_q/cmplx(nr::sqr(2*Nu),0.0);
+	// v_q = v_q/cmplx(nr::sqr(2*Nu),0.0);
 
-	for (int i=0; i<v_q.size(); i++)
-	{
-		v_q(i) = cmplx(std::abs(v_q(i))*PI(i),0.0);
-	}
+	// for (int i=0; i<v_q.size(); i++)
+	// {
+	// 	v_q(i) = cmplx(std::abs(v_q(i))*PI(i),0.0);
+	// }
 
-	// open file to save electron energy bands
-	file.open(name+".vq.dat", std::ios::app);
+	// // open file to save electron energy bands
+	// file.open(name+".vq.dat", std::ios::app);
 
-	file << std::scientific;
-	file << std::showpos;
-	for (int i=0; i<v_q.size(); i++)
-	{
-		double wave_vec = double(i)*dk_l.norm2();
+	// file << std::scientific;
+	// file << std::showpos;
+	// for (int i=0; i<v_q.size(); i++)
+	// {
+	// 	double wave_vec = double(i)*dk_l.norm2();
 
-		file << std::scientific;
-		file << std::showpos;
-		file << wave_vec << "\t";
-		// file << v_q(i) << "\n";
-		file << std::abs(v_q(i)) << "\n";
-	}
-	file.close();
+	// 	file << std::scientific;
+	// 	file << std::showpos;
+	// 	file << wave_vec << "\t";
+	// 	// file << v_q(i) << "\n";
+	// 	file << std::abs(v_q(i)) << "\n";
+	// }
+	// file.close();
 
+	// calculate epsilon
+
+	// epsilon.assign(nk, 0.0);
+
+	// nr::vec_doub PI(2*nk,0.0);
+	// typedef std::complex<double> cmplx;
+
+	// for (int iq=0; iq<2*nk; iq++)
+	// {
+	// 	cmplx num1, num2;
+	// 	double denom1, denom2;
+
+	// 	for (int ik=0; ik<nk; ik++)
+	// 	{
+	// 		int ik_p = iq+ik;
+	// 		while(ik_p>=nk)	ik_p = ik_p-nk;
+
+	// 		for (int alpha_v=0; alpha_v<Nu; alpha_v++)
+	// 		{
+	// 			for (int alpha_c=Nu; alpha_c<2*Nu; alpha_c++)
+	// 			{
+	// 				num1 = cmplx(0.0,0.0);
+	// 				num2 = cmplx(0.0,0.0);
+	// 				for(int b=0; b<2*Nu; b++)
+	// 				{
+	// 					num1 += std::conj(el_psi(alpha_v*(2*Nu)+b,ik)) * el_psi(alpha_c*(2*Nu)+b,ik_p);
+	// 					num2 += std::conj(el_psi(alpha_c*(2*Nu)+b,ik)) * el_psi(alpha_v*(2*Nu)+b,ik_p);
+	// 				}
+	// 				denom1 = el_energy(alpha_c,ik_p)-el_energy(alpha_v,ik);
+	// 				denom2 = el_energy(alpha_c,ik)-el_energy(alpha_v,ik_p);
+
+	// 				PI(iq) += std::norm(num1)/denom1 + std::norm(num2)/denom2;
+	// 			}
+	// 		}
+	// 	}
+
+	// 	std::cout << "calculating dielectric function: PI(" << iq << ") = " << PI(iq) << std::endl;
+	// }
+
+	// PI = 2.0*PI;
+
+	// // open file to save electron energy bands
+	// std::ofstream file;
+	// file.open(name+".pi.dat", std::ios::app);
+
+	// file << std::scientific;
+	// file << std::showpos;
+	// for (int i=0; i<PI.size(); i++)
+	// {
+	// 	double wave_vec = double(i)*dk_l.norm2();
+
+	// 	file << std::scientific;
+	// 	file << std::showpos;
+	// 	file << wave_vec << "\t";
+	// 	file << PI(i) << "\n";
+	// }
+	// file.close();
 }
