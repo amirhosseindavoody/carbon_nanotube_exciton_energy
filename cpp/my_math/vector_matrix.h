@@ -116,29 +116,33 @@ void NRcatch(NRerror err) {
 // (You can of course substitute any other catch body for NRcatch(s).)
 
 
-// Vector and Matrix Classes
+//*************************************************************************************************
+//*************************************************************************************************
+// Definition of vector class
+//*************************************************************************************************
+//*************************************************************************************************
 
 #ifdef _USESTDVECTOR_
-#define NRvector std::vector
+#define vector std::vector
 #else
 
 template<class T>
-class NRmatrix;
+class matrix;
 
 template <class T>
-class NRvector {
+class vector {
 private:
 	int nn;	// size of array. upper index is nn-1
 	T *v;
 public:
-	NRvector();
-	explicit NRvector(int n);		// Zero-based array
-	NRvector(int n, const T &a);	// Initialize to constant value
-	NRvector(int n, const T *a);	// Initialize to array
-	NRvector(const NRvector &rhs);	// Copy constructor
-	NRvector & operator=(const NRvector &rhs);	//Copy assignment
-	NRvector(NRvector &&rhs);	// Move constructor
-	NRvector & operator=(NRvector &&rhs);	//Move assignment
+	vector();
+	explicit vector(int n);		// Zero-based array
+	vector(int n, const T &a);	// Initialize to constant value
+	vector(int n, const T *a);	// Initialize to array
+	vector(const vector &rhs);	// Copy constructor
+	vector & operator=(const vector &rhs);	//Copy assignment
+	vector(vector &&rhs);	// Move constructor
+	vector & operator=(vector &&rhs);	//Move assignment
 	typedef T value_type; // make T available externally
 	inline T & operator[](const int i);	//i'th element
 	inline const T & operator[](const int i) const; //i'th element
@@ -148,51 +152,51 @@ public:
 	inline const bool empty() const; // check if vector is empty
 	void resize(int newn); // resize (contents not preserved)
 	void assign(int newn, const T &a); // resize and assign a constant value
-	NRvector operator+(const NRvector &other) const;	// addition operator
-	NRvector operator-(const NRvector &other) const;	// subtract operator
-	NRvector operator*(const T &a) const;	// multiply by number operator
-	NRvector operator/(const T &a) const;	// divide by number operator
+	vector operator+(const vector &other) const;	// addition operator
+	vector operator-(const vector &other) const;	// subtract operator
+	vector operator*(const T &a) const;	// multiply by number operator
+	vector operator/(const T &a) const;	// divide by number operator
 	T norm2() const; // norm of the vector
 	template<class TT>
-	friend NRvector<TT> operator*(const NRmatrix<TT>& mat, const NRvector<TT>& vec); // matrix-vector multiplication
+	friend vector<TT> operator*(const matrix<TT>& mat, const vector<TT>& vec); // matrix-vector multiplication
 	template<class TT>
-	friend TT dot_prod(const NRvector<TT> first, const NRvector<TT> second); // dot product of two vectors
-	~NRvector();
+	friend TT dot_prod(const vector<TT> first, const vector<TT> second); // dot product of two vectors
+	~vector();
 };
 
-// NRvector definitions
+// vector definitions
 
 template <class T>
-NRvector<T>::NRvector() : nn(0), v(NULL) {}
+vector<T>::vector() : nn(0), v(NULL) {}
 
 // Zero-based array
 template <class T>
-NRvector<T>::NRvector(int n) : nn(n), v(n>0 ? new T[n] : NULL) {}
+vector<T>::vector(int n) : nn(n), v(n>0 ? new T[n] : NULL) {}
 
 // Initialize to constant value
 template <class T>
-NRvector<T>::NRvector(int n, const T& a) : nn(n), v(n>0 ? new T[n] : NULL)
+vector<T>::vector(int n, const T& a) : nn(n), v(n>0 ? new T[n] : NULL)
 {
 	for(int i=0; i<n; i++) v[i] = a;
 }
 
 // Initialize to array
 template <class T>
-NRvector<T>::NRvector(int n, const T *a) : nn(n), v(n>0 ? new T[n] : NULL)
+vector<T>::vector(int n, const T *a) : nn(n), v(n>0 ? new T[n] : NULL)
 {
 	for(int i=0; i<n; i++) v[i] = *a++;
 }
 
 // Copy constructor
 template <class T>
-NRvector<T>::NRvector(const NRvector<T> &rhs) : nn(rhs.nn), v(nn>0 ? new T[nn] : NULL)
+vector<T>::vector(const vector<T> &rhs) : nn(rhs.nn), v(nn>0 ? new T[nn] : NULL)
 {
 	for(int i=0; i<nn; i++) v[i] = rhs[i];
 }
 
 // Move constructor
 template <class T>
-NRvector<T>::NRvector(NRvector<T> &&rhs) : nn(rhs.nn), v(nn>0 ? rhs.v : NULL)
+vector<T>::vector(vector<T> &&rhs) : nn(rhs.nn), v(nn>0 ? rhs.v : NULL)
 {
 	rhs.nn = 0;
 	rhs.v = NULL;
@@ -200,7 +204,7 @@ NRvector<T>::NRvector(NRvector<T> &&rhs) : nn(rhs.nn), v(nn>0 ? rhs.v : NULL)
 
 // Copy assignment
 template <class T>
-NRvector<T> & NRvector<T>::operator=(const NRvector<T> &rhs)
+vector<T> & vector<T>::operator=(const vector<T> &rhs)
 // postcondition: normal assignment via copying has been performed;
 //		if vector and rhs were different sizes, vector
 //		has been resized to match the size of rhs
@@ -220,7 +224,7 @@ NRvector<T> & NRvector<T>::operator=(const NRvector<T> &rhs)
 
 // Move assignment
 template <class T>
-NRvector<T> & NRvector<T>::operator=(NRvector<T> &&rhs)
+vector<T> & vector<T>::operator=(vector<T> &&rhs)
 {
 	// std::cout << "vector move assignment!" << std::endl;
 	if (this != &rhs)
@@ -236,11 +240,11 @@ NRvector<T> & NRvector<T>::operator=(NRvector<T> &&rhs)
 
 //i'th element
 template <class T>
-inline T & NRvector<T>::operator[](const int i)	//subscripting
+inline T & vector<T>::operator[](const int i)	//subscripting
 {
 #ifdef _CHECKBOUNDS_
 if (i<0 || i>=nn) {
-	throw("NRvector subscript out of bounds");
+	throw("vector subscript out of bounds");
 }
 #endif
 	return v[i];
@@ -248,11 +252,11 @@ if (i<0 || i>=nn) {
 
 //i'th element
 template <class T>
-inline const T & NRvector<T>::operator[](const int i) const	//subscripting
+inline const T & vector<T>::operator[](const int i) const	//subscripting
 {
 #ifdef _CHECKBOUNDS_
 if (i<0 || i>=nn) {
-	throw("NRvector subscript out of bounds");
+	throw("vector subscript out of bounds");
 }
 #endif
 	return v[i];
@@ -260,11 +264,11 @@ if (i<0 || i>=nn) {
 
 //i'th element
 template <class T>
-inline T & NRvector<T>::operator()(const int i)	//subscripting
+inline T & vector<T>::operator()(const int i)	//subscripting
 {
 #ifdef _CHECKBOUNDS_
 if (i<0 || i>=nn) {
-	throw("NRvector subscript out of bounds");
+	throw("vector subscript out of bounds");
 }
 #endif
 	return v[i];
@@ -272,11 +276,11 @@ if (i<0 || i>=nn) {
 
 //i'th element
 template <class T>
-inline const T & NRvector<T>::operator()(const int i) const	//subscripting
+inline const T & vector<T>::operator()(const int i) const	//subscripting
 {
 #ifdef _CHECKBOUNDS_
 if (i<0 || i>=nn) {
-	throw("NRvector subscript out of bounds");
+	throw("vector subscript out of bounds");
 }
 #endif
 	return v[i];
@@ -284,21 +288,21 @@ if (i<0 || i>=nn) {
 
 // size of the vector
 template <class T>
-inline int NRvector<T>::size() const
+inline int vector<T>::size() const
 {
 	return nn;
 }
 
 // check if vector is empty
 template <class T>
-inline const bool NRvector<T>::empty() const
+inline const bool vector<T>::empty() const
 {
 	return (v == NULL);
 }
 
 // resize the vector do not vector values
 template <class T>
-void NRvector<T>::resize(int newn)
+void vector<T>::resize(int newn)
 {
 	if (newn != nn) {
 		if (v != NULL) delete[] (v);
@@ -309,7 +313,7 @@ void NRvector<T>::resize(int newn)
 
 // resize and assign a constant value
 template <class T>
-void NRvector<T>::assign(int newn, const T& a)
+void vector<T>::assign(int newn, const T& a)
 {
 	if (newn != nn) {
 		if (v != NULL) delete[] (v);
@@ -321,13 +325,13 @@ void NRvector<T>::assign(int newn, const T& a)
 
 // addition operator
 template <class T>
-NRvector<T> NRvector<T>::operator+(const NRvector<T> &other) const
+vector<T> vector<T>::operator+(const vector<T> &other) const
 {
 	if (v==NULL) throw("Trying to add empty vector!");
 	if (other.v==NULL) throw("Trying to add empty vector!");
-	if (nn != other.nn) throw("NRvector dimensions do not match for addition!");
+	if (nn != other.nn) throw("vector dimensions do not match for addition!");
 
-	NRvector<T> res(nn);
+	vector<T> res(nn);
 	for (int i = 0; i<nn; i++) res[i] = v[i] + other[i];
 
 	return res;
@@ -335,13 +339,13 @@ NRvector<T> NRvector<T>::operator+(const NRvector<T> &other) const
 
 // subtract operator
 template <class T>
-NRvector<T> NRvector<T>::operator-(const NRvector<T> &other) const
+vector<T> vector<T>::operator-(const vector<T> &other) const
 {
 	if (v==NULL) throw("error: empty vector!");
 	if (other.v==NULL) throw("error: empty vector!");
 	if (nn != other.nn) throw("vector dimensions mismatch!");
 
-	NRvector<T> res(nn);
+	vector<T> res(nn);
 	for (int i = 0; i<nn; i++) res[i] = v[i] - other[i];
 
 	return res;
@@ -349,11 +353,11 @@ NRvector<T> NRvector<T>::operator-(const NRvector<T> &other) const
 
 // Multiply vector by number
 template <class T>
-NRvector<T> NRvector<T>::operator*(const T &a) const
+vector<T> vector<T>::operator*(const T &a) const
 {
 	if (v==NULL) throw("Trying to multiply empty vector!");
 
-	NRvector<T> res(nn);
+	vector<T> res(nn);
 	for (int i = 0; i<nn; i++) res[i] = a * v[i];
 
 	return res;
@@ -361,18 +365,18 @@ NRvector<T> NRvector<T>::operator*(const T &a) const
 
 // Multiply number by vector
 template<class T>
-inline NRvector<T> operator*(const T &a, const NRvector<T> &vec)
+inline vector<T> operator*(const T &a, const vector<T> &vec)
 {
 	return vec * a;
 }
 
 // divide vector by number
 template <class T>
-NRvector<T> NRvector<T>::operator/(const T &a) const
+vector<T> vector<T>::operator/(const T &a) const
 {
 	if (v==NULL) throw("error:empty vector!");
 
-	NRvector<T> res(nn);
+	vector<T> res(nn);
 	for (int i = 0; i<nn; i++) res[i] = v[i]/a;
 
 	return res;
@@ -380,7 +384,7 @@ NRvector<T> NRvector<T>::operator/(const T &a) const
 
 // norm of the vector
 template<class T>
-T NRvector<T>::norm2() const
+T vector<T>::norm2() const
 {
 	if (v==NULL) throw("vector is empty!");
 
@@ -392,7 +396,7 @@ T NRvector<T>::norm2() const
 
 // dot product of two vectors
 template<class T>
-inline T dot_prod(const NRvector<T> first, const NRvector<T> second)
+inline T dot_prod(const vector<T> first, const vector<T> second)
 {
 	if (first.v == NULL) throw("error: vector is empty!");
 	if (second.v == NULL) throw("error: vector is empty!");
@@ -407,32 +411,35 @@ inline T dot_prod(const NRvector<T> first, const NRvector<T> second)
 }
 
 template <class T>
-NRvector<T>::~NRvector()
+vector<T>::~vector()
 {
 	if (v != NULL) delete[] (v);
 }
 
-// end of NRvector definitions
+// end of vector definitions
 
 #endif //ifdef _USESTDVECTOR_
 
-
+//*************************************************************************************************
+//*************************************************************************************************
 // definition of matrix class
+//*************************************************************************************************
+//*************************************************************************************************
 template <class T>
-class NRmatrix {
+class matrix {
 private:
 	int nn;
 	int mm;
 	T **v;
 public:
-	NRmatrix(); // default constructor
-	NRmatrix(int n, int m);			// Zero-based array
-	NRmatrix(int n, int m, const T &a);	//Initialize to constant
-	NRmatrix(int n, int m, const T *a);	// Initialize to array
-	NRmatrix(const NRmatrix &rhs);		// Copy constructor
-	NRmatrix(NRmatrix &&rhs);		// move constructor
-	NRmatrix & operator=(const NRmatrix &rhs);	//copy assignment
-	NRmatrix & operator=(NRmatrix &&rhs);	//move assignment
+	matrix(); // default constructor
+	matrix(int n, int m);			// Zero-based array
+	matrix(int n, int m, const T &a);	//Initialize to constant
+	matrix(int n, int m, const T *a);	// Initialize to array
+	matrix(const matrix &rhs);		// Copy constructor
+	matrix(matrix &&rhs);		// move constructor
+	matrix & operator=(const matrix &rhs);	//copy assignment
+	matrix & operator=(matrix &&rhs);	//move assignment
 	typedef T value_type; // make T available externally
 	inline T* operator[](const int i);	//subscripting: pointer to row i
 	inline const T* operator[](const int i) const; //subscripting: pointer to row i
@@ -443,23 +450,23 @@ public:
 	inline const bool empty() const; // check if matrix is empty
 	void resize(int newn, int newm); // resize (contents not preserved)
 	void assign(int newn, int newm, const T &a); // resize and assign a constant value
-	NRmatrix operator+(const NRmatrix& other) const; // matrix-matrix addition
-	NRmatrix operator-(const NRmatrix& other) const; // matrix-matrix addition
-	NRmatrix operator*(const T& num) const; // matrix-number multiplication
-	NRmatrix operator/(const T& num) const; // matrix-number multiplication
-	NRmatrix operator*(const NRmatrix& other) const; // matrix-matrix multiplication
+	matrix operator+(const matrix& other) const; // matrix-matrix addition
+	matrix operator-(const matrix& other) const; // matrix-matrix addition
+	matrix operator*(const T& num) const; // matrix-number multiplication
+	matrix operator/(const T& num) const; // matrix-number multiplication
+	matrix operator*(const matrix& other) const; // matrix-matrix multiplication
 	template<class TT>
-	friend NRvector<TT> operator*(const NRmatrix<TT>& mat, const NRvector<TT>& vec); // matrix-vector multiplication
-	~NRmatrix();
+	friend vector<TT> operator*(const matrix<TT>& mat, const vector<TT>& vec); // matrix-vector multiplication
+	~matrix();
 };
 
 // default constructor
 template <class T>
-NRmatrix<T>::NRmatrix() : nn(0), mm(0), v(NULL) {}
+matrix<T>::matrix() : nn(0), mm(0), v(NULL) {}
 
 // Zero-based array
 template <class T>
-NRmatrix<T>::NRmatrix(int n, int m) : nn(n), mm(m), v(n>0 ? new T*[n] : NULL)
+matrix<T>::matrix(int n, int m) : nn(n), mm(m), v(n>0 ? new T*[n] : NULL)
 {
 	int nel=m*n;
 	if (v) v[0] = nel>0 ? new T[nel] : NULL;
@@ -468,7 +475,7 @@ NRmatrix<T>::NRmatrix(int n, int m) : nn(n), mm(m), v(n>0 ? new T*[n] : NULL)
 
 //Initialize to constant
 template <class T>
-NRmatrix<T>::NRmatrix(int n, int m, const T &a) : nn(n), mm(m), v(n>0 ? new T*[n] : NULL)
+matrix<T>::matrix(int n, int m, const T &a) : nn(n), mm(m), v(n>0 ? new T*[n] : NULL)
 {
 	int i,j,nel=m*n;
 	if (v) v[0] = nel>0 ? new T[nel] : NULL;
@@ -478,7 +485,7 @@ NRmatrix<T>::NRmatrix(int n, int m, const T &a) : nn(n), mm(m), v(n>0 ? new T*[n
 
 // Initialize to array
 template <class T>
-NRmatrix<T>::NRmatrix(int n, int m, const T *a) : nn(n), mm(m), v(n>0 ? new T*[n] : NULL)
+matrix<T>::matrix(int n, int m, const T *a) : nn(n), mm(m), v(n>0 ? new T*[n] : NULL)
 {
 	int i,j,nel=m*n;
 	if (v) v[0] = nel>0 ? new T[nel] : NULL;
@@ -488,7 +495,7 @@ NRmatrix<T>::NRmatrix(int n, int m, const T *a) : nn(n), mm(m), v(n>0 ? new T*[n
 
 // Copy constructor
 template <class T>
-NRmatrix<T>::NRmatrix(const NRmatrix<T> &rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? new T*[nn] : NULL)
+matrix<T>::matrix(const matrix<T> &rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? new T*[nn] : NULL)
 {
 	// std::cout << "matrix copy constructor!" << std::endl;
 	int i,j,nel=mm*nn;
@@ -499,7 +506,7 @@ NRmatrix<T>::NRmatrix(const NRmatrix<T> &rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ?
 
 // move constructor
 template <class T>
-NRmatrix<T>::NRmatrix(NRmatrix<T> &&rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? rhs.v : NULL)
+matrix<T>::matrix(matrix<T> &&rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? rhs.v : NULL)
 {
 	// std::cout << "matrix move constructor!" << std::endl;
 	rhs.nn = 0;
@@ -509,7 +516,7 @@ NRmatrix<T>::NRmatrix(NRmatrix<T> &&rhs) : nn(rhs.nn), mm(rhs.mm), v(nn>0 ? rhs.
 
 //copy assignment
 template <class T>
-NRmatrix<T> & NRmatrix<T>::operator=(const NRmatrix<T> &rhs)
+matrix<T> & matrix<T>::operator=(const matrix<T> &rhs)
 // postcondition: normal assignment via copying has been performed;
 //		if matrix and rhs were different sizes, matrix
 //		has been resized to match the size of rhs
@@ -536,7 +543,7 @@ NRmatrix<T> & NRmatrix<T>::operator=(const NRmatrix<T> &rhs)
 
 //move assignment
 template <class T>
-NRmatrix<T> & NRmatrix<T>::operator=(NRmatrix<T> &&rhs)
+matrix<T> & matrix<T>::operator=(matrix<T> &&rhs)
 {
 	// std::cout << "matrix move assignment!" << std::endl;
 	if (this != &rhs) {
@@ -558,11 +565,11 @@ NRmatrix<T> & NRmatrix<T>::operator=(NRmatrix<T> &&rhs)
 
 //subscripting: pointer to row i
 template <class T>
-inline T* NRmatrix<T>::operator[](const int i)	//subscripting: pointer to row i
+inline T* matrix<T>::operator[](const int i)	//subscripting: pointer to row i
 {
 #ifdef _CHECKBOUNDS_
 if (i<0 || i>=nn) {
-	throw("NRmatrix subscript out of bounds");
+	throw("matrix subscript out of bounds");
 }
 #endif
 	return v[i];
@@ -570,11 +577,11 @@ if (i<0 || i>=nn) {
 
 //subscripting: pointer to row i
 template <class T>
-inline const T* NRmatrix<T>::operator[](const int i) const
+inline const T* matrix<T>::operator[](const int i) const
 {
 #ifdef _CHECKBOUNDS_
 if (i<0 || i>=nn) {
-	throw("NRmatrix subscript out of bounds");
+	throw("matrix subscript out of bounds");
 }
 #endif
 	return v[i];
@@ -582,14 +589,14 @@ if (i<0 || i>=nn) {
 
 //subscripting: reference to element at (i,j)
 template <class T>
-inline T& NRmatrix<T>::operator()(const int i, const int j)
+inline T& matrix<T>::operator()(const int i, const int j)
 {
 #ifdef _CHECKBOUNDS_
 if (i<0 || i>=nn) {
-	throw("NRmatrix subscript out of bounds");
+	throw("matrix subscript out of bounds");
 }
 if (j<0 || j>=mm) {
-	throw("NRmatrix subscript out of bounds");
+	throw("matrix subscript out of bounds");
 }
 #endif
 	return v[i][j];
@@ -597,14 +604,14 @@ if (j<0 || j>=mm) {
 
 //subscripting: reference to element at (i,j)
 template <class T>
-inline const T& NRmatrix<T>::operator()(const int i, const int j) const
+inline const T& matrix<T>::operator()(const int i, const int j) const
 {
 #ifdef _CHECKBOUNDS_
 if (i<0 || i>=nn) {
-	throw("NRmatrix subscript out of bounds");
+	throw("matrix subscript out of bounds");
 }
 if (j<0 || j>=mm) {
-	throw("NRmatrix subscript out of bounds");
+	throw("matrix subscript out of bounds");
 }
 #endif
 	return v[i][j];
@@ -612,28 +619,28 @@ if (j<0 || j>=mm) {
 
 // number of rows
 template <class T>
-inline int NRmatrix<T>::nrows() const
+inline int matrix<T>::nrows() const
 {
 	return nn;
 }
 
 // number of columns
 template <class T>
-inline int NRmatrix<T>::ncols() const
+inline int matrix<T>::ncols() const
 {
 	return mm;
 }
 
 // check if matrix is empty
 template <class T>
-inline const bool NRmatrix<T>::empty() const
+inline const bool matrix<T>::empty() const
 {
 	return (v == NULL);
 } 
 
 // resize (contents not preserved)
 template <class T>
-void NRmatrix<T>::resize(int newn, int newm)
+void matrix<T>::resize(int newn, int newm)
 {
 	int i,nel;
 	if (newn != nn || newm != mm) {
@@ -652,7 +659,7 @@ void NRmatrix<T>::resize(int newn, int newm)
 
 // resize and assign a constant value
 template <class T>
-void NRmatrix<T>::assign(int newn, int newm, const T& a)
+void matrix<T>::assign(int newn, int newm, const T& a)
 {
 	int i,j,nel;
 	if (newn != nn || newm != mm) {
@@ -672,12 +679,12 @@ void NRmatrix<T>::assign(int newn, int newm, const T& a)
 
 // matrix-matrix addition
 template<class T>
-NRmatrix<T> NRmatrix<T>::operator+(const NRmatrix<T>& other) const
+matrix<T> matrix<T>::operator+(const matrix<T>& other) const
 {
 	if (v == NULL) throw("error: empty matrix!");
 	if (other.v == NULL) throw("error: empty matrix!");
 	if ((nn != other.nn)||(mm!=other.mm)) throw("error: matrix dimensions mismatch!")
-	NRmatrix<T> res(nn,mm);
+	matrix<T> res(nn,mm);
 
 	for (int i=0; i<res.nn; i++)
 	{
@@ -691,12 +698,12 @@ NRmatrix<T> NRmatrix<T>::operator+(const NRmatrix<T>& other) const
 
 // matrix-matrix subtraction
 template<class T>
-NRmatrix<T> NRmatrix<T>::operator-(const NRmatrix<T>& other) const
+matrix<T> matrix<T>::operator-(const matrix<T>& other) const
 {
 	if (v == NULL) throw("error: empty matrix!");
 	if (other.v == NULL) throw("error: empty matrix!");
 	if ((nn != other.nn)||(mm!=other.mm)) throw("error: matrix dimensions mismatch!")
-	NRmatrix<T> res(nn,mm);
+	matrix<T> res(nn,mm);
 
 	for (int i=0; i<res.nn; i++)
 	{
@@ -710,10 +717,10 @@ NRmatrix<T> NRmatrix<T>::operator-(const NRmatrix<T>& other) const
 
 // matrix-number multiplication
 template<class T>
-NRmatrix<T> NRmatrix<T>::operator*(const T& num) const
+matrix<T> matrix<T>::operator*(const T& num) const
 {
 	if (v == NULL) throw("error: empty matrix!");	
-	NRmatrix<T> res(nn,mm);
+	matrix<T> res(nn,mm);
 
 	for (int i=0; i<res.nn; i++)
 	{
@@ -726,17 +733,17 @@ NRmatrix<T> NRmatrix<T>::operator*(const T& num) const
 }
 
 template<class T>
-inline NRmatrix<T> operator*(const T& num, const NRmatrix<T>& mat)
+inline matrix<T> operator*(const T& num, const matrix<T>& mat)
 {
 	return mat*num;
 }
 
 // matrix-number division
 template<class T>
-NRmatrix<T> NRmatrix<T>::operator/(const T& num) const
+matrix<T> matrix<T>::operator/(const T& num) const
 {
 	if (v == NULL) throw("error: empty matrix!");	
-	NRmatrix<T> res(nn,mm);
+	matrix<T> res(nn,mm);
 
 	for (int i=0; i<res.nn; i++)
 	{
@@ -750,13 +757,13 @@ NRmatrix<T> NRmatrix<T>::operator/(const T& num) const
 
 // matrix-matrix multiplication
 template<class T>
-NRmatrix<T> NRmatrix<T>::operator*(const NRmatrix<T>& other) const
+matrix<T> matrix<T>::operator*(const matrix<T>& other) const
 {
 	if (v == NULL) throw("error: empty matrix!");
 	if (other.v == NULL) throw("error: empty matrix!");
 	if (mm != other.nn) throw("multiplication error: size mismatch!");
 	
-	NRmatrix<T> res(nn,other.mm);
+	matrix<T> res(nn,other.mm);
 	T sum = static_cast<T>(0);
 
 	for (int i=0; i<res.nn; i++)
@@ -776,7 +783,7 @@ NRmatrix<T> NRmatrix<T>::operator*(const NRmatrix<T>& other) const
 
 // deconstructor
 template <class T>
-NRmatrix<T>::~NRmatrix()
+matrix<T>::~matrix()
 {
 	if (v != NULL) {
 		delete[] (v[0]);
@@ -786,7 +793,7 @@ NRmatrix<T>::~NRmatrix()
 
 // matrix-vector multiplication
 template<class T>
-NRvector<T> operator*(const NRmatrix<T>& mat, const NRvector<T>& vec)
+vector<T> operator*(const matrix<T>& mat, const vector<T>& vec)
 {
 	#ifdef _CHECKEMPTY_
 	if (vec.empty()) throw("error: empty vector!");
@@ -797,7 +804,7 @@ NRvector<T> operator*(const NRmatrix<T>& mat, const NRvector<T>& vec)
 	if (vec.size() != mat.ncols()) throw("multiplication error: size mismatch!");
 	#endif // end _CHECKDIMENSIONS_
 	
-	NRvector<T> res(mat.nrows());
+	vector<T> res(mat.nrows());
 	T sum = static_cast<T>(0);
 
 	for (int i=0; i<res.size(); i++)
@@ -812,74 +819,210 @@ NRvector<T> operator*(const NRmatrix<T>& mat, const NRvector<T>& vec)
 	return res;
 }
 
+//*************************************************************************************************
+//*************************************************************************************************
 // definition of 3D matrix class
+//*************************************************************************************************
+//*************************************************************************************************
 template <class T>
-class NRMat3d {
+class matrix3d {
 private:
 	int nn;
 	int mm;
 	int kk;
 	T ***v;
 public:
-	NRMat3d();
-	NRMat3d(int n, int m, int k);
-	inline T** operator[](const int i);	//subscripting: pointer to row i
-	inline const T* const * operator[](const int i) const;
-	inline int dim1() const;
-	inline int dim2() const;
-	inline int dim3() const;
-	~NRMat3d();
+	matrix3d(); // constructor
+	matrix3d(const int n, const int m, const int k); // zero-based array
+	matrix3d(const int n, const int m, const int k, const T &a ); // initiallize to constant value
+	matrix3d(const matrix3d &rhs); // copy constructor
+	matrix3d(const matrix3d &&rhs); // move constructor
+	inline T** operator()(const int i);	//subscripting: pointer to row i
+	inline T& operator()(const int i, const int j, const int k);	//subscripting: reference to element at (i,j,k)
+	inline const T& operator()(const int i, const int j, const int k) const; //subscripting: reference to element at (i,j,k)
+	inline const T* const * operator()(const int i) const; //subscripting: pointer to row i
+	inline int dim1() const; //size of dimension 1
+	inline int dim2() const; //size of dimension 2
+	inline int dim3() const; //size of dimension 3
+	~matrix3d(); // deconstructor
 };
 
+// constructor
 template <class T>
-NRMat3d<T>::NRMat3d(): nn(0), mm(0), kk(0), v(NULL) {}
+matrix3d<T>::matrix3d(): nn(0), mm(0), kk(0), v(NULL) {}
 
+// zero-based array
 template <class T>
-NRMat3d<T>::NRMat3d(int n, int m, int k) : nn(n), mm(m), kk(k), v(new T**[n])
+matrix3d<T>::matrix3d(const int n, const int m, const int k) : nn(n), mm(m), kk(k), v(new T**[n])
 {
 	int i,j;
 	v[0] = new T*[n*m];
 	v[0][0] = new T[n*m*k];
-	for(j=1; j<m; j++) v[0][j] = v[0][j-1] + k;
-	for(i=1; i<n; i++) {
+	for(j=1; j<m; j++)
+	{
+		v[0][j] = v[0][j-1] + k;
+	}
+	for(i=1; i<n; i++)
+	{
 		v[i] = v[i-1] + m;
 		v[i][0] = v[i-1][0] + m*k;
-		for(j=1; j<m; j++) v[i][j] = v[i][j-1] + k;
+		for(j=1; j<m; j++)
+		{
+			v[i][j] = v[i][j-1] + k;
+		}
 	}
 }
 
+// initiallize to constant value
 template <class T>
-inline T** NRMat3d<T>::operator[](const int i) //subscripting: pointer to row i
+matrix3d<T>::matrix3d(const int n, const int m, const int k, const T &a) : nn(n), mm(m), kk(k), v(new T**[n])
+{
+	int i,j;
+	v[0] = new T*[n*m];
+	v[0][0] = new T[n*m*k];
+	for(j=1; j<m; j++)
+	{
+		v[0][j] = v[0][j-1] + k;
+	}
+	for(i=1; i<n; i++)
+	{
+		v[i] = v[i-1] + m;
+		v[i][0] = v[i-1][0] + m*k;
+		for(j=1; j<m; j++)
+		{
+			v[i][j] = v[i][j-1] + k;
+		}
+	}
+	for (int i=0; i<nn; i++)
+	{
+		for (int j=0; j<mm; j++)
+		{
+			for (int l=0; l<kk; l++)
+			{
+				v[i][j][l] = a;
+			}
+		}
+	}
+}
+
+// copy constructor
+template<class T>
+matrix3d<T>::matrix3d(const matrix3d<T> &rhs): nn(rhs.nn), mm(rhs.mm), kk(rhs.kk), v(nn>0 ? new T**[nn] : NULL)
+{
+	if (v)
+	{
+		v[0] = nn*mm>0 ? new T*[nn*mm] : NULL;
+	}
+	if (v[0])
+	{
+		v[0][0] = nn*mm*kk>0 ? new T[nn*mm*kk] : NULL;
+	}
+	for (int i=1; i< nn; i++)
+	{
+		v[i] = v[i-1] + mm;
+		for (int j=1; j<mm; j++)
+		{
+			v[i][j] = v[i][j-1]+kk;
+		}
+	}
+	for (int i=0; i<nn; i++)
+	{
+		for (int j=0; j<mm; j++)
+		{
+			for (int k=0; k<kk; k++)
+			{
+				v[i][j][k] = rhs(i,j,k);
+			}
+		}
+	}
+}
+
+// move constructor
+template<class T>
+matrix3d<T>::matrix3d(const matrix3d<T> &&rhs): nn(rhs.nn), mm(rhs.mm), kk(rhs.kk), v(nn>0 ? rhs.v : NULL)
+{
+	rhs.nn = 0;
+	rhs.mm = 0;
+	rhs.kk = 0;
+	rhs.v = NULL;
+}
+
+//subscripting: pointer to row i
+template <class T>
+inline T** matrix3d<T>::operator()(const int i) 
 {
 	return v[i];
 }
 
+//subscripting: pointer to row i
 template <class T>
-inline const T* const * NRMat3d<T>::operator[](const int i) const
+inline const T* const * matrix3d<T>::operator()(const int i) const
 {
 	return v[i];
 }
 
+//subscripting: reference to element at (i,j,k)
 template <class T>
-inline int NRMat3d<T>::dim1() const
+inline T& matrix3d<T>::operator()(const int i, const int j, const int k)
+{
+	#ifdef _CHECKBOUNDS_
+	if (i<0 || i>=dim1())
+	{
+		throw("matrix subscript out of bounds");
+	}
+	if (j<0 || j>=dim2())
+	{
+		throw("matrix subscript out of bounds");
+	}
+	if (k<0 || k>=dim3())
+	{
+		throw("matrix subscript out of bounds");
+	}
+	#endif
+	return v[i][j][k];
+}
+
+//subscripting: reference to element at (i,j,k)
+template <class T>
+inline const T& matrix3d<T>::operator()(const int i, const int j, const int k) const
+{
+	#ifdef _CHECKBOUNDS_
+	if (i<0 || i>=dim1())
+	{
+		throw("matrix subscript out of bounds");
+	}
+	if (j<0 || j>=dim2())
+	{
+		throw("matrix subscript out of bounds");
+	}
+	if (k<0 || k>=dim3())
+	{
+		throw("matrix subscript out of bounds");
+	}
+	#endif
+	return v[i][j][k];
+}
+
+template <class T>
+inline int matrix3d<T>::dim1() const
 {
 	return nn;
 }
 
 template <class T>
-inline int NRMat3d<T>::dim2() const
+inline int matrix3d<T>::dim2() const
 {
 	return mm;
 }
 
 template <class T>
-inline int NRMat3d<T>::dim3() const
+inline int matrix3d<T>::dim3() const
 {
 	return kk;
 }
 
 template <class T>
-NRMat3d<T>::~NRMat3d()
+matrix3d<T>::~matrix3d()
 {
 	if (v != NULL) {
 		delete[] (v[0][0]);
@@ -890,72 +1033,75 @@ NRMat3d<T>::~NRMat3d()
 
 // vector types
 
-typedef const NRvector<Int> vec_int_I;
-typedef NRvector<Int> vec_int, vec_int_O, vec_int_IO;
+typedef const vector<Int> vec_int_I;
+typedef vector<Int> vec_int, vec_int_O, vec_int_IO;
 
-typedef const NRvector<Uint> vec_uint_I;
-typedef NRvector<Uint> vec_uint, vec_uint_O, vec_uint_IO;
+typedef const vector<Uint> vec_uint_I;
+typedef vector<Uint> vec_uint, vec_uint_O, vec_uint_IO;
 
-typedef const NRvector<Llong> vec_llong_I;
-typedef NRvector<Llong> vec_llong, vec_llong_O, vec_llong_IO;
+typedef const vector<Llong> vec_llong_I;
+typedef vector<Llong> vec_llong, vec_llong_O, vec_llong_IO;
 
-typedef const NRvector<Ullong> vec_ullong_I;
-typedef NRvector<Ullong> vec_ullong, vec_ullong_O, vec_ullong_IO;
+typedef const vector<Ullong> vec_ullong_I;
+typedef vector<Ullong> vec_ullong, vec_ullong_O, vec_ullong_IO;
 
-typedef const NRvector<Char> vec_char_I;
-typedef NRvector<Char> vec_char, vec_char_O, vec_char_IO;
+typedef const vector<Char> vec_char_I;
+typedef vector<Char> vec_char, vec_char_O, vec_char_IO;
 
-typedef const NRvector<Char*> vec_charp_I;
-typedef NRvector<Char*> vec_charp, vec_charp_O, vec_charp_IO;
+typedef const vector<Char*> vec_charp_I;
+typedef vector<Char*> vec_charp, vec_charp_O, vec_charp_IO;
 
-typedef const NRvector<Uchar> vec_uchar_I;
-typedef NRvector<Uchar> vec_uchar, vec_uchar_O, vec_uchar_IO;
+typedef const vector<Uchar> vec_uchar_I;
+typedef vector<Uchar> vec_uchar, vec_uchar_O, vec_uchar_IO;
 
-typedef const NRvector<Doub> vec_doub_I;
-typedef NRvector<Doub> vec_doub, vec_doub_O, vec_doub_IO;
+typedef const vector<Doub> vec_doub_I;
+typedef vector<Doub> vec_doub, vec_doub_O, vec_doub_IO;
 
-typedef const NRvector<Doub*> vec_doubp_I;
-typedef NRvector<Doub*> vec_doubp, vec_doubp_O, vec_doubp_IO;
+typedef const vector<Doub*> vec_doubp_I;
+typedef vector<Doub*> vec_doubp, vec_doubp_O, vec_doubp_IO;
 
-typedef const NRvector<Complex> vec_complex_I;
-typedef NRvector<Complex> vec_complex, vec_complex_O, vec_complex_IO;
+typedef const vector<Complex> vec_complex_I;
+typedef vector<Complex> vec_complex, vec_complex_O, vec_complex_IO;
 
-typedef const NRvector<Bool> vec_bool_I;
-typedef NRvector<Bool> vec_bool, vec_bool_O, vec_bool_IO;
+typedef const vector<Bool> vec_bool_I;
+typedef vector<Bool> vec_bool, vec_bool_O, vec_bool_IO;
 
 // matrix types
 
-typedef const NRmatrix<Int> mat_int_I;
-typedef NRmatrix<Int> mat_int, mat_int_O, mat_int_IO;
+typedef const matrix<Int> mat_int_I;
+typedef matrix<Int> mat_int, mat_int_O, mat_int_IO;
 
-typedef const NRmatrix<Uint> mat_uint_I;
-typedef NRmatrix<Uint> mat_uint, mat_uint_O, mat_uint_IO;
+typedef const matrix<Uint> mat_uint_I;
+typedef matrix<Uint> mat_uint, mat_uint_O, mat_uint_IO;
 
-typedef const NRmatrix<Llong> mat_llong_I;
-typedef NRmatrix<Llong> mat_llong, mat_llong_O, mat_llong_IO;
+typedef const matrix<Llong> mat_llong_I;
+typedef matrix<Llong> mat_llong, mat_llong_O, mat_llong_IO;
 
-typedef const NRmatrix<Ullong> mat_ullong_I;
-typedef NRmatrix<Ullong> mat_ullong, mat_ullong_O, mat_ullong_IO;
+typedef const matrix<Ullong> mat_ullong_I;
+typedef matrix<Ullong> mat_ullong, mat_ullong_O, mat_ullong_IO;
 
-typedef const NRmatrix<Char> mat_char_I;
-typedef NRmatrix<Char> mat_char, mat_char_O, mat_char_IO;
+typedef const matrix<Char> mat_char_I;
+typedef matrix<Char> mat_char, mat_char_O, mat_char_IO;
 
-typedef const NRmatrix<Uchar> mat_uchar_I;
-typedef NRmatrix<Uchar> mat_uchar, mat_uchar_O, mat_uchar_IO;
+typedef const matrix<Uchar> mat_uchar_I;
+typedef matrix<Uchar> mat_uchar, mat_uchar_O, mat_uchar_IO;
 
-typedef const NRmatrix<Doub> mat_doub_I;
-typedef NRmatrix<Doub> mat_doub, mat_doub_O, mat_doub_IO;
+typedef const matrix<Doub> mat_doub_I;
+typedef matrix<Doub> mat_doub, mat_doub_O, mat_doub_IO;
 
-typedef const NRmatrix<Complex> mat_complex_I;
-typedef NRmatrix<Complex> mat_complex, mat_complex_O, mat_complex_IO;
+typedef const matrix<Complex> mat_complex_I;
+typedef matrix<Complex> mat_complex, mat_complex_O, mat_complex_IO;
 
-typedef const NRmatrix<Bool> mat_bool_I;
-typedef NRmatrix<Bool> mat_bool, mat_bool_O, mat_bool_IO;
+typedef const matrix<Bool> mat_bool_I;
+typedef matrix<Bool> mat_bool, mat_bool_O, mat_bool_IO;
 
 // 3D matrix types
 
-typedef const NRMat3d<Doub> mat_3d_doub_I;
-typedef NRMat3d<Doub> mat_3d_doub, mat_3d_doub_O, mat_3d_doub_IO;
+typedef const matrix3d<Doub> mat3d_doub_I;
+typedef matrix3d<Doub> mat_3d_doub, mat3d_doub_O, mat3d_doub_IO;
+
+typedef const matrix3d<Complex> mat3d_complex_I;
+typedef matrix3d<Complex> mat3d_complex, mat3d_complex_O, mat3d_complex_IO;
 
 // Floating Point Exceptions for Microsoft compilers
 
