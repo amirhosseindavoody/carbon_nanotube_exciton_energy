@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 
 	cnts[0].geometry();
 	cnts[0].electron();
-	// cnts[0].dielectric();
+	cnts[0].dielectric();
 
 	// for (int i=0; i<10; i++) std::cout << ip[i] << "  ";
 	// std::cout << std::endl;

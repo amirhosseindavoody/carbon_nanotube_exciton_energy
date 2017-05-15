@@ -26,7 +26,7 @@ namespace nr
 	typedef double Doub; // default floating type
 	typedef long double Ldoub;
 
-	typedef std::complex<double> Complex; // default complex type
+	typedef std::complex<double> cmplx; // default complex type
 
 	typedef bool Bool;
 

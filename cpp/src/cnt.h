@@ -50,7 +50,8 @@ private:
 	// nr::mat_doub pos_aa, pos_ab, pos_ba, pos_bb; // distance between atoms and A and B sites which conserves lattice symmetry.
 
 	nr::mat_doub el_energy; // energy of electronic states
-	nr::mat_complex el_psi; // electronic wave functions corresponding to electronic states
+	nr::mat3d_complex el_psi; // electronic wave functions corresponding to electronic states
+	// nr::mat_complex el_psi; // electronic wave functions corresponding to electronic states
 
 	nr::vec_doub epsilon; // static dielectric function
 

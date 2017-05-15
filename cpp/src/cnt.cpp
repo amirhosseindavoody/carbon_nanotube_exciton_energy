@@ -252,8 +252,9 @@ void cnt::electron()
 
 	int NK = 2*nk;
 
+
 	el_energy.assign(2*Nu, NK, 0.0);
-	el_psi.assign((2*Nu)*(2*Nu), NK, 0.0);
+	el_psi.assign(2*Nu, 2*Nu, NK, nr::cmplx(0.0));
 	
 	double t_len = t_vec_3d.norm2();
 
@@ -268,7 +269,6 @@ void cnt::electron()
 		H.assign(2*Nu, 2*Nu, 0.0);
 		S.assign(2*Nu, 2*Nu, 0.0);
 
-		typedef std::complex<double> cmplx;
 		for (int i=0; i<2*Nu; i++)
 		{
 			H(i,i) = (e2p,0.e0);
@@ -277,8 +277,8 @@ void cnt::electron()
 				int j = nn_list(i,k);
 				int l = nn_tvec_index(i,k);
 
-				H(i,j) = H(i,j)+cmplx(t0,0.e0)*exp(cmplx(0.0,wave_vec*double(l)*t_len));
-				S(i,j) = S(i,j)+cmplx(s0,0.e0)*exp(cmplx(0.0,wave_vec*double(l)*t_len));
+				H(i,j) = H(i,j)+nr::cmplx(t0,0.e0)*exp(nr::cmplx(0.0,wave_vec*double(l)*t_len));
+				S(i,j) = S(i,j)+nr::cmplx(s0,0.e0)*exp(nr::cmplx(0.0,wave_vec*double(l)*t_len));
 			}
 		}
 
@@ -299,7 +299,7 @@ void cnt::electron()
 		// fix the phase of the eigen vectors
 		for (int i=0; i<C.ncols(); i++)
 		{
-			cmplx phi = std::conj(C(0,i))/std::abs(C(0,i));
+			nr::cmplx phi = std::conj(C(0,i))/std::abs(C(0,i));
 			for (int j=0; j<C.nrows(); j++)
 			{
 				C(j,i) = C(j,i)*phi;
@@ -309,7 +309,7 @@ void cnt::electron()
 		// // check normalization of the eigen vectors
 		// for (int i=0; i<C.ncols(); i++)
 		// {
-		// 	cmplx sum(0.0,0.0);
+		// 	nr::cmplx sum(0.0,0.0);
 		// 	for (int j=0; j<C.nrows(); j++)
 		// 	{
 		// 		sum += std::conj(C(j,0))*C(j,i);
@@ -322,7 +322,7 @@ void cnt::electron()
 			el_energy(i,n) = E(i);
 			for (int j=0; j<C.nrows(); j++)
 			{
-				el_psi(i*C.ncols()+j,n) = C(j,i);
+				el_psi(j,i,n) = C(j,i);
 			}
 		}
 
@@ -338,14 +338,15 @@ void cnt::dielectric()
 
 	// calculate v_q
 
-	int Nq = nk;
-	nr::mat_complex v_q((2*Nu)*(2*Nu), Nq, 0.0);
+	int Nq = 2*nk;
+	nr::mat3d_complex v_q(2*Nu, 2*Nu, Nq, nr::cmplx(0.0));
+	nr::vec_doub wave_vec(Nq, 0.0);
 
 	double t_len = t_vec_3d.norm2();
 	double factor = nr::sqr(4*constants::pi*constants::eps0*Upp/nr::sqr(constants::q0));
 	for(int iq = 0; iq<Nq; iq++)
 	{
-		double wave_vec = iq*dk_l.norm2();
+		wave_vec(iq) = double(iq-Nq/2)*dk_l.norm2();
 		for (int i=-int(number_of_cnt_unit_cells/2); i<int(number_of_cnt_unit_cells/2); i++)
 		{
 			for (int b=0; b<2*Nu; b++)
@@ -358,12 +359,45 @@ void cnt::dielectric()
 					double dR2 = dx*dx+dy*dy+dz*dz;
 
 					double I = Upp/sqrt(1+factor*dR2);
-					// v_q(b*(2*Nu)+bp, iq) += cmplx(1.0/double(number_of_cnt_unit_cells))*exp(cmplx(0.0,wave_vec*double(i)*t_len))*I;
+					v_q(b,bp,iq) += nr::cmplx(1.0/double(number_of_cnt_unit_cells))*exp(nr::cmplx(0.0,wave_vec(iq)*double(i)*t_len))*I;
 				}
 			}
 		}
 		// std::cout << "calculating dielectric function: v_q(" << iq << ") = " << v_q(iq) << std::endl;
 	}
+
+	// open file to save v_q
+	std::ofstream file_vq_real, file_vq_imag;
+	file_vq_real.open(name+".vq.real.dat", std::ios::app);
+	file_vq_imag.open(name+".vq.imag.dat", std::ios::app);
+
+	file_vq_real << std::scientific;
+	file_vq_real << std::showpos;
+	file_vq_imag << std::scientific;
+	file_vq_imag << std::showpos;
+	for (int iq=0; iq<v_q.dim3(); iq++)
+	{
+		file_vq_real << wave_vec(iq) << "\t";
+		file_vq_imag << wave_vec(iq) << "\t";
+	}
+	file_vq_real << "\n";
+	file_vq_imag << "\n";
+	for (int b=0; b<v_q.dim1(); b++)
+	{
+		for (int bp=0; bp<v_q.dim2(); bp++)
+		{
+			for (int iq=0; iq<v_q.dim3(); iq++)
+			{
+				file_vq_real << std::real(v_q(b,bp,iq)/constants::eV) << "\t";
+				file_vq_imag << std::imag(v_q(b,bp,iq)/constants::eV) << "\t";
+			}
+			file_vq_real << "\n";
+			file_vq_imag << "\n";
+		}
+	}
+	file_vq_real.close();
+	file_vq_imag.close();
+
 
 	// v_q = v_q/cmplx(nr::sqr(2*Nu),0.0);
 

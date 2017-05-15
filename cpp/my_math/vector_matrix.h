@@ -70,7 +70,7 @@ template<class T>
 inline void swap(T &a, T &b)
 	{T dum=a; a=b; b=dum;}
 
-// // greatest common divisor
+// greatest common divisor
 inline int gcd ( const int a, const int b ) 
 { 
   int c;
@@ -410,13 +410,12 @@ inline T dot_prod(const vector<T> first, const vector<T> second)
 	return sum;
 }
 
+// deconstructor
 template <class T>
 vector<T>::~vector()
 {
 	if (v != NULL) delete[] (v);
 }
-
-// end of vector definitions
 
 #endif //ifdef _USESTDVECTOR_
 
@@ -836,7 +835,9 @@ public:
 	matrix3d(const int n, const int m, const int k); // zero-based array
 	matrix3d(const int n, const int m, const int k, const T &a ); // initiallize to constant value
 	matrix3d(const matrix3d &rhs); // copy constructor
-	matrix3d(const matrix3d &&rhs); // move constructor
+	matrix3d(matrix3d &&rhs); // move constructor
+	inline matrix3d & operator=(const matrix3d &rhs);	//copy assignment
+	inline matrix3d & operator=(matrix3d &&rhs);	//move assignment
 	inline T** operator()(const int i);	//subscripting: pointer to row i
 	inline T& operator()(const int i, const int j, const int k);	//subscripting: reference to element at (i,j,k)
 	inline const T& operator()(const int i, const int j, const int k) const; //subscripting: reference to element at (i,j,k)
@@ -844,6 +845,8 @@ public:
 	inline int dim1() const; //size of dimension 1
 	inline int dim2() const; //size of dimension 2
 	inline int dim3() const; //size of dimension 3
+	void resize(const int newn, const int newm, const int newk); // resize (contents not preserved)
+	void assign(const int newn, const int newm, const int newk, const T &a); // resize and assign a constant value
 	~matrix3d(); // deconstructor
 };
 
@@ -855,18 +858,17 @@ matrix3d<T>::matrix3d(): nn(0), mm(0), kk(0), v(NULL) {}
 template <class T>
 matrix3d<T>::matrix3d(const int n, const int m, const int k) : nn(n), mm(m), kk(k), v(new T**[n])
 {
-	int i,j;
 	v[0] = new T*[n*m];
 	v[0][0] = new T[n*m*k];
-	for(j=1; j<m; j++)
+	for(int j=1; j<m; j++)
 	{
 		v[0][j] = v[0][j-1] + k;
 	}
-	for(i=1; i<n; i++)
+	for(int i=1; i<n; i++)
 	{
 		v[i] = v[i-1] + m;
 		v[i][0] = v[i-1][0] + m*k;
-		for(j=1; j<m; j++)
+		for(int j=1; j<m; j++)
 		{
 			v[i][j] = v[i][j-1] + k;
 		}
@@ -877,18 +879,17 @@ matrix3d<T>::matrix3d(const int n, const int m, const int k) : nn(n), mm(m), kk(
 template <class T>
 matrix3d<T>::matrix3d(const int n, const int m, const int k, const T &a) : nn(n), mm(m), kk(k), v(new T**[n])
 {
-	int i,j;
 	v[0] = new T*[n*m];
 	v[0][0] = new T[n*m*k];
-	for(j=1; j<m; j++)
+	for(int j=1; j<m; j++)
 	{
 		v[0][j] = v[0][j-1] + k;
 	}
-	for(i=1; i<n; i++)
+	for(int i=1; i<n; i++)
 	{
 		v[i] = v[i-1] + m;
 		v[i][0] = v[i-1][0] + m*k;
-		for(j=1; j<m; j++)
+		for(int j=1; j<m; j++)
 		{
 			v[i][j] = v[i][j-1] + k;
 		}
@@ -917,9 +918,14 @@ matrix3d<T>::matrix3d(const matrix3d<T> &rhs): nn(rhs.nn), mm(rhs.mm), kk(rhs.kk
 	{
 		v[0][0] = nn*mm*kk>0 ? new T[nn*mm*kk] : NULL;
 	}
+	for(int j=1; j<mm; j++)
+	{
+		v[0][j] = v[0][j-1] + kk;
+	}
 	for (int i=1; i< nn; i++)
 	{
 		v[i] = v[i-1] + mm;
+		v[i][0] = v[i-1][0] + mm*kk;
 		for (int j=1; j<mm; j++)
 		{
 			v[i][j] = v[i][j-1]+kk;
@@ -939,12 +945,104 @@ matrix3d<T>::matrix3d(const matrix3d<T> &rhs): nn(rhs.nn), mm(rhs.mm), kk(rhs.kk
 
 // move constructor
 template<class T>
-matrix3d<T>::matrix3d(const matrix3d<T> &&rhs): nn(rhs.nn), mm(rhs.mm), kk(rhs.kk), v(nn>0 ? rhs.v : NULL)
+matrix3d<T>::matrix3d(matrix3d<T> &&rhs): nn(rhs.nn), mm(rhs.mm), kk(rhs.kk), v(nn>0 ? rhs.v : NULL)
 {
 	rhs.nn = 0;
 	rhs.mm = 0;
 	rhs.kk = 0;
 	rhs.v = NULL;
+}
+
+// copy assignment
+template <class T>
+inline matrix3d<T> & matrix3d<T>::operator=(const matrix3d<T> &rhs)
+// postcondition: normal assignment via copying has been performed;
+//		if matrix and rhs were different sizes, matrix
+//		has been resized to match the size of rhs
+{
+	if (this != &rhs)
+	{
+		if (nn != rhs.dim1() || mm != rhs.dim2() || kk!=rhs.dim3())
+		{
+			if (v != NULL)
+			{
+				delete[] (v[0][0]);
+				delete[] (v[0]);
+				delete[] (v);
+			}
+			nn=rhs.dim1();
+			mm=rhs.dim2();
+			kk=rhs.dim3();
+			v = nn>0 ? new T**[nn] : NULL;
+			if (v)
+			{
+				v[0] = nn*mm>0 ? new T*[nn*mm] : NULL;
+			}
+			if (v[0])
+			{
+				v[0][0] = nn*mm*kk>0 ? new T[nn*mm*kk] : NULL;
+			}
+			for(int j=1; j<mm; j++)
+			{
+				v[0][j] = v[0][j-1] + kk;
+			}
+			for (int i=1; i< nn; i++)
+			{
+				v[i] = v[i-1] + mm;
+				v[i][0] = v[i-1][0] + mm*kk;
+				for (int j=1; j<mm; j++)
+				{
+					v[i][j] = v[i][j-1]+kk;
+				}
+			}
+		}
+
+		for (int i=0; i<nn; i++)
+		{
+			for (int j=0; j<mm; j++)
+			{
+				for (int k=0; k<kk; k++)
+				{
+					v[i][j][k] = rhs(i,j,k);
+				}
+			}
+		}
+	}
+	return *this;
+}
+
+// move assignment
+template <class T>
+inline matrix3d<T> & matrix3d<T>::operator=(matrix3d<T> &&rhs)
+{
+
+	if (this != &rhs)
+	{
+		if (v != NULL)
+		{
+			delete[] (v[0][0]);
+			delete[] (v[0]);
+			delete[] (v);
+		}
+		nn=rhs.dim1();
+		mm=rhs.dim2();
+		kk=rhs.dim3();
+		if (rhs.v)
+		{
+			v = rhs.v;
+		}
+		else
+		{
+			v = NULL;
+		}
+
+		rhs.nn = 0;
+		rhs.mm = 0;
+		rhs.kk = 0;
+		rhs.v = NULL;
+	}
+
+	return *this;
 }
 
 //subscripting: pointer to row i
@@ -1003,24 +1101,118 @@ inline const T& matrix3d<T>::operator()(const int i, const int j, const int k) c
 	return v[i][j][k];
 }
 
+//size of dimension 1
 template <class T>
 inline int matrix3d<T>::dim1() const
 {
 	return nn;
 }
 
+//size of dimension 2
 template <class T>
 inline int matrix3d<T>::dim2() const
 {
 	return mm;
 }
 
+//size of dimension 3
 template <class T>
 inline int matrix3d<T>::dim3() const
 {
 	return kk;
 }
 
+// resize (contents not preserved)
+template <class T>
+void matrix3d<T>::resize(const int newn, const int newm, const int newk)
+{
+	if (newn != nn || newm != mm || newk != kk)
+	{
+		if (v != NULL) {
+			delete[] (v[0][0]);
+			delete[] (v[0]);
+			delete[] (v);
+		}
+		nn = newn;
+		mm = newm;
+		kk = newk;
+		v = nn>0 ? new T**[nn] : NULL;
+		if (v)
+		{
+			v[0] = nn*mm>0 ? new T*[nn*mm] : NULL;
+		}
+		if (v[0])
+		{
+			v[0][0] = nn*mm*kk>0 ? new T[nn*mm*kk] : NULL;
+		}
+		for(int j=1; j<mm; j++)
+		{
+			v[0][j] = v[0][j-1] + kk;
+		}
+		for (int i=1; i< nn; i++)
+		{
+			v[i] = v[i-1] + mm;
+			v[i][0] = v[i-1][0] + mm*kk;
+			for (int j=1; j<mm; j++)
+			{
+				v[i][j] = v[i][j-1]+kk;
+			}
+		}
+	}
+}
+
+// resize and assign a constant value
+template <class T>
+void matrix3d<T>::assign(const int newn, const int newm, const int newk, const T& a)
+{
+	if (newn != nn || newm != mm || newk != kk)
+	{
+
+		if (v != NULL) {
+			delete[] (v[0][0]);
+			delete[] (v[0]);
+			delete[] (v);
+		}
+		nn = newn;
+		mm = newm;
+		kk = newk;
+		v = nn>0 ? new T**[nn] : NULL;
+		if (v)
+		{
+			v[0] = nn*mm>0 ? new T*[nn*mm] : NULL;
+		}
+		if (v[0])
+		{
+			v[0][0] = nn*mm*kk>0 ? new T[nn*mm*kk] : NULL;
+		}
+		for(int j=1; j<mm; j++)
+		{
+			v[0][j] = v[0][j-1] + kk;
+		}
+		for (int i=1; i< nn; i++)
+		{
+			v[i] = v[i-1] + mm;
+			v[i][0] = v[i-1][0] + mm*kk;
+			for (int j=1; j<mm; j++)
+			{
+				v[i][j] = v[i][j-1]+kk;
+			}
+		}
+	}
+
+	for (int i=0; i< nn; i++)
+	{
+		for (int j=0; j<mm; j++)
+		{
+			for (int k=0; k<kk; k++)
+			{
+				v[i][j][k] = a;
+			}
+		}
+	}
+}
+
+// deconstrocture
 template <class T>
 matrix3d<T>::~matrix3d()
 {
@@ -1031,7 +1223,11 @@ matrix3d<T>::~matrix3d()
 	}
 }
 
+//*************************************************************************************************
+//*************************************************************************************************
 // vector types
+//*************************************************************************************************
+//*************************************************************************************************
 
 typedef const vector<Int> vec_int_I;
 typedef vector<Int> vec_int, vec_int_O, vec_int_IO;
@@ -1060,13 +1256,17 @@ typedef vector<Doub> vec_doub, vec_doub_O, vec_doub_IO;
 typedef const vector<Doub*> vec_doubp_I;
 typedef vector<Doub*> vec_doubp, vec_doubp_O, vec_doubp_IO;
 
-typedef const vector<Complex> vec_complex_I;
-typedef vector<Complex> vec_complex, vec_complex_O, vec_complex_IO;
+typedef const vector<cmplx> vec_complex_I;
+typedef vector<cmplx> vec_complex, vec_complex_O, vec_complex_IO;
 
 typedef const vector<Bool> vec_bool_I;
 typedef vector<Bool> vec_bool, vec_bool_O, vec_bool_IO;
 
+//*************************************************************************************************
+//*************************************************************************************************
 // matrix types
+//*************************************************************************************************
+//*************************************************************************************************
 
 typedef const matrix<Int> mat_int_I;
 typedef matrix<Int> mat_int, mat_int_O, mat_int_IO;
@@ -1089,19 +1289,23 @@ typedef matrix<Uchar> mat_uchar, mat_uchar_O, mat_uchar_IO;
 typedef const matrix<Doub> mat_doub_I;
 typedef matrix<Doub> mat_doub, mat_doub_O, mat_doub_IO;
 
-typedef const matrix<Complex> mat_complex_I;
-typedef matrix<Complex> mat_complex, mat_complex_O, mat_complex_IO;
+typedef const matrix<cmplx> mat_complex_I;
+typedef matrix<cmplx> mat_complex, mat_complex_O, mat_complex_IO;
 
 typedef const matrix<Bool> mat_bool_I;
 typedef matrix<Bool> mat_bool, mat_bool_O, mat_bool_IO;
 
+//*************************************************************************************************
+//*************************************************************************************************
 // 3D matrix types
+//*************************************************************************************************
+//*************************************************************************************************
 
 typedef const matrix3d<Doub> mat3d_doub_I;
 typedef matrix3d<Doub> mat_3d_doub, mat3d_doub_O, mat3d_doub_IO;
 
-typedef const matrix3d<Complex> mat3d_complex_I;
-typedef matrix3d<Complex> mat3d_complex, mat3d_complex_O, mat3d_complex_IO;
+typedef const matrix3d<cmplx> mat3d_complex_I;
+typedef matrix3d<cmplx> mat3d_complex, mat3d_complex_O, mat3d_complex_IO;
 
 // Floating Point Exceptions for Microsoft compilers
 
