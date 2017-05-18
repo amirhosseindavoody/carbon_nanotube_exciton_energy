@@ -46,4 +46,21 @@ for ib in range(0,Nb):
 # 	for ibp in range(ib, Nb):
 # 		ax.plot(wave_vec[0:int(Nq/2)-1],diff_real[ib*Nb+ibp,:], linestyle="solid", linewidth=2, marker="")
 
+
+# data = np.loadtxt(directory+"cnt1.pi.dat", skiprows=0)
+# wave_vec = data[0,:]
+# pi = data[1,:]
+# fig = plt.figure()
+# ax = fig.gca()
+# ax.plot(wave_vec[:],pi[:], linestyle="solid", linewidth=2, marker="")
+
+# data = np.loadtxt(directory+"cnt1.epsilon.dat", skiprows=0)
+# wave_vec = data[0,:]
+# epsilon_real = data[1,:]
+# epsilon_imag = data[2,:]
+# fig = plt.figure()
+# ax = fig.gca()
+# ax.plot(wave_vec[:],epsilon_real[:], linestyle="solid", color='blue', linewidth=2, marker="")
+# ax.plot(wave_vec[:],epsilon_imag[:], linestyle="solid", color='red', linewidth=2, marker="")
+
 input("Press Enter to exit...")

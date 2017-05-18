@@ -51,9 +51,8 @@ private:
 
 	nr::mat_doub el_energy; // energy of electronic states
 	nr::mat3d_complex el_psi; // electronic wave functions corresponding to electronic states
-	// nr::mat_complex el_psi; // electronic wave functions corresponding to electronic states
 
-	nr::vec_doub epsilon; // static dielectric function
+	nr::vec_complex epsilon; // static dielectric function
 
 
 public:
@@ -62,6 +61,7 @@ public:
 	void geometry(); // calculates position of atoms
 	void electron(); // electron dispersion energies
 	void dielectric(); // calculate static dielectric function
+	void coulomb_int(); // calculate coulomb interaction matrix elements
 };
 
 #endif

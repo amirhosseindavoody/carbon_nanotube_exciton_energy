@@ -9,9 +9,9 @@ namespace nr
 	inline void print(nr::mat_complex& X, std::string name="matrix_complex")
 	{
 		std::cout << name <<" = " << std::endl;
-		for (int i=0; i<X.nrows(); i++)
+		for (int i=0; i<X.dim1(); i++)
 		{
-			for (int j=0; j<X.ncols(); j++)
+			for (int j=0; j<X.dim2(); j++)
 			{
 				std::cout << std::scientific;
 				std::cout << std::showpos;
@@ -25,9 +25,9 @@ namespace nr
 	inline void print(nr::mat_doub& X, std::string name="matrix_double")
 	{
 		std::cout << name <<" = " << std::endl;
-		for (int i=0; i<X.nrows(); i++)
+		for (int i=0; i<X.dim1(); i++)
 		{
-			for (int j=0; j<X.ncols(); j++)
+			for (int j=0; j<X.dim2(); j++)
 			{
 				std::cout << std::scientific;
 				std::cout << std::showpos;

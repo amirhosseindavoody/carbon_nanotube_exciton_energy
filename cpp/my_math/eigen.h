@@ -12,8 +12,8 @@ namespace nr
 		char jobz = 'V';
 		char uplo = 'U';
 		
-		if (X.nrows() != X.ncols()) throw("error: not a square matrix!");
-		int n = X.nrows();
+		if (X.dim1() != X.dim2()) throw("error: not a square matrix!");
+		int n = X.dim1();
 		
 		double *a = new double[2*n*n];
 		for (int j=0; j<n; j++)

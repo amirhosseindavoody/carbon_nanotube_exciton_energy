@@ -444,8 +444,8 @@ public:
 	inline const T* operator[](const int i) const; //subscripting: pointer to row i
 	inline T& operator()(const int i, const int j);	//subscripting: reference to element at (i,j)
 	inline const T& operator()(const int i, const int j) const; //subscripting: reference to element at (i,j)
-	inline int nrows() const; // number of rows
-	inline int ncols() const; // number of columns
+	inline int dim1() const; // number of rows
+	inline int dim2() const; // number of columns
 	inline const bool empty() const; // check if matrix is empty
 	void resize(int newn, int newm); // resize (contents not preserved)
 	void assign(int newn, int newm, const T &a); // resize and assign a constant value
@@ -618,14 +618,14 @@ if (j<0 || j>=mm) {
 
 // number of rows
 template <class T>
-inline int matrix<T>::nrows() const
+inline int matrix<T>::dim1() const
 {
 	return nn;
 }
 
 // number of columns
 template <class T>
-inline int matrix<T>::ncols() const
+inline int matrix<T>::dim2() const
 {
 	return mm;
 }
@@ -800,10 +800,10 @@ vector<T> operator*(const matrix<T>& mat, const vector<T>& vec)
 	#endif // end _CHECKEMPTY_
 
 	#ifdef _CHECKDIMENSIONS_
-	if (vec.size() != mat.ncols()) throw("multiplication error: size mismatch!");
+	if (vec.size() != mat.dim2()) throw("multiplication error: size mismatch!");
 	#endif // end _CHECKDIMENSIONS_
 	
-	vector<T> res(mat.nrows());
+	vector<T> res(mat.dim1());
 	T sum = static_cast<T>(0);
 
 	for (int i=0; i<res.size(); i++)

@@ -163,7 +163,7 @@ void cnt::geometry()
 
 	// calculate position of all atoms in the 3d space (rolled graphene sheet)
 	pos_3d.assign(2*Nu,3,0.0);
-	for (int i=0; i<pos_3d.nrows(); i++)
+	for (int i=0; i<pos_3d.dim1(); i++)
 	{
 		pos_3d(i,0) = radius*cos(pos_2d(i,0)/radius);
 		pos_3d(i,1) = pos_2d(i,1);
@@ -183,8 +183,8 @@ void cnt::geometry()
 	{
 		file << std::scientific;
 		file << std::showpos;
-		file << pos_2d.nrows() << "\t" << pos_2d.ncols() << std::endl;
-		for (int i=0; i<pos_2d.nrows(); i++)
+		file << pos_2d.dim1() << "\t" << pos_2d.dim2() << std::endl;
+		for (int i=0; i<pos_2d.dim1(); i++)
 		{
 			file << pos_2d(i,0) << "\t" << pos_2d(i,1) << "\n";
 		}
@@ -203,8 +203,8 @@ void cnt::geometry()
 	{
 		file << std::scientific;
 		file << std::showpos;
-		file << pos_3d.nrows() << "\t" << pos_3d.ncols() << std::endl;
-		for (int i=0; i<pos_3d.nrows(); i++)
+		file << pos_3d.dim1() << "\t" << pos_3d.dim2() << std::endl;
+		for (int i=0; i<pos_3d.dim1(); i++)
 		{
 			file << pos_3d(i,0) << "\t" << pos_3d(i,1) << "\t" << pos_3d(i,2) << "\n";
 		}
@@ -224,10 +224,10 @@ void cnt::electron()
 	// make the list of 1st nearest neighbor atoms
 	nr::mat_int nn_list(2*Nu,3,0); // contains index of the nearest neighbor atom
 	nr::mat_int nn_tvec_index(2*Nu,3,0); // contains the index of the cnt unit cell that the nearest neigbor atom is in.
-	for (int i=0; i<pos_3d.nrows(); i++)
+	for (int i=0; i<pos_3d.dim1(); i++)
 	{
 		int k=0;
-		for (int j=0; j<pos_3d.nrows(); j++)
+		for (int j=0; j<pos_3d.dim1(); j++)
 		{
 			for (int l=-1; l<=1; l++)
 			{
@@ -297,30 +297,20 @@ void cnt::electron()
 		file << "\n";
 
 		// fix the phase of the eigen vectors
-		for (int i=0; i<C.ncols(); i++)
+		for (int i=0; i<C.dim2(); i++)
 		{
 			nr::cmplx phi = std::conj(C(0,i))/std::abs(C(0,i));
-			for (int j=0; j<C.nrows(); j++)
+			for (int j=0; j<C.dim1(); j++)
 			{
 				C(j,i) = C(j,i)*phi;
 			}
 		}
 
-		// // check normalization of the eigen vectors
-		// for (int i=0; i<C.ncols(); i++)
-		// {
-		// 	nr::cmplx sum(0.0,0.0);
-		// 	for (int j=0; j<C.nrows(); j++)
-		// 	{
-		// 		sum += std::conj(C(j,0))*C(j,i);
-		// 	}
-		// }
-
 		// save electron energy and wavefunction data in member variables
-		for (int i=0; i<C.ncols(); i++)
+		for (int i=0; i<C.dim2(); i++)
 		{
 			el_energy(i,n) = E(i);
-			for (int j=0; j<C.nrows(); j++)
+			for (int j=0; j<C.dim1(); j++)
 			{
 				el_psi(j,i,n) = C(j,i);
 			}
@@ -337,8 +327,7 @@ void cnt::dielectric()
 
 
 	// calculate v_q
-
-	int Nq = 2*nk;
+	int Nq = nk;
 	nr::mat3d_complex v_q(2*Nu, 2*Nu, Nq, nr::cmplx(0.0));
 	nr::vec_doub wave_vec(Nq, 0.0);
 
@@ -363,7 +352,6 @@ void cnt::dielectric()
 				}
 			}
 		}
-		// std::cout << "calculating dielectric function: v_q(" << iq << ") = " << v_q(iq) << std::endl;
 	}
 
 	// open file to save v_q
@@ -399,85 +387,211 @@ void cnt::dielectric()
 	file_vq_imag.close();
 
 
-	// v_q = v_q/cmplx(nr::sqr(2*Nu),0.0);
-
-	// for (int i=0; i<v_q.size(); i++)
+	// // calculate polarization (PI)
+	// nr::vec_doub PI(Nq,0.0);
+	// for (int i=0; i<Nq; i++)
 	// {
-	// 	v_q(i) = cmplx(std::abs(v_q(i))*PI(i),0.0);
-	// }
-
-	// // open file to save electron energy bands
-	// file.open(name+".vq.dat", std::ios::app);
-
-	// file << std::scientific;
-	// file << std::showpos;
-	// for (int i=0; i<v_q.size(); i++)
-	// {
-	// 	double wave_vec = double(i)*dk_l.norm2();
-
-	// 	file << std::scientific;
-	// 	file << std::showpos;
-	// 	file << wave_vec << "\t";
-	// 	// file << v_q(i) << "\n";
-	// 	file << std::abs(v_q(i)) << "\n";
-	// }
-	// file.close();
-
-	// calculate epsilon
-
-	// epsilon.assign(nk, 0.0);
-
-	// nr::vec_doub PI(2*nk,0.0);
-	// typedef std::complex<double> cmplx;
-
-	// for (int iq=0; iq<2*nk; iq++)
-	// {
-	// 	cmplx num1, num2;
+	// 	int iq = i-Nq/2;
+	// 	nr::cmplx num1, num2;
 	// 	double denom1, denom2;
 
 	// 	for (int ik=0; ik<nk; ik++)
 	// 	{
 	// 		int ik_p = iq+ik;
 	// 		while(ik_p>=nk)	ik_p = ik_p-nk;
+	// 		while(ik_p<0) ik_p = ik_p+nk;
 
 	// 		for (int alpha_v=0; alpha_v<Nu; alpha_v++)
 	// 		{
 	// 			for (int alpha_c=Nu; alpha_c<2*Nu; alpha_c++)
 	// 			{
-	// 				num1 = cmplx(0.0,0.0);
-	// 				num2 = cmplx(0.0,0.0);
+	// 				num1 = nr::cmplx(0.0,0.0);
+	// 				num2 = nr::cmplx(0.0,0.0);
 	// 				for(int b=0; b<2*Nu; b++)
 	// 				{
-	// 					num1 += std::conj(el_psi(alpha_v*(2*Nu)+b,ik)) * el_psi(alpha_c*(2*Nu)+b,ik_p);
-	// 					num2 += std::conj(el_psi(alpha_c*(2*Nu)+b,ik)) * el_psi(alpha_v*(2*Nu)+b,ik_p);
+	// 					num1 += std::conj(el_psi(b,alpha_v,ik)) * el_psi(b,alpha_c,ik_p);
+	// 					num2 += std::conj(el_psi(b,alpha_c,ik)) * el_psi(b,alpha_v,ik_p);
 	// 				}
 	// 				denom1 = el_energy(alpha_c,ik_p)-el_energy(alpha_v,ik);
 	// 				denom2 = el_energy(alpha_c,ik)-el_energy(alpha_v,ik_p);
 
-	// 				PI(iq) += std::norm(num1)/denom1 + std::norm(num2)/denom2;
+	// 				PI(i) += std::norm(num1)/denom1 + std::norm(num2)/denom2;
 	// 			}
 	// 		}
 	// 	}
 
-	// 	std::cout << "calculating dielectric function: PI(" << iq << ") = " << PI(iq) << std::endl;
+	// 	std::cout << "calculating dielectric function: PI(" << i << ") = " << PI(i) << std::endl;
 	// }
 
 	// PI = 2.0*PI;
 
-	// // open file to save electron energy bands
-	// std::ofstream file;
-	// file.open(name+".pi.dat", std::ios::app);
+	// // open file to save polarization (PI)
+	// std::ofstream file_pi;
+	// file_pi.open(name+".pi.dat", std::ios::app);
 
-	// file << std::scientific;
-	// file << std::showpos;
+	// file_pi << std::scientific;
+	// file_pi << std::showpos;
+	// for (int i=0; i<wave_vec.size(); i++)
+	// {
+	// 	file_pi << wave_vec(i) << "\t";
+	// }
+	// file_pi << "\n";
 	// for (int i=0; i<PI.size(); i++)
 	// {
-	// 	double wave_vec = double(i)*dk_l.norm2();
-
-	// 	file << std::scientific;
-	// 	file << std::showpos;
-	// 	file << wave_vec << "\t";
-	// 	file << PI(i) << "\n";
+	// 	file_pi << PI(i) << "\t";
 	// }
-	// file.close();
+	// file_pi.close();
+
+	// // calculate dielectric function (epsilon)
+	// epsilon.assign(Nq,nr::cmplx(0));
+	// for (int i=0; i<epsilon.size(); i++)
+	// {
+	// 	nr::cmplx sum = nr::cmplx(0);
+	// 	for (int b=0; b<2*Nu; b++)
+	// 	{
+	// 		for (int bp=0; bp<2*Nu; bp++)
+	// 		{
+	// 			sum += v_q(b,bp,i);
+	// 		}
+	// 	}
+	// 	sum = sum/nr::cmplx((2*Nu)*(2*Nu));
+	// 	epsilon(i) = nr::cmplx(1)+sum*nr::cmplx(PI(i));
+	// }
+
+	// // open file to save epsilon
+	// std::ofstream file_eps;
+	// file_eps.open(name+".epsilon.dat", std::ios::app);
+
+	// file_eps << std::scientific;
+	// file_eps << std::showpos;
+	// for (int i=0; i<wave_vec.size(); i++)
+	// {
+	// 	file_eps << wave_vec(i) << "\t";
+	// }
+	// file_eps << "\n";
+	// for (int i=0; i<epsilon.size(); i++)
+	// {
+	// 	file_eps << std::real(epsilon(i)) << "\t";
+	// }
+	// file_eps << "\n";
+	// for (int i=0; i<epsilon.size(); i++)
+	// {
+	// 	file_eps << std::imag(epsilon(i)) << "\t";
+	// }
+	// file_eps.close();
+}
+
+
+void cnt::coulomb_int()
+{
+
+
+	// calculate v_q
+	int Nq = nk;
+	nr::mat3d_complex v_q(2*Nu, 2*Nu, Nq, nr::cmplx(0.0));
+	nr::vec_doub wave_vec(Nq, 0.0);
+
+	double t_len = t_vec_3d.norm2();
+	double factor = nr::sqr(4*constants::pi*constants::eps0*Upp/nr::sqr(constants::q0));
+	for(int iq = 0; iq<Nq; iq++)
+	{
+		wave_vec(iq) = double(iq)*dk_l.norm2();
+		for (int i=-int(number_of_cnt_unit_cells/2); i<int(number_of_cnt_unit_cells/2); i++)
+		{
+			for (int b=0; b<2*Nu; b++)
+			{
+				for (int bp=0; bp<2*Nu; bp++)
+				{
+					double dx = pos_3d(b,0) - (pos_3d(bp,0) + double(i)*t_vec_3d(0));
+					double dy = pos_3d(b,1) - (pos_3d(bp,1) + double(i)*t_vec_3d(1));
+					double dz = pos_3d(b,2) - (pos_3d(bp,2) + double(i)*t_vec_3d(2));
+					double dR2 = dx*dx+dy*dy+dz*dz;
+
+					double I = Upp/sqrt(1+factor*dR2);
+					v_q(b,bp,iq) += nr::cmplx(1.0/double(number_of_cnt_unit_cells))*exp(nr::cmplx(0.0,wave_vec(iq)*double(i)*t_len))*I;
+				}
+			}
+		}
+	}
+
+	// direct interaction matrix
+	int nkr = nk;
+	int nkrp = nk;
+	nr::mat_complex V_dir(nkr,nkrp,nr::cmplx(0));
+	
+	// electron bands
+	int a1=Nu;
+	int a2=Nu;
+	int a3=Nu-1;
+	int a4=Nu-1;
+
+	// center of mass wave vector
+	int iKcm=0;
+
+	for (int ikr=0; ikr<nkr; ikr+=2)
+	{
+		int ikc = int((ikr+iKcm)/2);
+		int ikv = int((ikr-iKcm)/2);
+		// while(ikc>=nk)	ikc -= nk;
+		// while(ikc<0) ikc += nk;
+		// while(ikc>=nk)	ikc -= nk;
+		// while(ikc<0) ikc += nk;
+
+		for (int ikrp=0; ikrp<nkrp; ikrp+=2)
+		{
+			int ikcp = int((ikrp+iKcm)/2);
+			int ikvp = int((ikrp-iKcm)/2);
+
+			int iq = ikr-ikrp;
+			while(iq>=Nq) iq = iq-Nq;
+			while(iq<0) iq = iq+Nq;
+
+			for (int b=0; b<2*Nu; b++)
+			{
+				for (int bp=0; bp<2*Nu; bp++)
+				{
+					V_dir(ikr,ikrp) += std::conj(el_psi(b,a1,ikcp))*el_psi(b,a2,ikc)*el_psi(bp,a3,ikvp)*std::conj(el_psi(bp,a4,ikv))*v_q(b,bp,iq);
+					// V_dir(ikr,ikrp) += v_q(b,bp,iq);
+					// V_dir(ikr,ikrp) += std::conj(el_psi(b,a1,ikcp))*el_psi(b,a2,ikc)*el_psi(bp,a3,ikvp)*std::conj(el_psi(bp,a4,ikv));
+				}
+			}
+		}
+	}
+
+
+	// open file to save V_dir
+	std::ofstream file_V_dir_real, file_V_dir_imag;
+	file_V_dir_real.open(name+".v_dir.real.dat", std::ios::app);
+	file_V_dir_imag.open(name+".v_dir.imag.dat", std::ios::app);
+
+	file_V_dir_real << std::scientific << std::showpos;
+	file_V_dir_imag << std::scientific << std::showpos;
+	
+	file_V_dir_real << double(0.0) << "\t";
+	file_V_dir_imag << double(0.0) << "\t";
+	for (int ikrp=0; ikrp<V_dir.dim2(); ikrp+=2)
+	{
+		double wave_vec = double(ikrp)*dk_l.norm2();
+		file_V_dir_real << wave_vec << "\t";
+		file_V_dir_imag << wave_vec << "\t";
+	}
+	file_V_dir_real << "\n";
+	file_V_dir_imag << "\n";
+
+	for (int ikr=0; ikr<V_dir.dim1(); ikr+=2)
+	{
+		double wave_vec = double(ikr)*dk_l.norm2();
+		file_V_dir_real << wave_vec << "\t";
+		file_V_dir_imag << wave_vec << "\t";
+
+		for (int ikrp=0; ikrp<V_dir.dim2(); ikrp+=2)
+		{
+			file_V_dir_real << std::real(V_dir(ikr,ikrp)/constants::eV) << "\t";
+			file_V_dir_imag << std::imag(V_dir(ikr,ikrp)/constants::eV) << "\t";
+		}
+		file_V_dir_real << "\n";
+		file_V_dir_imag << "\n";
+	}
+	file_V_dir_real.close();
+	file_V_dir_imag.close();
 }
