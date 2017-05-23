@@ -91,7 +91,6 @@ namespace nr
 		double *z = new double[2*n*m];
 		int ldz = n;
 		int lwork = 2*n+1; // this should be 2*n-1 but for some reason it does not work with that value and I have to use a larger value.
-		std::cout << "lwork = " << lwork << "\n";
 		double *work = new double[2*lwork];
 		double *rwork = new double[7*n];
 		int *iwork = new int[5*n];

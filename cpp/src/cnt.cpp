@@ -514,47 +514,64 @@ void cnt::coulomb_int()
 		}
 	}
 
-	// direct interaction matrix
-	nr::mat_complex V_dir(nk,nk,nr::cmplx(0));
-	nr::mat_complex V_xch(nk,nk,nr::cmplx(0));
-	nr::mat_complex dE(nk,nk,nr::cmplx(0));
-	
-	// electron bands
-	int ac=Nu;
-	int acp=Nu;
-	int av=Nu-1;
-	int avp=Nu-1;
+	std::cout << "I am here: 0\n";
 
+	int Nb = 2;
+
+	// direct interaction matrix
+	nr::mat_complex V_dir(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
+	nr::mat_complex V_xch(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
+	nr::mat_complex dE(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
+
+	std::cout << "I am here: 1\n";
+	
 	int iKcm=0; // center of mass wave vector
 
-	for (int ikc=0; ikc<nk; ikc++)
+	for (int ic=0; ic<Nb; ic++)
 	{
-		int ikv = int(ikc+iKcm);
-		while(ikv>=nk)	ikv -= nk;
-		while(ikv<0) ikv += nk;
-
-		dE(ikc,ikc) = nr::cmplx(el_energy(ac,ikc)-el_energy(av,ikv));
-
-		for (int ikcp=0; ikcp<nk; ikcp++)
+		int ac = Nu+ic;
+		std::cout << "ic = " << ic << "\n";
+		for (int icp=0; icp<Nb; icp++)
 		{
-			int ikvp = int(ikcp+iKcm);
-			while(ikv>=nk)	ikv -= nk;
-			while(ikv<0) ikv += nk;
-
-			int iq_dir = ikc-ikcp;
-			while(iq_dir>=Nq) iq_dir = iq_dir-Nq;
-			while(iq_dir<0) iq_dir = iq_dir+Nq;
-
-			int iq_xch = int(ikc-ikv);
-			while(iq_xch>=Nq) iq_xch -= Nq;
-			while(iq_xch<0) iq_xch += Nq;
-
-			for (int b=0; b<2*Nu; b++)
+			int acp = Nu+icp;
+			for (int iv=0; iv<Nb; iv++)
 			{
-				for (int bp=0; bp<2*Nu; bp++)
+				int av = Nu-1-iv;
+				for (int ivp=0; ivp<Nb; ivp++)
 				{
-					V_dir(ikc,ikcp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,acp,ikcp)*el_psi(bp,av,ikv)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_dir);
-					V_xch(ikc,ikcp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,av,ikv)*el_psi(bp,acp,ikcp)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_xch);
+					int avp = Nu-1-ivp;
+					for (int ikc=0; ikc<nk; ikc++)
+					{
+						int ikv = int(ikc+iKcm);
+						while(ikv>=nk)	ikv -= nk;
+						while(ikv<0) ikv += nk;
+
+						dE((nk-1)*((Nb-1)*ic+iv)+ikc,(nk-1)*((Nb-1)*ic+iv)+ikc) = nr::cmplx(el_energy(ac,ikc)-el_energy(av,ikv));
+
+						for (int ikcp=0; ikcp<nk; ikcp++)
+						{
+							int ikvp = int(ikcp+iKcm);
+							while(ikv>=nk)	ikv -= nk;
+							while(ikv<0) ikv += nk;
+
+							int iq_dir = ikc-ikcp;
+							while(iq_dir>=Nq) iq_dir = iq_dir-Nq;
+							while(iq_dir<0) iq_dir = iq_dir+Nq;
+
+							int iq_xch = int(ikc-ikv);
+							while(iq_xch>=Nq) iq_xch -= Nq;
+							while(iq_xch<0) iq_xch += Nq;
+
+							for (int b=0; b<2*Nu; b++)
+							{
+								for (int bp=0; bp<2*Nu; bp++)
+								{
+									V_dir((nk-1)*((Nb-1)*ic+iv)+ikc,(nk-1)*((Nb-1)*icp+ivp)+ikcp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,acp,ikcp)*el_psi(bp,av,ikv)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_dir);
+									V_xch((nk-1)*((Nb-1)*ic+iv)+ikc,(nk-1)*((Nb-1)*icp+ivp)+ikcp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,av,ikv)*el_psi(bp,acp,ikcp)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_xch);
+								}
+							}
+						}
+					}
 				}
 			}
 		}
@@ -638,13 +655,13 @@ void cnt::coulomb_int()
 	nr::mat_complex kernel(dE-V_dir);
 	// nr::mat_complex kernel(dE+nr::cmplx(2)*V_xch-V_dir);
 	
-	// nr::mat_complex ex_psi(nk,nk);
-	// nr::vec_doub ex_energy(nk);
-	// nr::eig_sym(ex_energy, ex_psi, kernel);
+	nr::mat_complex ex_psi(Nb*Nb*nk,Nb*Nb*nk);
+	nr::vec_doub ex_energy(Nb*Nb*nk);
+	nr::eig_sym(ex_energy, ex_psi, kernel);
 
-	nr::mat_complex ex_psi(nk,nk,nr::cmplx(0));
-	nr::vec_doub ex_energy(nk,0.0);
-	nr::eig_sym_selected(ex_energy, ex_psi, kernel, 20);
+	// nr::mat_complex ex_psi(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
+	// nr::vec_doub ex_energy(Nb*Nb*nk,0.0);
+	// nr::eig_sym_selected(ex_energy, ex_psi, kernel, 20);
 
 
 	// open file to save exciton energies
