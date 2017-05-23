@@ -1,5 +1,5 @@
 CC=g++
-CC+= -Wno-deprecated-declarations
+CC+= -Ofast -Wno-deprecated-declarations
 
 CFLAGS = -I./ -I./lib/ -I./my_math/ -std=c++14
 # LFLAGS = -lgsl -lgslcblas -lm -std=c++14

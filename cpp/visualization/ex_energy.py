@@ -14,21 +14,22 @@ ex_energy = np.zeros(data.shape)
 ex_energy[:,0] = data[:,0]
 ex_energy[:,1] = data[:,0]
 
-elec_hole = np.zeros(data.shape)
-elec_hole[:,0] = np.sort(data[:,1])
-elec_hole[:,1] = np.sort(data[:,1])
+eh_energy = np.zeros(data.shape)
+eh_energy[:,0] = np.sort(data[:,1])
+eh_energy[:,1] = np.sort(data[:,1])
 
 
-xvec = [0, 1]
-
-fig = plt.figure()
-ax = fig.gca()
-ax.plot(xvec,np.transpose(elec_hole), linestyle="solid", color="blue", linewidth=2, marker="")
-ax.plot(xvec,np.transpose(ex_energy), linestyle="solid", color="red", linewidth=2, marker="")
+ex_vec = [0, 0.4]
+eh_vec = [0.6, 1]
 
 fig = plt.figure()
 ax = fig.gca()
-ax.plot(elec_hole[:,0], linestyle="solid", color="blue", linewidth=2, marker="o")
+ax.plot(eh_vec,np.transpose(eh_energy), linestyle="solid", color="blue", linewidth=2, marker="")
+ax.plot(ex_vec,np.transpose(ex_energy), linestyle="solid", color="red", linewidth=2, marker="")
+
+fig = plt.figure()
+ax = fig.gca()
+ax.plot(eh_energy[:,0], linestyle="solid", color="blue", linewidth=2, marker="o")
 ax.plot(ex_energy[:,0], linestyle="solid", color="red", linewidth=2, marker="o")
 
 
@@ -37,7 +38,7 @@ ex_psi = data
 
 fig = plt.figure()
 ax = fig.gca()
-for j in range(74,84):
+for j in range(0,10):
 	ax.plot(ex_psi[:,j], linestyle="solid", linewidth=2, marker="")
 	print(j, ex_energy[j,0])
 	input()

@@ -2,7 +2,7 @@
 #define _vector_matrix_h_
 
 // check bounds when accessing elements in vectors and matrices
-#define _CHECKBOUNDS_ 1	
+#define _CHECKBOUNDS_ 1
 // check if vectors and matrices are empty when operating on these objects
 #define _CHECKEMPTY_ 1
 // check if dimensions matches in algebraic operations on matrices and vectors

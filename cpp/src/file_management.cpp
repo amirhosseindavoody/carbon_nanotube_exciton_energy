@@ -116,12 +116,22 @@ void file_management::change_working_directory(const char *path)
 	{
 		std::stringstream command;
 		command << "rm -f -r " << path;
-		system(command.str().c_str());
+		int tmp = std::system(command.str().c_str());
+		if (tmp)
+		{
+			std::cout << "error with running command prompt!" << std::endl;
+			std::exit(EXIT_FAILURE);
+		}
 	}
 
 	std::stringstream command;
 	command << "mkdir " << path;
-	system(command.str().c_str());
+	int tmp = std::system(command.str().c_str());
+	if (tmp)
+	{
+		std::cout << "error with running command prompt!" << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
 
 	int rc = chdir(path);
 	if (rc < 0)
