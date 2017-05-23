@@ -639,7 +639,8 @@ void cnt::coulomb_int()
 
 
 	// solve for exciton energy
-	nr::mat_complex kernel(dE+nr::cmplx(0)*V_xch-V_dir);
+	nr::mat_complex kernel(dE-V_dir);
+	// nr::mat_complex kernel(dE+nr::cmplx(2)*V_xch-V_dir);
 	nr::mat_complex ex_psi(nkr,nkrp);
 	nr::vec_doub ex_energy(nkr);
 	nr::eig_sym(ex_energy, ex_psi, kernel);
@@ -648,14 +649,26 @@ void cnt::coulomb_int()
 	// open file to save exciton energies
 	std::ofstream file_ex_energy;
 	file_ex_energy.open(name+".ex_energy.dat", std::ios::app);
-
 	file_ex_energy << std::scientific << std::showpos;
-	
 	for (int i=0; i<ex_energy.size(); i++)
 	{
 		file_ex_energy << ex_energy(i)/constants::eV << "\t" << std::real(dE(i,i))/constants::eV << "\n";
 	}
-	
 	file_ex_energy.close();
+
+
+	// open file to save exciton energies
+	std::ofstream file_ex_psi;
+	file_ex_psi.open(name+".ex_psi.dat", std::ios::app);
+	file_ex_psi << std::scientific << std::showpos;
+	for (int i=0; i<ex_psi.dim1(); i++)
+	{
+		for (int j=0; j<ex_psi.dim2(); j++)
+		{
+			file_ex_psi << std::norm(ex_psi(i,j)) << "\t";
+		}
+		file_ex_psi << "\n";
+	}
+	file_ex_psi.close();
 
 }
