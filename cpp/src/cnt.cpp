@@ -518,15 +518,16 @@ void cnt::coulomb_int()
 	int nkr = nk;
 	int nkrp = nk;
 	nr::mat_complex V_dir(nkr,nkrp,nr::cmplx(0));
+	nr::mat_complex V_xch(nkr,nkrp,nr::cmplx(0));
+	nr::mat_complex dE(nkr,nkrp,nr::cmplx(0));
 	
 	// electron bands
-	int a1=Nu;
-	int a2=Nu;
-	int a3=Nu-1;
-	int a4=Nu-1;
+	int ac=Nu;
+	int acp=Nu;
+	int av=Nu-1;
+	int avp=Nu-1;
 
-	// center of mass wave vector
-	int iKcm=0;
+	int iKcm=0; // center of mass wave vector
 
 	for (int ikr=0; ikr<nkr; ikr+=2)
 	{
@@ -537,22 +538,27 @@ void cnt::coulomb_int()
 		// while(ikc>=nk)	ikc -= nk;
 		// while(ikc<0) ikc += nk;
 
+		dE(ikr,ikr) = nr::cmplx(el_energy(ac,ikc)-el_energy(av,ikv));
+
 		for (int ikrp=0; ikrp<nkrp; ikrp+=2)
 		{
 			int ikcp = int((ikrp+iKcm)/2);
 			int ikvp = int((ikrp-iKcm)/2);
 
-			int iq = ikr-ikrp;
-			while(iq>=Nq) iq = iq-Nq;
-			while(iq<0) iq = iq+Nq;
+			int iq_dir = ikr-ikrp;
+			while(iq_dir>=Nq) iq_dir = iq_dir-Nq;
+			while(iq_dir<0) iq_dir = iq_dir+Nq;
+
+			int iq_xch = int(2*iKcm);
+			while(iq_xch>=Nq) iq_xch -= Nq;
+			while(iq_xch<0) iq_xch += Nq;
 
 			for (int b=0; b<2*Nu; b++)
 			{
 				for (int bp=0; bp<2*Nu; bp++)
 				{
-					V_dir(ikr,ikrp) += std::conj(el_psi(b,a1,ikcp))*el_psi(b,a2,ikc)*el_psi(bp,a3,ikvp)*std::conj(el_psi(bp,a4,ikv))*v_q(b,bp,iq);
-					// V_dir(ikr,ikrp) += v_q(b,bp,iq);
-					// V_dir(ikr,ikrp) += std::conj(el_psi(b,a1,ikcp))*el_psi(b,a2,ikc)*el_psi(bp,a3,ikvp)*std::conj(el_psi(bp,a4,ikv));
+					V_dir(ikr,ikrp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,acp,ikcp)*el_psi(bp,av,ikv)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_dir);
+					V_xch(ikr,ikrp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,av,ikv)*el_psi(bp,acp,ikcp)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_xch);
 				}
 			}
 		}
@@ -594,4 +600,62 @@ void cnt::coulomb_int()
 	}
 	file_V_dir_real.close();
 	file_V_dir_imag.close();
+
+	// open file to save V_xch
+	std::ofstream file_V_xch_real, file_V_xch_imag;
+	file_V_xch_real.open(name+".v_xch.real.dat", std::ios::app);
+	file_V_xch_imag.open(name+".v_xch.imag.dat", std::ios::app);
+
+	file_V_xch_real << std::scientific << std::showpos;
+	file_V_xch_imag << std::scientific << std::showpos;
+	
+	file_V_xch_real << double(0.0) << "\t";
+	file_V_xch_imag << double(0.0) << "\t";
+	for (int ikrp=0; ikrp<V_xch.dim2(); ikrp+=2)
+	{
+		double wave_vec = double(ikrp)*dk_l.norm2();
+		file_V_xch_real << wave_vec << "\t";
+		file_V_xch_imag << wave_vec << "\t";
+	}
+	file_V_xch_real << "\n";
+	file_V_xch_imag << "\n";
+
+	for (int ikr=0; ikr<V_xch.dim1(); ikr+=2)
+	{
+		double wave_vec = double(ikr)*dk_l.norm2();
+		file_V_xch_real << wave_vec << "\t";
+		file_V_xch_imag << wave_vec << "\t";
+
+		for (int ikrp=0; ikrp<V_xch.dim2(); ikrp+=2)
+		{
+			file_V_xch_real << std::real(V_xch(ikr,ikrp)/constants::eV) << "\t";
+			file_V_xch_imag << std::imag(V_xch(ikr,ikrp)/constants::eV) << "\t";
+		}
+		file_V_xch_real << "\n";
+		file_V_xch_imag << "\n";
+	}
+	file_V_xch_real.close();
+	file_V_xch_imag.close();
+
+
+	// solve for exciton energy
+	nr::mat_complex kernel(dE+nr::cmplx(0)*V_xch-V_dir);
+	nr::mat_complex ex_psi(nkr,nkrp);
+	nr::vec_doub ex_energy(nkr);
+	nr::eig_sym(ex_energy, ex_psi, kernel);
+
+
+	// open file to save exciton energies
+	std::ofstream file_ex_energy;
+	file_ex_energy.open(name+".ex_energy.dat", std::ios::app);
+
+	file_ex_energy << std::scientific << std::showpos;
+	
+	for (int i=0; i<ex_energy.size(); i++)
+	{
+		file_ex_energy << ex_energy(i)/constants::eV << "\t" << std::real(dE(i,i))/constants::eV << "\n";
+	}
+	
+	file_ex_energy.close();
+
 }
