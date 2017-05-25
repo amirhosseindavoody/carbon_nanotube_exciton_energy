@@ -487,7 +487,7 @@ void cnt::coulomb_int()
 
 
 	// calculate v_q
-	int Nq = nk;
+	const int Nq = nk;
 	nr::mat3d_complex v_q(2*Nu, 2*Nu, Nq, nr::cmplx(0.0));
 	nr::vec_doub wave_vec(Nq, 0.0);
 
@@ -514,18 +514,17 @@ void cnt::coulomb_int()
 		}
 	}
 
-	std::cout << "I am here: 0\n";
-
-	int Nb = 2;
+	const int Nb = 4;
 
 	// direct interaction matrix
 	nr::mat_complex V_dir(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
 	nr::mat_complex V_xch(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
 	nr::mat_complex dE(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
 
-	std::cout << "I am here: 1\n";
+	nr::mat_complex tmp_dir(2*Nu,2*Nu,nr::cmplx(0));
+	nr::mat_complex tmp_xch(2*Nu,2*Nu,nr::cmplx(0));
 	
-	int iKcm=0; // center of mass wave vector
+	const int iKcm=0; // center of mass wave vector
 
 	for (int ic=0; ic<Nb; ic++)
 	{
@@ -546,7 +545,22 @@ void cnt::coulomb_int()
 						while(ikv>=nk)	ikv -= nk;
 						while(ikv<0) ikv += nk;
 
-						dE((nk-1)*((Nb-1)*ic+iv)+ikc,(nk-1)*((Nb-1)*ic+iv)+ikc) = nr::cmplx(el_energy(ac,ikc)-el_energy(av,ikv));
+						// int iq_xch = int(ikc-ikv);
+						// while(iq_xch>=Nq) iq_xch -= Nq;
+						// while(iq_xch<0) iq_xch += Nq;
+
+						// for (int b=0; b<2*Nu; b++)
+						// {
+						// 	for (int bp=0; bp<2*Nu; bp++)
+						// 	{
+						// 		tmp_dir(b,bp) = std::conj(el_psi(b,ac,ikc))*el_psi(bp,av,ikv)/kappa;
+						// 		tmp_xch(b,bp) = std::conj(el_psi(b,ac,ikc))*el_psi(b,av,ikv)*v_q(b,bp,iq_xch);
+						// 	}
+						// }
+
+						// int row = (nk)*((Nb)*ic+iv)+ikc;
+
+						dE((nk)*((Nb)*ic+iv)+ikc,(nk)*((Nb)*ic+iv)+ikc) = nr::cmplx(el_energy(ac,ikc)-el_energy(av,ikv));
 
 						for (int ikcp=0; ikcp<nk; ikcp++)
 						{
@@ -562,12 +576,18 @@ void cnt::coulomb_int()
 							while(iq_xch>=Nq) iq_xch -= Nq;
 							while(iq_xch<0) iq_xch += Nq;
 
+							// int col = (nk)*((Nb)*icp+ivp)+ikcp;
+
 							for (int b=0; b<2*Nu; b++)
 							{
 								for (int bp=0; bp<2*Nu; bp++)
 								{
-									V_dir((nk-1)*((Nb-1)*ic+iv)+ikc,(nk-1)*((Nb-1)*icp+ivp)+ikcp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,acp,ikcp)*el_psi(bp,av,ikv)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_dir);
-									V_xch((nk-1)*((Nb-1)*ic+iv)+ikc,(nk-1)*((Nb-1)*icp+ivp)+ikcp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,av,ikv)*el_psi(bp,acp,ikcp)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_xch);
+									V_dir((nk)*((Nb)*ic+iv)+ikc,(nk)*((Nb)*icp+ivp)+ikcp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,acp,ikcp)*el_psi(bp,av,ikv)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_dir)/kappa;
+									V_xch((nk)*((Nb)*ic+iv)+ikc,(nk)*((Nb)*icp+ivp)+ikcp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,av,ikv)*el_psi(bp,acp,ikcp)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_xch);
+
+									// V_dir(row,col) += tmp_dir(b,bp)*el_psi(b,acp,ikcp)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_dir);
+									// V_xch(row,col) += tmp_xch(b,bp)*el_psi(bp,acp,ikcp)*std::conj(el_psi(bp,avp,ikvp));
+
 								}
 							}
 						}

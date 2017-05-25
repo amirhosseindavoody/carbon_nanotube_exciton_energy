@@ -19,10 +19,10 @@ for i in range(1,energy.shape[0]):
 	ax.plot(wave_vec,energy[i,:], linestyle="solid", linewidth=2, marker="")
 
 Nu = int(energy.shape[0]/2)
-# bands = []
+bands = Nu+np.arange(-3,3)
 fig = plt.figure()
 ax = fig.gca()
-for i in [Nu+2 ,Nu, Nu-1]:
+for i in bands:
 	ax.plot(wave_vec,energy[i,:], linestyle="solid", linewidth=2, marker="")
 
 # fig.tight_layout()

@@ -1,5 +1,7 @@
 CC=g++
-CC+= -Ofast -Wno-deprecated-declarations
+CC+= -Ofast -finline-functions -ffp-contract=on
+# CC=icpc
+# CC+= -Ofast -simd -qopt-report-phase=vec
 
 CFLAGS = -I./ -I./lib/ -I./my_math/ -std=c++14
 # LFLAGS = -lgsl -lgslcblas -lm -std=c++14
@@ -10,7 +12,7 @@ OBJDIR = ./obj
 
 object:
 	@mkdir -p $(OBJDIR)
-	$(CC) $(CFLAGS) -c $(SRCDIR)/*.cpp
+	$(CC) -c $(CFLAGS) $(SRCDIR)/*.cpp
 	@mv -f ./*.o $(OBJDIR)
 
 main: object

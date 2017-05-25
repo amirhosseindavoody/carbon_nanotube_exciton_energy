@@ -22,6 +22,7 @@ private:
 	const double s0 = 0.0; // tight binding constants
 
 	const double Upp = 11.3 * constants::eV; // constant used in the Ohno potential
+	const double kappa = 2.0; // dielectric constant due to core electrons and surrounding environment
 
 	int n, m; // chirailty parameters
 	int number_of_cnt_unit_cells; // length of cnt in units of cnt unit cell.

@@ -33,14 +33,14 @@ ax.plot(eh_energy[:,0], linestyle="solid", color="blue", linewidth=2, marker="o"
 ax.plot(ex_energy[:,0], linestyle="solid", color="red", linewidth=2, marker="o")
 
 
-data = np.loadtxt(directory+"cnt1.ex_psi.dat", skiprows=0)
-ex_psi = data
+# data = np.loadtxt(directory+"cnt1.ex_psi.dat", skiprows=0)
+# ex_psi = data
 
-fig = plt.figure()
-ax = fig.gca()
-for j in range(0,10):
-	ax.plot(ex_psi[:,j], linestyle="solid", linewidth=2, marker="")
-	print(j, ex_energy[j,0])
-	input()
+# fig = plt.figure()
+# ax = fig.gca()
+# for j in range(0,10):
+# 	ax.plot(ex_psi[:,j], linestyle="solid", linewidth=2, marker="")
+# 	print(j, ex_energy[j,0])
+# 	input()
 
 input("Press Enter to exit...")

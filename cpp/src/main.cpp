@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
 	if (argc != 2)
 	{
-		std::cout << "input directory must be entered as an argument!!!" << std::endl;;
+		std::cout << "input directory must be entered as an argument!!!" << std::endl;
 		std::exit(EXIT_FAILURE);
 	}
 

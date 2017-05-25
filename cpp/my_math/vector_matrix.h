@@ -1,15 +1,12 @@
 #ifndef _vector_matrix_h_
 #define _vector_matrix_h_
 
-// check bounds when accessing elements in vectors and matrices
-#define _CHECKBOUNDS_ 1
-// check if vectors and matrices are empty when operating on these objects
-#define _CHECKEMPTY_ 1
-// check if dimensions matches in algebraic operations on matrices and vectors
-#define _CHECKDIMENSIONS_ 1 
-//#define _USESTDVECTOR_ 1
-//#define _USENRERRORCLASS_ 1
-//#define _TURNONFPES_ 1
+// #define _CHECKBOUNDS_ 1 // check bounds when accessing elements in vectors and matrices
+// #define _CHECKEMPTY_ 1 // check if vectors and matrices are empty when operating on these objects
+// #define _CHECKDIMENSIONS_ 1 // check if dimensions matches in algebraic operations on matrices and vectors
+// #define _USESTDVECTOR_ 1
+// #define _USENRERRORCLASS_ 1
+// #define _TURNONFPES_ 1
 
 // all the system #include's we'll ever need
 #include <fstream>
@@ -149,7 +146,7 @@ public:
 	inline T & operator()(const int i);	//i'th element
 	inline const T & operator()(const int i) const; //i'th element
 	inline int size() const; // gets size of the array
-	inline const bool empty() const; // check if vector is empty
+	inline bool empty() const; // check if vector is empty
 	void resize(int newn); // resize (contents not preserved)
 	void assign(int newn, const T &a); // resize and assign a constant value
 	vector operator+(const vector &other) const;	// addition operator
@@ -295,7 +292,7 @@ inline int vector<T>::size() const
 
 // check if vector is empty
 template <class T>
-inline const bool vector<T>::empty() const
+inline bool vector<T>::empty() const
 {
 	return (v == NULL);
 }
@@ -446,7 +443,7 @@ public:
 	inline const T& operator()(const int i, const int j) const; //subscripting: reference to element at (i,j)
 	inline int dim1() const; // number of rows
 	inline int dim2() const; // number of columns
-	inline const bool empty() const; // check if matrix is empty
+	inline bool empty() const; // check if matrix is empty
 	void resize(int newn, int newm); // resize (contents not preserved)
 	void assign(int newn, int newm, const T &a); // resize and assign a constant value
 	matrix operator+(const matrix& other) const; // matrix-matrix addition
@@ -632,7 +629,7 @@ inline int matrix<T>::dim2() const
 
 // check if matrix is empty
 template <class T>
-inline const bool matrix<T>::empty() const
+inline bool matrix<T>::empty() const
 {
 	return (v == NULL);
 } 
