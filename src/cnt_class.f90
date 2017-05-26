@@ -3,14 +3,16 @@ module cnt_class
 	public
 
 	type cnt
+		! input parameters for the CNT
+		character(len=1000) :: name
 		integer :: n_ch,m_ch !chiral vector parameters
 		integer :: i_sub !subband index used in exciton energy calculation
+		integer :: nr !length of cnt in terms of its unit cell.
 
 		!Geometrical properties
 		real*8, dimension(2) :: a1,a2,b1,b2,ch_vec,t_vec,aCC_vec
 		real*8 :: len_ch,radius
 		integer :: Nu !number of graphene unit cells in cnt unit cell.
-		integer :: nr !length of cnt in terms of its unit cell.
 		real*8, dimension(:,:), allocatable :: posA,posB,posAA,posBB,posAB,posBA
 		real*8, dimension(:,:), allocatable :: posA3, posB3
 		real*8, dimension(:,:,:), allocatable :: pos2d, pos3d

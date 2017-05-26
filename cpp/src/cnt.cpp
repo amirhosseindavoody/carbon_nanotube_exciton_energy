@@ -514,31 +514,39 @@ void cnt::coulomb_int()
 		}
 	}
 
-	const int Nb = 4;
+	nr::vec_int ac_list(2,0);
+	nr::vec_int av_list(2,0);
+	ac_list(0) = 0;
+	ac_list(1) = 1;
+	av_list(0) = 0;
+	av_list(1) = 1;
+
+	const int Nb = ac_list.size();
 
 	// direct interaction matrix
 	nr::mat_complex V_dir(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
 	nr::mat_complex V_xch(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
 	nr::mat_complex dE(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
 
-	nr::mat_complex tmp_dir(2*Nu,2*Nu,nr::cmplx(0));
-	nr::mat_complex tmp_xch(2*Nu,2*Nu,nr::cmplx(0));
+	// nr::mat_complex tmp_dir(2*Nu,2*Nu,nr::cmplx(0));
+	// nr::mat_complex tmp_xch(2*Nu,2*Nu,nr::cmplx(0));
 	
 	const int iKcm=0; // center of mass wave vector
 
-	for (int ic=0; ic<Nb; ic++)
+
+	for (int ic=0; ic<ac_list.size(); ic++)
 	{
-		int ac = Nu+ic;
+		int ac = Nu+ac_list(ic);
 		std::cout << "ic = " << ic << "\n";
-		for (int icp=0; icp<Nb; icp++)
+		for (int icp=0; icp<ac_list.size(); icp++)
 		{
-			int acp = Nu+icp;
-			for (int iv=0; iv<Nb; iv++)
+			int acp = Nu+ac_list(icp);
+			for (int iv=0; iv<av_list.size(); iv++)
 			{
-				int av = Nu-1-iv;
-				for (int ivp=0; ivp<Nb; ivp++)
+				int av = Nu-1-av_list(iv);
+				for (int ivp=0; ivp<av_list.size(); ivp++)
 				{
-					int avp = Nu-1-ivp;
+					int avp = Nu-1-av_list(ivp);
 					for (int ikc=0; ikc<nk; ikc++)
 					{
 						int ikv = int(ikc+iKcm);
