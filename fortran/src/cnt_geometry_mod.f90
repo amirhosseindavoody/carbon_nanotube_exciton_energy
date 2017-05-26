@@ -18,9 +18,9 @@ contains
 		integer :: MC
 		integer :: dR = 1
         integer :: t1,t2
-		real*8 :: p1,p2,p,q
-		real*8 :: cosTh, sinTh
-		real*8, dimension(2,2) :: Rot
+		double precision :: p1,p2,p,q
+		double precision :: cosTh, sinTh
+		double precision, dimension(2,2) :: Rot
 		character(len=1000) :: logInput
 
 		! unit vectors and reciprocal lattice vectors************************************************************************
@@ -32,22 +32,22 @@ contains
 		currcnt%aCC_vec=1.d0/3.d0*(currcnt%a1+currcnt%a2)
 
 		! calculate chirality and translational vectors of CNT unit cell.****************************************************
-		currcnt%ch_vec=dble(currcnt%n_ch)*currcnt%a1+dble(currcnt%m_ch)*currcnt%a2
+		currcnt%ch_vec=dble(currcnt%n)*currcnt%a1+dble(currcnt%m)*currcnt%a2
 
-		currcnt%len_ch=a_l*dsqrt(dble(currcnt%n_ch)**2+dble(currcnt%m_ch)**2+dble(currcnt%n_ch)*dble(currcnt%m_ch))
+		currcnt%len_ch=a_l*dsqrt(dble(currcnt%n)**2+dble(currcnt%m)**2+dble(currcnt%n)*dble(currcnt%m))
 		currcnt%radius=currcnt%len_ch/2.d0/pi
 
-		call gcd(dR,2*currcnt%n_ch+currcnt%m_ch,2*currcnt%m_ch+currcnt%n_ch)
+		call gcd(dR,2*currcnt%n+currcnt%m,2*currcnt%m+currcnt%n)
 
-		t1=int((2.d0*dble(currcnt%m_ch)+dble(currcnt%n_ch))/dble(dR))
-		t2=-int((2.d0*dble(currcnt%n_ch)+dble(currcnt%m_ch))/dble(dR))
+		t1 = +int((2.d0*dble(currcnt%m)+dble(currcnt%n))/dble(dR))
+		t2 = -int((2.d0*dble(currcnt%n)+dble(currcnt%m))/dble(dR))
 
 		currcnt%t_vec=dble(t1)*currcnt%a1+ dble(t2)*currcnt%a2
 
-		currcnt%Nu=2*(currcnt%n_ch**2+currcnt%m_ch**2+currcnt%n_ch*currcnt%m_ch)/dR
+		currcnt%Nu=2*(currcnt%n**2+currcnt%m**2+currcnt%n*currcnt%m)/dR
 
-		p1=max((dble(currcnt%Nu)/dble(currcnt%n_ch)+1.d0/dble(t1))/(dble(currcnt%m_ch)/dble(currcnt%n_ch)- dble(t2)/dble(t1)),(1.d0/dble(currcnt%n_ch)+1.d0/dble(t1))/(dble(currcnt%m_ch)/dble(currcnt%n_ch)-dble(t2)/dble(t1)))
-		p2=min((dble(currcnt%Nu)/dble(currcnt%n_ch)+1.d0/dble(t1))/(dble(currcnt%m_ch)/dble(currcnt%n_ch)- dble(t2)/dble(t1)),(1.d0/dble(currcnt%n_ch)+1.d0/dble(t1))/(dble(currcnt%m_ch)/dble(currcnt%n_ch)-dble(t2)/dble(t1)))
+		p1=max((dble(currcnt%Nu)/dble(currcnt%n)+1.d0/dble(t1))/(dble(currcnt%m)/dble(currcnt%n)- dble(t2)/dble(t1)),(1.d0/dble(currcnt%n)+1.d0/dble(t1))/(dble(currcnt%m)/dble(currcnt%n)-dble(t2)/dble(t1)))
+		p2=min((dble(currcnt%Nu)/dble(currcnt%n)+1.d0/dble(t1))/(dble(currcnt%m)/dble(currcnt%n)- dble(t2)/dble(t1)),(1.d0/dble(currcnt%n)+1.d0/dble(t1))/(dble(currcnt%m)/dble(currcnt%n)-dble(t2)/dble(t1)))
 
 		! do i=ceiling(p2),floor(p1)
 		! 	p=dble(i)
@@ -63,7 +63,7 @@ contains
 		! call gcd(tmpi,int(abs(p)),int(abs(q)))
 		! p=p/dble(tmpi)
 		! q=q/dble(tmpi)
-		! MC=int(dble(currcnt%m_ch)*p-dble(currcnt%n_ch)*q)
+		! MC=int(dble(currcnt%m)*p-dble(currcnt%n)*q)
 
 		! rotate basis vectors so that ch_vec is along x-axis
 		cosTh=currcnt%ch_vec(1)/my_norm2(currcnt%ch_vec)
@@ -78,23 +78,22 @@ contains
 		currcnt%aCC_vec=matmul(Rot,currcnt%aCC_vec)
 
 		! calculate reciprocal lattice of CNT.*******************************************************************************
-		currcnt%dk=my_norm2(currcnt%b1)/(dble(currcnt%nkg)-1.d0)
-		currcnt%dkx = currcnt%dk/currcnt%dk_dkx_ratio
+		currcnt%dk=my_norm2(currcnt%t_vec)/(currcnt%nr)
 		currcnt%K1=(- t2*currcnt%b1+ dble(t1)*currcnt%b2)/(dble(currcnt%Nu))
-		currcnt%K2=(dble(currcnt%m_ch)*currcnt%b1-dble(currcnt%n_ch)*currcnt%b2)/dble(currcnt%Nu)
+		currcnt%K2=(dble(currcnt%m)*currcnt%b1-dble(currcnt%n)*currcnt%b2)/dble(currcnt%Nu)
 		currcnt%K2=currcnt%K2/my_norm2(currcnt%K2)
 
 		! calculate coordinates of atoms in the unwarped CNT unit cell.******************************************************
 		allocate(currcnt%posA(currcnt%Nu,2))
 		allocate(currcnt%posB(currcnt%Nu,2))
 
-		open(unit=100,file='posA.dat',status="unknown")
-		open(unit=101,file='posB.dat',status="unknown")
+		open(unit=100,file=trim(currcnt%name)//'.posA.dat',status="unknown")
+		open(unit=101,file=trim(currcnt%name)//'.posB.dat',status="unknown")
 
 		k=0
-		do i=0, t1+currcnt%n_ch
-			do j= t2,currcnt%m_ch
-				if ((dble(t2*i)/dble(t1) .le. dble(j)) .and. (dble(currcnt%m_ch*i)/dble(currcnt%n_ch) .ge. dble(j)) .and. (dble( t2)/dble(t1)*dble(i-currcnt%n_ch) .gt. dble(j-currcnt%m_ch)) .and. (dble(currcnt%m_ch)/dble(currcnt%n_ch)*dble(i-t1) .lt. dble(j-t2))) then
+		do i=0, t1+currcnt%n
+			do j= t2,currcnt%m
+				if ((dble(t2*i)/dble(t1) .le. dble(j)) .and. (dble(currcnt%m*i)/dble(currcnt%n) .ge. dble(j)) .and. (dble( t2)/dble(t1)*dble(i-currcnt%n) .gt. dble(j-currcnt%m)) .and. (dble(currcnt%m)/dble(currcnt%n)*dble(i-t1) .lt. dble(j-t2))) then
 					k=k+1
 					currcnt%posA(k,1)=dble(i)*currcnt%a1(1)+dble(j)*currcnt%a2(1)
 					currcnt%posA(k,2)=dble(i)*currcnt%a1(2)+dble(j)*currcnt%a2(2)
@@ -142,13 +141,13 @@ contains
 			if (currcnt%posBA(i,1) .gt. currcnt%ch_vec(1)/2.d0) currcnt%posBA(i,1)=currcnt%posBA(i,1)-currcnt%ch_vec(1)
 			if (currcnt%posBB(i,1) .gt. currcnt%ch_vec(1)/2.d0) currcnt%posBB(i,1)=currcnt%posBB(i,1)-currcnt%ch_vec(1)
 
-! 			write(100,'(E16.8,E16.8)') currcnt%posAA(k,1), currcnt%posAA(k,2)
-! 			write(101,'(E16.8,E16.8)') currcnt%posBA(k,1), currcnt%posBA(k,2)
+			! write(100,'(E16.8,E16.8)') currcnt%posAA(k,1), currcnt%posAA(k,2)
+			! write(101,'(E16.8,E16.8)') currcnt%posBA(k,1), currcnt%posBA(k,2)
 
 		end do
 
 		! write down important informations into the output file.************************************************************
-		write(logInput,'(A, I0, A, I0, A)') "chirality = (",currcnt%n_ch, " , ", currcnt%m_ch, ")"
+		write(logInput,'(A, I0, A, I0, A)') "chirality = (",currcnt%n, " , ", currcnt%m, ")"
 		call writeLog(trim(logInput))
 		write(logInput,'(A, E16.8)') "radius = ", currcnt%radius
 		call writeLog(trim(logInput))
@@ -175,8 +174,6 @@ contains
 		write(logInput,'(A, I0)') "MC=",MC
 		call writeLog(trim(logInput))
 		write(logInput,'(A, E9.2)') "dk= ",currcnt%dk
-		call writeLog(trim(logInput))
-		write(logInput,'(A, E9.2)') "dkx=",currcnt%dkx
 		call writeLog(trim(logInput))
 
 		return
