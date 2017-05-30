@@ -18,30 +18,29 @@ module cnt_class
 		!directory that the CNT information is stored
 		character(len=1000) :: directory
 
+		! exciton objects
 		type(exciton) :: ex
 
 		! !Geometrical properties
-		double precision, dimension(2) :: a1, a2, b1, b2, ch_vec, t_vec, aCC_vec
-		double precision :: len_ch,radius
+		double precision, dimension(2) :: a1, a2 ! graphene unit lattice vectors
+		double precision, dimension(2) :: aCC_vec ! vector connecting two basis carbon atoms in graphene unit cell
+		double precision, dimension(2) :: ch_vec ! chiral vector of the cnt
+		double precision, dimension(2) :: t_vec ! translational vector of the cnt
+		double precision :: len_ch ! length of the chiral vector which is the circumference of the cnt
+		double precision :: radius ! radius of the cnt
 		integer :: Nu !number of graphene unit cells in cnt unit cell.
-		double precision, dimension(:,:), allocatable :: posA,posB
+		double precision, dimension(:,:), allocatable :: posA,posB ! position of A-type and B-type carbon atoms in the 2d graphene shit
 		double precision, dimension(:,:), allocatable :: posAA,posBB,posAB,posBA
 		! double precision, dimension(:,:), allocatable :: posA3, posB3
 		! double precision, dimension(:,:,:), allocatable :: pos2d, pos3d
 
-		! !Length and location of cnt for calculating the resonance energy transfer rate
-		! double precision :: length
-		! double precision :: center_position
-
-		! !Environment properties
-		! double precision :: kappa !this is the dielectric factor that accounts for core electron and environment screening
-		! double precision :: Ckappa !this is the factor that is multiplied to a kappa_coeff to yield kappa. This is varient under different environments.
-		! double precision :: kappa_coeff !this is the scaling factor for calculating kappa and is different for each different cnt chirality.
-
-		!Graphene reciprocal lattice properties
-		double precision, dimension(2) :: K1, K2
+		! graphene reciprocal lattice properties
+		double precision, dimension(2) :: b1, b2 ! reciprocal lattice vectors for graphene
 
 		!CNT reciprocal lattice properties
+		double precision, dimension(2) :: K1 ! cnt reciprocal lattice vector in the circumferencial direction
+		double precision, dimension(2) :: K2 ! cnt reciprocal lattice vector along the cnt axis
+		integer :: nk !number of wave vectors along the axis of the carbon nanotube, this should be equal to nr
 		double precision :: dk !reciprocal lattice mesh size for calculating self-energy, Fourier transform of coulomb interaction v_FT, and dielectric function.
 		integer :: ik_max, ik_min !limits of k-vector in the first Brillouin zone of cnt
 		integer :: mu_min, mu_max !limits of mu index in the cnt
@@ -81,3 +80,4 @@ module cnt_class
 	end type cnt
 
 end module cnt_class
+

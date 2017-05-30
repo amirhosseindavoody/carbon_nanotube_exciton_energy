@@ -1,8 +1,8 @@
 directory, output= /home/amirhossein/research/test/
 
 cnt, name= cnt1
-cnt, n=	14
-cnt, m=	0
-cnt, length[unit cells]= 10
+cnt, n=	4
+cnt, m=	2
+cnt, length[unit cells]= 100
 cnt, exciton_subband=	1
 cnt, selected_exciton=	A2_singlet

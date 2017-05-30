@@ -78,10 +78,11 @@ contains
 		currcnt%aCC_vec=matmul(Rot,currcnt%aCC_vec)
 
 		! calculate reciprocal lattice of CNT.*******************************************************************************
-		currcnt%dk=my_norm2(currcnt%t_vec)/(currcnt%nr)
+		currcnt%nk = currcnt%nr
 		currcnt%K1=(- t2*currcnt%b1+ dble(t1)*currcnt%b2)/(dble(currcnt%Nu))
 		currcnt%K2=(dble(currcnt%m)*currcnt%b1-dble(currcnt%n)*currcnt%b2)/dble(currcnt%Nu)
-		currcnt%K2=currcnt%K2/my_norm2(currcnt%K2)
+		currcnt%dk=2*pi/my_norm2(currcnt%t_vec)/(currcnt%nk) ! this is equal to my_norm2(currcnt%K2)/dble(currcnt%nr)
+		currcnt%K2=currcnt%K2/my_norm2(currcnt%K2) ! normalize K2 so that later we can use it easier for calculating k-vector in 2d space
 
 		! calculate coordinates of atoms in the unwarped CNT unit cell.******************************************************
 		allocate(currcnt%posA(currcnt%Nu,2))

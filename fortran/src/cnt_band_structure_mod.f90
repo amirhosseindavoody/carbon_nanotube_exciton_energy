@@ -1,7 +1,7 @@
 module cnt_band_structure_mod
 	implicit none
 	private
-	public :: cnt_band_structure, grapheneEnergy
+	public :: cnt_band_structure, graphene_energy
 
 contains
 	subroutine cnt_band_structure()
@@ -11,7 +11,7 @@ contains
 		use write_log_mod, only: writeLog
 		implicit none
 		
-		integer :: nkc, imin_sub
+		integer :: imin_sub
 		integer :: i,j,mu,ik,tmpi
 		integer, dimension(:), allocatable :: min_loc
 		double precision :: tmpr
@@ -23,13 +23,11 @@ contains
 		character(len=200) :: logInput
 		
 		
-		! calculate CNT energy dispersion.***********************************************************************************
-		currcnt%ik_max = floor(pi/my_norm2(currcnt%t_vec)/currcnt%dk)
-		currcnt%ik_min = 1-currcnt%ik_max
+		! calculate cnt energy dispersion.***********************************************************************************
+		currcnt%ik_min = 1-nint(currcnt%nk/2.d0)
+		currcnt%ik_max = 30*currcnt%nk-nint(currcnt%nk/2.d0)
 		currcnt%mu_max = +currcnt%Nu/2
 		currcnt%mu_min = 1-currcnt%Nu/2
-		
-		nkc=2*currcnt%ik_max+1
 		
 		allocate(k_vec(currcnt%ik_min:currcnt%ik_max))
 		allocate(E_k(currcnt%mu_min:currcnt%mu_max, currcnt%ik_min:currcnt%ik_max,2))
@@ -44,20 +42,20 @@ contains
 		do mu=currcnt%mu_min, currcnt%mu_max
 			do ik=currcnt%ik_min, currcnt%ik_max
 				k=dble(mu)*currcnt%K1+dble(ik)*currcnt%dk*currcnt%K2
-				call grapheneEnergy(currcnt, E_tmp, Cc_tmp, Cv_tmp, k)
+				call graphene_energy(currcnt, E_tmp, Cc_tmp, Cv_tmp, k)
 				E_k(mu,ik,:) = E_tmp
 				Cc_k(mu,ik,:) = Cc_tmp
 				Cv_k(mu,ik,:) = Cv_tmp
 			enddo
 		enddo
 		
-		! save the CNT energy dispersion*************************************************************************************
-		open(unit=100,file=trim(currcnt%name)//'.condo_band.dat',status="unknown")
-		open(unit=101,file=trim(currcnt%name)//'.valen_band.dat',status="unknown")
+		! save the cnt energy dispersion*************************************************************************************
+		open(unit=100,file=trim(currcnt%name)//'.c_band.dat',status="unknown")
+		open(unit=101,file=trim(currcnt%name)//'.v_band.dat',status="unknown")
 		
 		do ik=currcnt%ik_min,currcnt%ik_max
-			 write(100,'(E16.8)', advance='no') k_vec(ik) 
-			 write(101,'(E16.8)', advance='no') k_vec(ik)
+			write(100,'(E16.8)', advance='no') k_vec(ik)
+			write(101,'(E16.8)', advance='no') k_vec(ik)
 		end do
 		
 		write(100,*)
@@ -77,13 +75,13 @@ contains
 		
 		! find the subbands with a minimum energy.***************************************************************************
 		min_loc=minloc(E_k(0:currcnt%mu_max,:,1),2)
-		imin_sub=count((min_loc .lt. nkc) .and. (min_loc .gt. 1))
+		imin_sub=count((min_loc .lt. currcnt%nk) .and. (min_loc .gt. 1))
 		allocate(currcnt%min_sub(imin_sub))
 		allocate(min_energy(imin_sub))
 		
 		i=1
 		do mu=0,currcnt%mu_max
-			if ((min_loc(mu) .gt. 1) .and. (min_loc(mu) .lt. nkc)) then
+			if ((min_loc(mu) .gt. 1) .and. (min_loc(mu) .lt. currcnt%nk)) then
 			 currcnt%min_sub(i)=mu
 			 min_energy(i)=minval(E_k(mu,:,1))
 			 i=i+1
@@ -110,9 +108,9 @@ contains
 		! E2_tmp=(/ min_energy(currcnt%i_sub),0.d0 /)
 		! do while ((min(E1_tmp(1),E2_tmp(1))-min_energy(currcnt%i_sub)) .le. currcnt%E_th )
 		! 	k=dble(currcnt%min_sub(currcnt%i_sub))*currcnt%K1+dble(ik)*currcnt%dk*currcnt%K2
-		! 	call grapheneEnergy(currcnt,E1_tmp,Cc_tmp,Cv_tmp,k)
+		! 	call graphene_energy(currcnt,E1_tmp,Cc_tmp,Cv_tmp,k)
 		! 	k=dble(currcnt%min_sub(currcnt%i_sub))*currcnt%K1-dble(ik)*currcnt%dk*currcnt%K2
-		! 	call grapheneEnergy(currcnt,E2_tmp,Cc_tmp,Cv_tmp,k)
+		! 	call graphene_energy(currcnt,E2_tmp,Cc_tmp,Cv_tmp,k)
 		! 	ik=ik+1
 		! enddo
 		
@@ -172,7 +170,7 @@ contains
 		! mu=currcnt%min_sub(currcnt%i_sub)
 		! do ik=currcnt%ik_low,currcnt%ik_high
 		! 	k=dble(mu)*currcnt%K1+dble(ik)*currcnt%dk*currcnt%K2
-		! 	call grapheneEnergy(currcnt,E_tmp,Cc_tmp,Cv_tmp,k)
+		! 	call graphene_energy(currcnt,E_tmp,Cc_tmp,Cv_tmp,k)
 		! 	write(100,'(E16.8)', advance='no') E_tmp(1) 
 		! 	write(101,'(E16.8)', advance='no') E_tmp(2) 
 		! enddo
@@ -183,7 +181,7 @@ contains
 		! mu=-currcnt%min_sub(currcnt%i_sub)
 		! do ik=currcnt%ik_low,currcnt%ik_high
 		! 	k=dble(mu)*currcnt%K1+dble(ik)*currcnt%dk*currcnt%K2
-		! 	call grapheneEnergy(currcnt,E_tmp,Cc_tmp,Cv_tmp,k)
+		! 	call graphene_energy(currcnt,E_tmp,Cc_tmp,Cv_tmp,k)
 		! 	write(100,'(E16.8)', advance='no') E_tmp(1) 
 		! 	write(101,'(E16.8)', advance='no') E_tmp(2) 
 		! enddo
@@ -202,7 +200,7 @@ contains
 	! subroutine to calculate Bloch functions and energy in graphene
 	!**************************************************************************************************************************
 
-	subroutine grapheneEnergy(currCNT,E,Cc,Cv,k)
+	subroutine graphene_energy(currCNT,E,Cc,Cv,k)
 		use physical_constant_mod, only: i1, t0
 		use cnt_class, only: cnt
 
@@ -222,6 +220,6 @@ contains
 		Cc(2)=dcmplx(+1.d0/sqrt(2.d0)/abs(f_k))*conjg(f_k)
 		Cv(1)=dcmplx(+1.d0/sqrt(2.d0))
 		Cv(2)=dcmplx(-1.d0/sqrt(2.d0)/abs(f_k))*conjg(f_k)
-	end subroutine grapheneEnergy
+	end subroutine graphene_energy
 
 end module cnt_band_structure_mod
