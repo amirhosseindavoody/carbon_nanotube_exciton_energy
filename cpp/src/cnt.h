@@ -42,21 +42,21 @@ private:
 
 	arma::vec _t_vec; // translational vector for cnt unit cell in unrolled graphene sheet
 	arma::vec _t_vec_3d; // translational vector for cnt unit cell in rolled graphene sheed (3d)
-	//
-	// int Nu; // number of graphene unit cells in cnt unit cell.
-	//
-	// nr::vec_doub K1; // cnt reciprocal lattice vector in the circumferencial direction
-	// nr::vec_doub K2; // cnt reciprocal lattice vector along the cnt axis
-	// nr::vec_doub dk_l; // delta_k in the longitudinal direction with respect to cnt axis
-	//
-	// nr::mat_doub pos_a, pos_b; // position of atoms in A and B sites
-	// nr::mat_doub pos_2d, pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space
-	// // nr::mat_doub pos_aa, pos_ab, pos_ba, pos_bb; // distance between atoms and A and B sites which conserves lattice symmetry.
-	//
-	// nr::mat_doub el_energy; // energy of electronic states
-	// nr::mat3d_complex el_psi; // electronic wave functions corresponding to electronic states
-	//
-	// nr::vec_complex epsilon; // static dielectric function
+
+	int _Nu; // number of graphene unit cells in cnt unit cell.
+
+	arma::vec _K1; // cnt reciprocal lattice vector in the circumferencial direction
+	arma::vec _K2; // cnt reciprocal lattice vector along the cnt axis
+	arma::vec _dk_l; // delta_k in the longitudinal direction with respect to cnt axis
+
+	arma::mat _pos_a, _pos_b; // position of atoms in A and B sites
+	arma::mat _pos_2d, _pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space
+	arma::mat _pos_aa, _pos_ab, _pos_ba, _pos_bb; // distance between atoms and A and B sites which conserves lattice symmetry.
+
+	arma::mat _el_energy; // energy of electronic states
+	arma::cx_mat _el_psi; // electronic wave functions corresponding to electronic states
+
+	arma::cx_vec epsilon; // static dielectric function
 
 
 public:
@@ -196,6 +196,7 @@ public:
 			std::cout << "length of cnt: " << _number_of_cnt_unit_cells << " unit cells.\n";
 		}
 
+		std::cout << std::endl;
 
 	};
 	// initialize

@@ -9,22 +9,7 @@ Stores all relevant information for a carbon nanotube
 
 #include "constants.h"
 #include "cnt.h"
-//
-// // cnt::cnt(const std::string &in_name, const int in_n, const int in_m, const int in_length)
-// // {
-// // 	name = in_name;
-// // 	n = in_n;
-// // 	m = in_m;
-// // 	number_of_cnt_unit_cells = in_length;
-// // 	nk = number_of_cnt_unit_cells;
-// //
-// // 	a1.assign(2,0.0);
-// // 	a2.assign(2,0.0);
-// // 	b1.assign(2,0.0);
-// // 	b2.assign(2,0.0);
-// //
-// // }
-//
+
 void cnt::geometry()
 {
   // unit vectors and reciprocal lattice vectors
@@ -60,165 +45,160 @@ void cnt::geometry()
 
 	_t_vec = double(t1)*_a1 + double(t2)*_a2;
   _t_vec.print("t_vec:");
-  //
-	// Nu = 2*(pow(n,2)+pow(m,2)+n*m)/dR;
-  //
-	// // rotate basis vectors so that ch_vec is along the x_axis
-	// double cos_theta = ch_vec[0]/ch_vec.norm2();
-	// double sin_theta = ch_vec[1]/ch_vec.norm2();
-	// nr::mat_doub rot(2,2); // rotation matrix
-	// rot(0,0) = cos_theta;
-	// rot(1,0) = -sin_theta;
-	// rot(0,1) = sin_theta;
-	// rot(1,1) = cos_theta;
-  //
-	// ch_vec = rot*ch_vec;
-	// t_vec = rot*t_vec;
-	// a1 = rot*a1;
-	// a2 = rot*a2;
-	// b1 = rot*b1;
-	// b2 = rot*b2;
-	// aCC_vec = rot*aCC_vec;
-  //
-	// // calculate reciprocal lattice of CNT
-	// K1 = (-(double)t2*b1 + (double)t1*b2)/((double)Nu);
-	// K2 = ((double)m*b1-(double)n*b2)/((double)Nu);
-	// dk_l = K2/((double)number_of_cnt_unit_cells);
-  //
-	// // calculate positions of atoms in the cnt unit cell
-	// pos_a.assign(Nu,2,0.0);
-	// pos_b.assign(Nu,2,0.0);
-  //
-	// int k =0;
-  //
-	// for (int i=0; i<=t1+n; i++)
+
+	_Nu = 2*(std::pow(_n,2)+std::pow(_m,2)+_n*_m)/dR;
+
+	// rotate basis vectors so that ch_vec is along the x_axis
+	double cos_theta = _ch_vec(0)/arma::norm(_ch_vec);
+	double sin_theta = _ch_vec(1)/arma::norm(_ch_vec);
+	arma::mat rot = {{+cos_theta, +sin_theta},
+                   {-sin_theta, +cos_theta}}; // rotation matrix
+
+	_ch_vec = rot*_ch_vec;
+	_t_vec = rot*_t_vec;
+	_a1 = rot*_a1;
+	_a2 = rot*_a2;
+	_b1 = rot*_b1;
+	_b2 = rot*_b2;
+	_aCC_vec = rot*_aCC_vec;
+
+  _ch_vec.print("chirality vector:");
+  _t_vec.print("t_vec:");
+
+
+	// calculate reciprocal lattice of CNT
+	_K1 = (-double(t2)*_b1 + double(t1)*_b2)/(double(_Nu));
+	_K2 = (double(_m)*_b1-double(_n)*_b2)/(double(_Nu));
+	_dk_l = _K2/(double(_number_of_cnt_unit_cells));
+
+	// calculate positions of atoms in the cnt unit cell
+	_pos_a = arma::mat(_Nu,2,arma::fill::zeros);
+	_pos_b = arma::mat(_Nu,2,arma::fill::zeros);
+
+	int k = 0;
+
+	for (int i=0; i<=t1+_n; i++)
+	{
+		for (int j=t2; j<=_m; j++)
+		{
+			bool flag1 = double(t2*i)/(double)t1 <= double(j);
+			bool flag2 = double(_m*i)/(double)_n >= double(j);
+			bool flag3 = double(t2*(i-_n))/double(t1) > double(j-_m);
+			bool flag4 = double(_m*(i-t1))/double(_n) < double(j-t2);
+
+			if(flag1 && flag2 && flag3 && flag4)
+			{
+        _pos_a.row(k) = double(i)*_a1.t() + double(j)*_a2.t();
+        _pos_b.row(k) = _pos_a.row(k) + _aCC_vec.t();
+
+        // _pos_a(k,0) = double(i)*_a1(0) + (double)j*_a2(0);
+				// _pos_a(k,1) = (double)i*_a1(1) + (double)j*_a2(1);
+				// _pos_b(k,0) = _pos_a(k,0)+_aCC_vec(0);
+				// _pos_b(k,1) = _pos_a(k,1)+_aCC_vec(1);
+
+				if(_pos_a(k,0) > _ch_vec(0))
+          _pos_a(k,0) -= _ch_vec(0);
+				if(_pos_a(k,0) < 0.0)
+          _pos_a(k,0) += _ch_vec(0);
+				if(_pos_a(k,1) > _ch_vec(1))
+          _pos_a(k,1) -= _ch_vec(1);
+				if(_pos_a(k,1) < 0.0)
+          _pos_a(k,1) += _ch_vec(1);
+
+				if(_pos_b(k,0) > _ch_vec(0))
+          _pos_b(k,0) -= _ch_vec(0);
+				if(_pos_b(k,0) < 0.0)
+          _pos_b(k,0) += _ch_vec(0);
+				if(_pos_b(k,1) > _ch_vec(1))
+          _pos_b(k,1) -= _ch_vec(1);
+				if(_pos_b(k,1) < 0.0)
+          _pos_b(k,1) += _ch_vec(1);
+
+				k++;
+			}
+		}
+	}
+
+  _pos_a.print("pos_a:");
+  _pos_b.print("pos_b:");
+
+
+
+	if (k != _Nu)
+	{
+		std::cout << "error in finding position of atoms in cnt unit cell!!!" << std::endl;
+		std::cout << "Nu = " << _Nu << "  ,  k = " << k << std::endl;
+		exit(1);
+	}
+
+	// calculate distances between atoms in a warped cnt unit cell.
+	_pos_aa = arma::mat(_Nu,2,arma::fill::zeros);
+	_pos_ab = arma::mat(_Nu,2,arma::fill::zeros);
+	_pos_ba = arma::mat(_Nu,2,arma::fill::zeros);
+	_pos_bb = arma::mat(_Nu,2,arma::fill::zeros);
+
+	for (int i=0; i<_Nu; i++)
+	{
+    _pos_aa.row(i) = _pos_a.row(i)-_pos_a.row(0);
+    _pos_ab.row(i) = _pos_a.row(i)-_pos_b.row(0);
+    _pos_ba.row(i) = _pos_b.row(i)-_pos_a.row(0);
+    _pos_bb.row(i) = _pos_b.row(i)-_pos_b.row(0);
+
+		// pos_aa(i,0) = pos_a(i,0)-pos_a(0,0);
+		// pos_aa(i,1) = pos_a(i,1)-pos_a(0,1);
+    //
+		// pos_ab(i,0) = pos_a(i,0)-pos_b(0,0);
+		// pos_ab(i,1) = pos_a(i,1)-pos_b(0,1);
+    //
+		// pos_ba(i,0) = pos_b(i,0)-pos_a(0,0);
+		// pos_ba(i,1) = pos_b(i,1)-pos_a(0,1);
+    //
+		// pos_bb(i,0) = pos_b(i,0)-pos_b(0,0);
+		// pos_bb(i,1) = pos_b(i,1)-pos_b(0,1);
+
+		if(_pos_aa(i,0) > _ch_vec(0)/2)
+      _pos_aa(i,0) -= _ch_vec(0);
+		if(_pos_ab(i,0) > _ch_vec(0)/2)
+      _pos_ab(i,0) -= _ch_vec(0);
+		if(_pos_ba(i,0) > _ch_vec(0)/2)
+      _pos_ba(i,0) -= _ch_vec(0);
+		if(_pos_bb(i,0) > _ch_vec(0)/2)
+      _pos_bb(i,0) -= _ch_vec(0);
+	}
+
+	// put position of all atoms in a single variable in 2d space(unrolled graphene sheet)
+	_pos_2d = arma::mat(2*_Nu,2,arma::fill::zeros);
+  _pos_2d(arma::span(0,_Nu-1),arma::span::all) = _pos_a;
+  _pos_2d(arma::span(_Nu,2*_Nu-1),arma::span::all) = _pos_b;
+	// for (int i=0; i<_Nu; i++)
 	// {
-	// 	for (int j=t2; j<=m; j++)
-	// 	{
-	// 		bool flag1 = (double)(t2*i)/(double)t1 <= (double)j;
-	// 		bool flag2 = (double)(m*i)/(double)n >= (double)j;
-	// 		bool flag3 = (double)(t2*(i-n))/(double)(t1) > (double)(j-m);
-	// 		bool flag4 = (double)(m*(i-t1))/(double)(n) < (double)(j-t2);
-  //
-	// 		if(flag1 && flag2 && flag3 && flag4)
-	// 		{
-	// 			pos_a(k,0) = (double)i*a1(0) + (double)j*a2(0);
-	// 			pos_a(k,1) = (double)i*a1(1) + (double)j*a2(1);
-	// 			pos_b(k,0) = pos_a(k,0)+aCC_vec(0);
-	// 			pos_b(k,1) = pos_a(k,1)+aCC_vec(1);
-  //
-	// 			if(pos_a(k,0) > ch_vec(0))	pos_a(k,0) -= ch_vec(0);
-	// 			if(pos_a(k,0) < 0.0)	pos_a(k,0) += ch_vec(0);
-	// 			if(pos_a(k,1) > ch_vec(1))	pos_a(k,1) -= ch_vec(1);
-	// 			if(pos_a(k,1) < 0.0)	pos_a(k,1) += ch_vec(1);
-  //
-	// 			if(pos_b(k,0) > ch_vec(0))	pos_b(k,0) -= ch_vec(0);
-	// 			if(pos_b(k,0) < 0.0)	pos_b(k,0) += ch_vec(0);
-	// 			if(pos_b(k,1) > ch_vec(1))	pos_b(k,1) -= ch_vec(1);
-	// 			if(pos_b(k,1) < 0.0)	pos_b(k,1) += ch_vec(1);
-  //
-	// 			k++;
-	// 		}
-	// 	}
+	// 	_pos_2d(i,0) = pos_a(i,0);
+	// 	_pos_2d(i+_Nu,0) = pos_b(i,0);
+	// 	_pos_2d(i,1) = pos_a(i,1);
+	// 	_pos_2d(i+Nu,1) = pos_b(i,1);
 	// }
-  //
-	// if (k != Nu)
-	// {
-	// 	std::cout << "error in finding position of atoms in cnt unit cell!!!" << std::endl;
-	// 	std::cout << "Nu = " << Nu << "  ,  k = " << k << std::endl;
-	// 	exit(1);
-	// }
-  //
-	// // // calculate distances between atoms in a warped cnt unit cell.
-	// // pos_aa.assign(Nu,2,0.0);
-	// // pos_ab.assign(Nu,2,0.0);
-	// // pos_ba.assign(Nu,2,0.0);
-	// // pos_bb.assign(Nu,2,0.0);
-  //
-	// // for (int i=0; i<Nu; i++)
-	// // {
-	// // 	pos_aa(i,0) = pos_a(i,0)-pos_a(0,0);
-	// // 	pos_aa(i,1) = pos_a(i,1)-pos_a(0,1);
-  //
-	// // 	pos_ab(i,0) = pos_a(i,0)-pos_b(0,0);
-	// // 	pos_ab(i,1) = pos_a(i,1)-pos_b(0,1);
-  //
-	// // 	pos_ba(i,0) = pos_b(i,0)-pos_a(0,0);
-	// // 	pos_ba(i,1) = pos_b(i,1)-pos_a(0,1);
-  //
-	// // 	pos_bb(i,0) = pos_b(i,0)-pos_b(0,0);
-	// // 	pos_bb(i,1) = pos_b(i,1)-pos_b(0,1);
-  //
-	// // 	if(pos_aa(i,0) > ch_vec(0)/2)	pos_aa(i,0) -= ch_vec(0);
-	// // 	if(pos_ab(i,0) > ch_vec(0)/2)	pos_ab(i,0) -= ch_vec(0);
-	// // 	if(pos_ba(i,0) > ch_vec(0)/2)	pos_ba(i,0) -= ch_vec(0);
-	// // 	if(pos_bb(i,0) > ch_vec(0)/2)	pos_bb(i,0) -= ch_vec(0);
-	// // }
-  //
-	// // put position of all atoms in a single variable in 2d space(unrolled graphene sheet)
-	// pos_2d.assign(2*Nu,2,0.0);
-	// for (int i=0; i<Nu; i++)
-	// {
-	// 	pos_2d(i,0) = pos_a(i,0);
-	// 	pos_2d(i+Nu,0) = pos_b(i,0);
-	// 	pos_2d(i,1) = pos_a(i,1);
-	// 	pos_2d(i+Nu,1) = pos_b(i,1);
-	// }
-  //
-	// // calculate position of all atoms in the 3d space (rolled graphene sheet)
-	// pos_3d.assign(2*Nu,3,0.0);
-	// for (int i=0; i<pos_3d.dim1(); i++)
-	// {
-	// 	pos_3d(i,0) = radius*cos(pos_2d(i,0)/radius);
-	// 	pos_3d(i,1) = pos_2d(i,1);
-	// 	pos_3d(i,2) = radius*sin(pos_2d(i,0)/radius);
-	// }
-  //
-	// //make 3d t_vec
-	// t_vec_3d.assign(3,0.0);
-	// t_vec_3d(1) = t_vec(1);
-  //
-  //
-	// // save coordinates of atoms in 2d space
-	// std::ofstream file;
-	// file.open(name+".pos_2d.dat", std::ios::trunc);
-  //
-	// if (file.is_open())
-	// {
-	// 	file << std::scientific;
-	// 	file << std::showpos;
-	// 	file << pos_2d.dim1() << "\t" << pos_2d.dim2() << std::endl;
-	// 	for (int i=0; i<pos_2d.dim1(); i++)
-	// 	{
-	// 		file << pos_2d(i,0) << "\t" << pos_2d(i,1) << "\n";
-	// 	}
-	// }
-	// else
-	// {
-	// 	write_log("error: could not creat output file!");
-	// 	exit(EXIT_FAILURE);
-	// }
-	// file.close();
-  //
-	// // save coordinates of atoms in 3d space
-	// file.open(name+".pos_3d.dat", std::ios::trunc);
-  //
-	// if (file.is_open())
-	// {
-	// 	file << std::scientific;
-	// 	file << std::showpos;
-	// 	file << pos_3d.dim1() << "\t" << pos_3d.dim2() << std::endl;
-	// 	for (int i=0; i<pos_3d.dim1(); i++)
-	// 	{
-	// 		file << pos_3d(i,0) << "\t" << pos_3d(i,1) << "\t" << pos_3d(i,2) << "\n";
-	// 	}
-	// }
-	// else
-	// {
-	// 	write_log("error: could not creat output file!");
-	// 	exit(EXIT_FAILURE);
-	// }
-	// file.close();
+
+	// calculate position of all atoms in the 3d space (rolled graphene sheet)
+	_pos_3d = arma::mat(2*_Nu,3,arma::fill::zeros);
+	for (int i=0; i<_pos_3d.n_rows; i++)
+	{
+		_pos_3d(i,0) = _radius*cos(_pos_2d(i,0)/_radius);
+		_pos_3d(i,1) = _pos_2d(i,1);
+		_pos_3d(i,2) = _radius*sin(_pos_2d(i,0)/_radius);
+	}
+
+	//make 3d t_vec
+	_t_vec_3d = arma::vec(3,arma::fill::zeros);
+	_t_vec_3d(1) = _t_vec(1);
+
+
+	// save coordinates of atoms in 2d space
+  std::string filename = _directory.path().string() + _name + ".pos_2d.dat";
+  _pos_2d.save(filename, arma::arma_ascii);
+
+  // save coordinates of atoms in 3d space
+  filename = _directory.path().string() + _name + ".pos_3d.dat";
+  _pos_3d.save(filename, arma::arma_ascii);
 
 }
 //
