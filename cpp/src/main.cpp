@@ -2,12 +2,6 @@
 #include <ctime>
 #include <armadillo>
 
-// #include "file_management.h"
-// #include "cnt.h"
-// #include "constants.h"
-// #include "write_log.h"
-// #include "nr.h"
-
 #include "cnt.h"
 
 int main(int argc, char *argv[])
@@ -22,8 +16,8 @@ int main(int argc, char *argv[])
 
 	m_cnt.process_command_line_args(argc, argv);
 	m_cnt.geometry();
+	m_cnt.electron_full();
 
-	// cnts[0].electron();
 	// // cnts[0].dielectric();
 	// cnts[0].coulomb_int();
 

@@ -10,6 +10,141 @@ Stores all relevant information for a carbon nanotube
 #include "constants.h"
 #include "cnt.h"
 
+// set the output directory and the output file name
+void cnt::process_command_line_args(int argc, char* argv[])
+{
+  namespace fs = std::experimental::filesystem;
+
+  // first find the xml input file and open it
+  fs::directory_entry xml_file;
+  std::cout << "current path is " << fs::current_path() << std::endl;
+
+  if (argc <= 1)
+  {
+    xml_file.assign("input.xml");
+  }
+  else
+  {
+    xml_file.assign(argv[1]);
+  }
+
+  if(fs::exists(xml_file))
+  {
+    std::cout << "input xml file found: " << xml_file.path() << std::endl;
+  }
+  else
+  {
+    std::cout << "input xml file NOT found: " << xml_file.path() << std::endl;
+    std::exit(1);
+  }
+
+  if (!fs::is_regular_file(xml_file))
+  {
+    std::cout << "input xml file NOT found: " << xml_file.path() << std::endl;
+    std::exit(1);
+  }
+  std::cout << std::endl;
+
+  rapidxml::file<> xmlFile(xml_file.path().c_str()); //open file
+  rapidxml::xml_document<> doc; //create xml object
+  doc.parse<0>(xmlFile.data()); //parse contents of file
+  rapidxml::xml_node<>* curr_node = doc.first_node(); //gets the node "Document" or the root nodes
+  curr_node = curr_node->first_node();
+
+  // get the sibling node with name sibling_name
+  auto get_sibling = [](rapidxml::xml_node<>* node, const std::string& sibling_name)
+  {
+    if (node->name() == sibling_name)
+    {
+      return node;
+    }
+    auto next_node = node->next_sibling(sibling_name.c_str());
+    if (next_node == 0)
+    {
+      next_node = node->previous_sibling(sibling_name.c_str());
+      if (next_node == 0)
+      {
+        std::cout << "sibling not found: " << sibling_name.c_str() << std::endl;
+        std::exit(1);
+      }
+    }
+    return next_node;
+  };
+
+  // get name cnt name
+  {
+    curr_node = get_sibling(curr_node, "name");
+    _name = trim_copy(curr_node->value());
+    std::cout << "cnt name: '" << _name << "'\n";
+  }
+
+  // set the output_directory
+  {
+    curr_node = get_sibling(curr_node,"output_directory");
+
+    std::string attr = curr_node->first_attribute("type")->value();
+    // std::string path = trim_copy(curr_node->value());
+    fs::path path = trim_copy(curr_node->value());
+    if (attr == "absolute")
+    {
+      std::cout << "absolute directory format used!\n";
+    }
+
+    _directory.assign(path);
+    std::cout << "output_directory: " << _directory.path() << std::endl;
+
+    if (not fs::exists(_directory.path()))
+    {
+      std::cout << "warning: output directory does NOT exist!!!" << std::endl;
+      std::cout << "output directory: " << _directory.path() << std::endl;
+      fs::create_directories(_directory.path());
+    }
+
+    if (fs::is_directory(_directory.path()))
+    {
+      if (not fs::is_empty(_directory.path()))
+      {
+        std::cout << "warning: output directory is NOT empty!!!" << std::endl;
+        std::cout << "output directory: " << _directory.path() << std::endl;
+        std::cout << "deleting the existing directory!!!" << std::endl;
+        fs::remove_all(_directory.path());
+        fs::create_directories(_directory.path());
+      }
+    }
+    else
+    {
+      std::cout << "error: output path is NOT a directory!!!" << std::endl;
+      std::cout << "output path: " << _directory.path() << std::endl;
+      std::exit(EXIT_FAILURE);
+    }
+  }
+
+  // read chirality
+  {
+    curr_node = get_sibling(curr_node,"chirality");
+    std::string chirality = curr_node->value();
+    _n = std::stoi(chirality.substr(0,chirality.find(",")));
+    _m = std::stoi(chirality.substr(chirality.find(",")+1));
+    std::cout << "chirality: (" << _n << "," << _m << ")\n";
+  }
+
+  // length of cnt
+  {
+    curr_node = get_sibling(curr_node,"length");
+    std::string units = curr_node->first_attribute("units")->value();
+    if (units != "cnt_unit_cell")
+    {
+      std::cout << "cnt length is not in units '" << units << "'\n";
+      std::exit(1);
+    }
+    _number_of_cnt_unit_cells = std::stoi(curr_node->value());
+    std::cout << "length of cnt: " << _number_of_cnt_unit_cells << " unit cells.\n";
+  }
+
+  std::cout << std::endl;
+
+};
+// calculates position of atoms and reciprocal lattice vectors
 void cnt::geometry()
 {
   // unit vectors and reciprocal lattice vectors
@@ -70,6 +205,7 @@ void cnt::geometry()
 	_K1 = (-double(t2)*_b1 + double(t1)*_b2)/(double(_Nu));
 	_K2 = (double(_m)*_b1-double(_n)*_b2)/(double(_Nu));
 	_dk_l = _K2/(double(_number_of_cnt_unit_cells));
+  _nk = _number_of_cnt_unit_cells;
 
 	// calculate positions of atoms in the cnt unit cell
 	_pos_a = arma::mat(_Nu,2,arma::fill::zeros);
@@ -90,11 +226,6 @@ void cnt::geometry()
 			{
         _pos_a.row(k) = double(i)*_a1.t() + double(j)*_a2.t();
         _pos_b.row(k) = _pos_a.row(k) + _aCC_vec.t();
-
-        // _pos_a(k,0) = double(i)*_a1(0) + (double)j*_a2(0);
-				// _pos_a(k,1) = (double)i*_a1(1) + (double)j*_a2(1);
-				// _pos_b(k,0) = _pos_a(k,0)+_aCC_vec(0);
-				// _pos_b(k,1) = _pos_a(k,1)+_aCC_vec(1);
 
 				if(_pos_a(k,0) > _ch_vec(0))
           _pos_a(k,0) -= _ch_vec(0);
@@ -122,8 +253,6 @@ void cnt::geometry()
   _pos_a.print("pos_a:");
   _pos_b.print("pos_b:");
 
-
-
 	if (k != _Nu)
 	{
 		std::cout << "error in finding position of atoms in cnt unit cell!!!" << std::endl;
@@ -144,18 +273,6 @@ void cnt::geometry()
     _pos_ba.row(i) = _pos_b.row(i)-_pos_a.row(0);
     _pos_bb.row(i) = _pos_b.row(i)-_pos_b.row(0);
 
-		// pos_aa(i,0) = pos_a(i,0)-pos_a(0,0);
-		// pos_aa(i,1) = pos_a(i,1)-pos_a(0,1);
-    //
-		// pos_ab(i,0) = pos_a(i,0)-pos_b(0,0);
-		// pos_ab(i,1) = pos_a(i,1)-pos_b(0,1);
-    //
-		// pos_ba(i,0) = pos_b(i,0)-pos_a(0,0);
-		// pos_ba(i,1) = pos_b(i,1)-pos_a(0,1);
-    //
-		// pos_bb(i,0) = pos_b(i,0)-pos_b(0,0);
-		// pos_bb(i,1) = pos_b(i,1)-pos_b(0,1);
-
 		if(_pos_aa(i,0) > _ch_vec(0)/2)
       _pos_aa(i,0) -= _ch_vec(0);
 		if(_pos_ab(i,0) > _ch_vec(0)/2)
@@ -170,13 +287,6 @@ void cnt::geometry()
 	_pos_2d = arma::mat(2*_Nu,2,arma::fill::zeros);
   _pos_2d(arma::span(0,_Nu-1),arma::span::all) = _pos_a;
   _pos_2d(arma::span(_Nu,2*_Nu-1),arma::span::all) = _pos_b;
-	// for (int i=0; i<_Nu; i++)
-	// {
-	// 	_pos_2d(i,0) = pos_a(i,0);
-	// 	_pos_2d(i+_Nu,0) = pos_b(i,0);
-	// 	_pos_2d(i,1) = pos_a(i,1);
-	// 	_pos_2d(i+Nu,1) = pos_b(i,1);
-	// }
 
 	// calculate position of all atoms in the 3d space (rolled graphene sheet)
 	_pos_3d = arma::mat(2*_Nu,3,arma::fill::zeros);
@@ -201,109 +311,97 @@ void cnt::geometry()
   _pos_3d.save(filename, arma::arma_ascii);
 
 }
-//
-// void cnt::electron()
-// {
-//
-// 	// make the list of 1st nearest neighbor atoms
-// 	nr::mat_int nn_list(2*Nu,3,0); // contains index of the nearest neighbor atom
-// 	nr::mat_int nn_tvec_index(2*Nu,3,0); // contains the index of the cnt unit cell that the nearest neigbor atom is in.
-// 	for (int i=0; i<pos_3d.dim1(); i++)
-// 	{
-// 		int k=0;
-// 		for (int j=0; j<pos_3d.dim1(); j++)
-// 		{
-// 			for (int l=-1; l<=1; l++)
-// 			{
-// 				double dx = pos_3d(i,0) - (pos_3d(j,0) + (double)l*t_vec_3d(0));
-// 				double dy = pos_3d(i,1) - (pos_3d(j,1) + (double)l*t_vec_3d(1));
-// 				double dz = pos_3d(i,2) - (pos_3d(j,2) + (double)l*t_vec_3d(2));
-// 				double dR = sqrt(dx*dx+dy*dy+dz*dz);
-// 				if ( (i!=j) && (dR<(1.4*a_cc)) )
-// 				{
-// 					nn_list(i,k) = j;
-// 					nn_tvec_index(i,k) = l;
-// 					k++;
-// 				}
-// 			}
-// 		}
-// 	}
-//
-// 	nr::mat_complex H(2*Nu, 2*Nu, 0.0);
-// 	nr::mat_complex S(2*Nu, 2*Nu, 0.0);
-// 	nr::vec_doub E(2*Nu,0.0);
-// 	nr::mat_complex C(2*Nu, 2*Nu, 0.0);
-//
-// 	int NK = nk;
-//
-//
-// 	el_energy.assign(2*Nu, NK, 0.0);
-// 	el_psi.assign(2*Nu, 2*Nu, NK, nr::cmplx(0.0));
-//
-// 	double t_len = t_vec_3d.norm2();
-//
-// 	// open file to save electron energy bands
-// 	std::ofstream file;
-// 	file.open(name+".electron_energy.dat", std::ios::app);
-//
-// 	for (int n=0; n<NK; n++)
-// 	{
-// 		double wave_vec = double(n-nk/2)*dk_l.norm2();
-//
-// 		H.assign(2*Nu, 2*Nu, 0.0);
-// 		S.assign(2*Nu, 2*Nu, 0.0);
-//
-// 		for (int i=0; i<2*Nu; i++)
-// 		{
-// 			H(i,i) = (e2p,0.e0);
-// 			for (int k=0; k<3; k++)
-// 			{
-// 				int j = nn_list(i,k);
-// 				int l = nn_tvec_index(i,k);
-//
-// 				H(i,j) = H(i,j)+nr::cmplx(t0,0.e0)*exp(nr::cmplx(0.0,wave_vec*double(l)*t_len));
-// 				S(i,j) = S(i,j)+nr::cmplx(s0,0.e0)*exp(nr::cmplx(0.0,wave_vec*double(l)*t_len));
-// 			}
-// 		}
-//
-// 		nr::eig_sym(E, C, H);
-//
-// 		// save electron energy bands
-// 		file << std::scientific;
-// 		file << std::showpos;
-// 		file << wave_vec << "\t";
-// 		for (int i=0; i<E.size(); i++)
-// 		{
-// 			file << std::scientific;
-// 			file << std::showpos;
-// 			file << E(i)/t0 << "\t";
-// 		}
-// 		file << "\n";
-//
-// 		// fix the phase of the eigen vectors
-// 		for (int i=0; i<C.dim2(); i++)
-// 		{
-// 			nr::cmplx phi = std::conj(C(0,i))/std::abs(C(0,i));
-// 			for (int j=0; j<C.dim1(); j++)
-// 			{
-// 				C(j,i) = C(j,i)*phi;
-// 			}
-// 		}
-//
-// 		// save electron energy and wavefunction data in member variables
-// 		for (int i=0; i<C.dim2(); i++)
-// 		{
-// 			el_energy(i,n) = E(i);
-// 			for (int j=0; j<C.dim1(); j++)
-// 			{
-// 				el_psi(j,i,n) = C(j,i);
-// 			}
-// 		}
-//
-// 	}
-// 	file.close();
-//
-// }
+// calculate electron dispersion energies using full unit cell (2*Nu atoms)
+void cnt::electron_full()
+{
+
+	// make the list of 1st nearest neighbor atoms
+	arma::umat nn_list(2*_Nu,3,arma::fill::zeros); // contains index of the nearest neighbor atom
+	arma::imat nn_tvec_index(2*_Nu,3,arma::fill::zeros); // contains the index of the cnt unit cell that the nearest neigbor atom is in.
+	for (int i=0; i<_pos_3d.n_rows; i++)
+	{
+		int k=0;
+		for (int j=0; j<_pos_3d.n_rows; j++)
+		{
+			for (int l=-1; l<=1; l++)
+			{
+        double dR = arma::norm(_pos_3d.row(i)-_pos_3d.row(j)+double(l)*_t_vec_3d.t());
+				if ( (i!=j) && (dR<(1.4*_a_cc)) )
+				{
+					nn_list(i,k) = j;
+					nn_tvec_index(i,k) = l;
+					k++;
+				}
+			}
+		}
+    if (k != 3)
+    {
+      std::cout << "error: nearest neighbors partially found!!!\n";
+      std::exit(1);
+    }
+	}
+
+	arma::cx_mat H(2*_Nu, 2*_Nu, arma::fill::zeros);
+	arma::cx_mat S(2*_Nu, 2*_Nu, arma::fill::zeros);
+  arma::vec E;
+  arma::cx_mat C;
+
+	int NK = _nk;
+
+	_el_energy_full = arma::mat(2*_Nu, NK, arma::fill::zeros);
+	_el_psi_full = arma::cx_cube(2*_Nu, 2*_Nu, NK, arma::fill::zeros);
+
+	double t_len = arma::norm(_t_vec_3d);
+
+	for (int n=0; n<NK; n++)
+	{
+		double wave_vec = double(n-_nk/2)*arma::norm(_dk_l);
+
+		H.zeros();
+		S.zeros();
+
+		for (int i=0; i<2*_Nu; i++)
+		{
+			H(i,i) = (_e2p,0.e0);
+			for (int k=0; k<3; k++)
+			{
+				int j = nn_list(i,k);
+				int l = nn_tvec_index(i,k);
+
+				H(i,j) += arma::cx_double(_t0,0.e0)*exp(arma::cx_double(0.0,wave_vec*double(l)*t_len));
+				S(i,j) += arma::cx_double(_s0,0.e0)*exp(arma::cx_double(0.0,wave_vec*double(l)*t_len));
+			}
+		}
+
+		arma::eig_sym(E, C, H);
+
+		// fix the phase of the eigen vectors
+		for (int i=0; i<C.n_cols; i++)
+		{
+			arma::cx_double phi = std::conj(C(0,i))/std::abs(C(0,i));
+			for (int j=0; j<C.n_rows; j++)
+			{
+				C(j,i) *= phi;
+			}
+		}
+
+    _el_energy_full.col(n) = E;
+    _el_psi_full.slice(n) = C;
+
+	}
+
+  // save electron energy bands using full Brillouine zone
+  std::string filename = _directory.path().string() + _name + ".el_energy_full.dat";
+  _el_energy_full.save(filename, arma::arma_ascii);
+
+  // // save electron wavefunctions using full Brillouine zone
+  // filename = _directory.path().string() + _name + ".el_psi_full.dat";
+  // _el_psi_full.save(filename, arma::arma_ascii);
+
+}
+
+
+
 //
 //
 // void cnt::dielectric()

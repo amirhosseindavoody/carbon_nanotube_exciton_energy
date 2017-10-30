@@ -53,158 +53,26 @@ private:
 	arma::mat _pos_2d, _pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space
 	arma::mat _pos_aa, _pos_ab, _pos_ba, _pos_bb; // distance between atoms and A and B sites which conserves lattice symmetry.
 
-	arma::mat _el_energy; // energy of electronic states
-	arma::cx_mat _el_psi; // electronic wave functions corresponding to electronic states
+	arma::mat _el_energy_full; // energy of electronic states calculated using the full unit cell (2*Nu atoms)
+	arma::cx_cube _el_psi_full; // electronic wave functions corresponding to electronic states using the full unit cell (2*Nu atoms)
 
-	arma::cx_vec epsilon; // static dielectric function
+	arma::mat _el_energy_redu; // energy of electronic states calculated using the reduced graphene unit cell (2 atoms)
+	arma::cx_cube _el_psi_redu; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms)
+
+	arma::cx_vec _epsilon; // static dielectric function
 
 
 public:
 	//constructor
 	cnt(){};
-
-	// cnt(const std::string &in_name, const int in_n, const int in_m, const int in_length);
-
 	// set the output directory and the output file name
-	void process_command_line_args(int argc, char* argv[])
-	{
-		namespace fs = std::experimental::filesystem;
-
-		// first find the xml input file and open it
-		fs::directory_entry xml_file;
-		std::cout << "current path is " << fs::current_path() << std::endl;
-
-		if (argc <= 1)
-		{
-			xml_file.assign("input.xml");
-		}
-		else
-		{
-			xml_file.assign(argv[1]);
-		}
-
-		if(fs::exists(xml_file))
-		{
-			std::cout << "input xml file found: " << xml_file.path() << std::endl;
-		}
-		else
-		{
-			std::cout << "input xml file NOT found: " << xml_file.path() << std::endl;
-			std::exit(1);
-		}
-
-		if (!fs::is_regular_file(xml_file))
-		{
-			std::cout << "input xml file NOT found: " << xml_file.path() << std::endl;
-			std::exit(1);
-		}
-		std::cout << std::endl;
-
-		rapidxml::file<> xmlFile(xml_file.path().c_str()); //open file
-		rapidxml::xml_document<> doc; //create xml object
-		doc.parse<0>(xmlFile.data()); //parse contents of file
-		rapidxml::xml_node<>* curr_node = doc.first_node(); //gets the node "Document" or the root nodes
-		curr_node = curr_node->first_node();
-
-		// get the sibling node with name sibling_name
-		auto get_sibling = [](rapidxml::xml_node<>* node, const std::string& sibling_name)
-		{
-			if (node->name() == sibling_name)
-			{
-				return node;
-			}
-			auto next_node = node->next_sibling(sibling_name.c_str());
-			if (next_node == 0)
-			{
-				next_node = node->previous_sibling(sibling_name.c_str());
-				if (next_node == 0)
-				{
-					std::cout << "sibling not found: " << sibling_name.c_str() << std::endl;
-					std::exit(1);
-				}
-			}
-			return next_node;
-		};
-
-		// get name cnt name
-		{
-			curr_node = get_sibling(curr_node, "name");
-			_name = trim_copy(curr_node->value());
-			std::cout << "cnt name: '" << _name << "'\n";
-		}
-
-		// set the output_directory
-		{
-			curr_node = get_sibling(curr_node,"output_directory");
-
-			std::string attr = curr_node->first_attribute("type")->value();
-			// std::string path = trim_copy(curr_node->value());
-			fs::path path = trim_copy(curr_node->value());
-			if (attr == "absolute")
-			{
-				std::cout << "absolute directory format used!\n";
-			}
-
-			_directory.assign(path);
-			std::cout << "output_directory: " << _directory.path() << std::endl;
-
-			if (not fs::exists(_directory.path()))
-			{
-				std::cout << "warning: output directory does NOT exist!!!" << std::endl;
-				std::cout << "output directory: " << _directory.path() << std::endl;
-				fs::create_directories(_directory.path());
-			}
-
-			if (fs::is_directory(_directory.path()))
-			{
-				if (not fs::is_empty(_directory.path()))
-				{
-					std::cout << "warning: output directory is NOT empty!!!" << std::endl;
-					std::cout << "output directory: " << _directory.path() << std::endl;
-					std::cout << "deleting the existing directory!!!" << std::endl;
-					fs::remove_all(_directory.path());
-					fs::create_directories(_directory.path());
-				}
-			}
-			else
-			{
-				std::cout << "error: output path is NOT a directory!!!" << std::endl;
-				std::cout << "output path: " << _directory.path() << std::endl;
-				std::exit(EXIT_FAILURE);
-			}
-		}
-
-		// read chirality
-		{
-			curr_node = get_sibling(curr_node,"chirality");
-			std::string chirality = curr_node->value();
-			_n = std::stoi(chirality.substr(0,chirality.find(",")));
-			_m = std::stoi(chirality.substr(chirality.find(",")+1));
-			std::cout << "chirality: (" << _n << "," << _m << ")\n";
-		}
-
-		// length of cnt
-		{
-			curr_node = get_sibling(curr_node,"length");
-			std::string units = curr_node->first_attribute("units")->value();
-			if (units != "cnt_unit_cell")
-			{
-				std::cout << "cnt length is not in units '" << units << "'\n";
-				std::exit(1);
-			}
-			_number_of_cnt_unit_cells = std::stoi(curr_node->value());
-			std::cout << "length of cnt: " << _number_of_cnt_unit_cells << " unit cells.\n";
-		}
-
-		std::cout << std::endl;
-
-	};
-	// initialize
-	void init();
-
-	// calculates position of atoms
+	void process_command_line_args(int argc, char* argv[]);
+	// calculates position of atoms and reciprocal lattice vectors
 	void geometry();
-	// void electron(); // electron dispersion energies
+	// calculate electron dispersion energies using full unit cell (2*Nu atoms)
+	void electron_full();
+	// calculate electron dispersion energies using the reduced graphene unit cell (2 atoms)
+	void electron_reduced();
 	// void dielectric(); // calculate static dielectric function
 	// void coulomb_int(); // calculate coulomb interaction matrix elements
 };
