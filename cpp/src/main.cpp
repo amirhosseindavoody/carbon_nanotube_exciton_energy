@@ -1,11 +1,14 @@
 #include <iostream>
 #include <ctime>
+#include <armadillo>
 
-#include "file_management.h"
+// #include "file_management.h"
+// #include "cnt.h"
+// #include "constants.h"
+// #include "write_log.h"
+// #include "nr.h"
+
 #include "cnt.h"
-#include "constants.h"
-#include "write_log.h"
-#include "nr.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,27 +16,16 @@ int main(int argc, char *argv[])
 	std::clock_t start = std::clock();
 
 	std::time_t start_time = std::time(nullptr);
-	std::cout << std::endl << "start time:" << std::endl << std::asctime(std::localtime(&start_time)) << std::endl;
+	std::cout << "\nstart time:" << std::endl << std::asctime(std::localtime(&start_time)) << std::endl;
 
-	std::vector<cnt> cnts;
+	cnt m_cnt;
 
+	m_cnt.process_command_line_args(argc, argv);
+	m_cnt.geometry();
 
-	if (argc != 2)
-	{
-		std::cout << "input directory must be entered as an argument!!!" << std::endl;
-		std::exit(EXIT_FAILURE);
-	}
-
-	file_management fm;
-	fm.set_input_directory(argv[1]);
-	fm.parse_xml(cnts);
-	fm.change_working_directory(fm.get_output_directory().c_str());
-
-
-	cnts[0].geometry();
-	cnts[0].electron();
-	// cnts[0].dielectric();
-	cnts[0].coulomb_int();
+	// cnts[0].electron();
+	// // cnts[0].dielectric();
+	// cnts[0].coulomb_int();
 
 	std::clock_t end = std::clock();
 
