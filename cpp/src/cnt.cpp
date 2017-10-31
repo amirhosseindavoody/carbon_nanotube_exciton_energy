@@ -399,7 +399,11 @@ void cnt::electron_full()
   // _el_psi_full.save(filename, arma::arma_ascii);
 
 }
-
+// calculate electron dispersion energies using the reduced graphene unit cell (2 atoms)
+void cnt::electron_reduced()
+{
+  
+};
 
 
 //
