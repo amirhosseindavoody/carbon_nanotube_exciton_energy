@@ -248,5 +248,4 @@ contains
 
 	end subroutine finalize_output_directory_name
 
-
 end module parse_input_file_mod
