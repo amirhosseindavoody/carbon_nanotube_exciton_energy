@@ -6,6 +6,7 @@ Stores all relevant information for a carbon nanotube
 #include <iostream>
 #include <numeric>
 #include <armadillo>
+#include <complex>
 
 #include "constants.h"
 #include "cnt.h"
@@ -152,7 +153,6 @@ void cnt::geometry()
   _a2 = arma::vec({_a_l*std::sqrt(3.0)/2.0, -_a_l/2.0});
   _b1 = arma::vec({1.0/sqrt(3.0)*2.0*constants::pi/_a_l, +2.0*constants::pi/_a_l});
   _b2 = arma::vec({1.0/sqrt(3.0)*2.0*constants::pi/_a_l, -2.0*constants::pi/_a_l});
-  _b2 = arma::vec({_a_l*std::sqrt(3.0)/2.0, _a_l/2.0});
 
   _a1.print("a1:");
   _a2.print("a2:");
@@ -204,6 +204,7 @@ void cnt::geometry()
 	// calculate reciprocal lattice of CNT
 	_K1 = (-double(t2)*_b1 + double(t1)*_b2)/(double(_Nu));
 	_K2 = (double(_m)*_b1-double(_n)*_b2)/(double(_Nu));
+  _K2_normed = arma::normalise(_K2);
 	_dk_l = _K2/(double(_number_of_cnt_unit_cells));
   _nk = _number_of_cnt_unit_cells;
 
@@ -402,7 +403,39 @@ void cnt::electron_full()
 // calculate electron dispersion energies using the reduced graphene unit cell (2 atoms)
 void cnt::electron_reduced()
 {
-  
+  int number_of_bands = 2;
+  int number_of_atoms_in_graphene_unit_cell = number_of_bands;
+
+  _el_energy_redu = arma::cube(number_of_bands, _nk, _Nu, arma::fill::zeros);
+  _el_psi_redu = arma::field<arma::cx_cube>(_Nu);
+  _el_psi_redu.for_each([&](arma::cx_cube& c){c.zeros(number_of_atoms_in_graphene_unit_cell, number_of_bands, _nk);});
+
+  const std::complex<double> i1(0,1);
+
+  for (int i_mu=0; i_mu<_Nu; i_mu++)
+  {
+    for (int ik=0; ik<_nk; ik++)
+    {
+      arma::vec k_vec = mu(i_mu)*_K1 + k(ik)*_dk_l;
+      std::complex<double> fk = std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1+_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1-2.*_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a2-2.*_a1)/3.)));
+      const int ic = 0;
+      const int iv = 1;
+      _el_energy_redu(ic,ik,i_mu) = -_t0*std::abs(fk);
+      _el_energy_redu(iv,ik,i_mu) = +_t0*std::abs(fk);
+
+      const int iA = 0;
+      const int iB = 1;
+      (_el_psi_redu(i_mu))(iA,ic,ik) = +1./std::sqrt(2.);
+      (_el_psi_redu(i_mu))(iA,iv,ik) = +1./std::sqrt(2.);
+      (_el_psi_redu(i_mu))(iB,ic,ik) = +1./std::sqrt(2.)*std::conj(fk)/std::abs(fk);
+      (_el_psi_redu(i_mu))(iB,iv,ik) = -1./std::sqrt(2.)*std::conj(fk)/std::abs(fk);
+    }
+  }
+
+  // save electron energy bands using full Brillouine zone
+  std::string filename = _directory.path().string() + _name + ".el_energy_redu.dat";
+  _el_energy_redu.save(filename,arma::arma_ascii);
+
 };
 
 

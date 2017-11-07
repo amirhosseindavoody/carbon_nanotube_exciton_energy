@@ -47,6 +47,7 @@ private:
 
 	arma::vec _K1; // cnt reciprocal lattice vector in the circumferencial direction
 	arma::vec _K2; // cnt reciprocal lattice vector along the cnt axis
+	arma::vec _K2_normed; // normalised _K2 vector (cnt reciprocal lattice vector along the cnt axis) for generating k vector
 	arma::vec _dk_l; // delta_k in the longitudinal direction with respect to cnt axis
 
 	arma::mat _pos_a, _pos_b; // position of atoms in A and B sites
@@ -56,8 +57,8 @@ private:
 	arma::mat _el_energy_full; // energy of electronic states calculated using the full unit cell (2*Nu atoms)
 	arma::cx_cube _el_psi_full; // electronic wave functions corresponding to electronic states using the full unit cell (2*Nu atoms)
 
-	arma::mat _el_energy_redu; // energy of electronic states calculated using the reduced graphene unit cell (2 atoms)
-	arma::cx_cube _el_psi_redu; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms)
+	arma::cube _el_energy_redu; // energy of electronic states calculated using the reduced graphene unit cell (2 atoms)
+	arma::field<arma::cx_cube> _el_psi_redu; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms)
 
 	arma::cx_vec _epsilon; // static dielectric function
 
@@ -73,6 +74,16 @@ public:
 	void electron_full();
 	// calculate electron dispersion energies using the reduced graphene unit cell (2 atoms)
 	void electron_reduced();
+	// given index i_mu between [0,Nu-1] return the value of mu between [1-Nu/2, Nu/2]
+	const double mu(const int& i_mu) const
+	{
+		return double(i_mu+1-_Nu/2);
+	};
+	// given index ik shift it by -_nk/2;
+	const double k(const int& ik) const
+	{
+		return double(ik-_nk/2);
+	};
 	// void dielectric(); // calculate static dielectric function
 	// void coulomb_int(); // calculate coulomb interaction matrix elements
 };

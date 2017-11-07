@@ -17,7 +17,7 @@ contains
 		integer :: tmpi,i,j,k
 		integer :: MC
 		integer :: dR = 1
-        integer :: t1,t2
+		integer :: t1,t2
 		real*8 :: p1,p2,p,q
 		real*8 :: cosTh, sinTh
 		real*8, dimension(2,2) :: Rot

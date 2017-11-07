@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
 	m_cnt.process_command_line_args(argc, argv);
 	m_cnt.geometry();
 	m_cnt.electron_full();
+	m_cnt.electron_reduced();
 
 	// // cnts[0].dielectric();
 	// cnts[0].coulomb_int();
