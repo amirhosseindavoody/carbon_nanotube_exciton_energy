@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	m_cnt.electron_full();
 	m_cnt.electron_reduced();
 
-	// // cnts[0].dielectric();
+	// cnts[0].dielectric();
 	// cnts[0].coulomb_int();
 
 	std::clock_t end = std::clock();

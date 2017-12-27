@@ -1,3 +1,6 @@
+// This file contains small functions for triming strings for trailing or leading
+// white spaces.
+
 #ifndef _small_h_
 #define _small_h_
 

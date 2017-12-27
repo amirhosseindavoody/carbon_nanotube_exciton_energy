@@ -2,3 +2,10 @@
 *.o
 *.optrpt
 *.mod
+
+# vscode files and folders
+*.code-workspace
+.vscode
+
+# macOS files
+.DS_Store

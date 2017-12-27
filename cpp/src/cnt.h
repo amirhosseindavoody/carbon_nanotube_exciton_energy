@@ -19,7 +19,7 @@ private:
 	std::string _name; //cnt name
 
 	const double _a_cc = 1.42e-10; // carbon-carbon distance [meters]
-	const double _a_l = sqrt(3.0)*_a_cc; // graphene lattice constants [meters]
+	const double _a_l = std::sqrt(float(3.0))*_a_cc; // graphene lattice constants [meters]
 
 	const double _e2p = 0.0; // tight binding constants
 	const double _t0 = 2.7 * constants::eV; // tight binding constants
