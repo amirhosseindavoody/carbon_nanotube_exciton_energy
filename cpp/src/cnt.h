@@ -66,25 +66,33 @@ private:
 public:
 	//constructor
 	cnt(){};
+	
 	// set the output directory and the output file name
 	void process_command_line_args(int argc, char* argv[]);
+	
 	// calculates position of atoms and reciprocal lattice vectors
 	void geometry();
+	
 	// calculate electron dispersion energies using full unit cell (2*Nu atoms)
 	void electron_full();
+	
 	// calculate electron dispersion energies using the reduced graphene unit cell (2 atoms)
 	void electron_reduced();
+	
 	// given index i_mu between [0,Nu-1] return the value of mu between [1-Nu/2, Nu/2]
 	const double mu(const int& i_mu) const
 	{
 		return double(i_mu+1-_Nu/2);
 	};
+	
 	// given index ik shift it by -_nk/2;
 	const double k(const int& ik) const
 	{
 		return double(ik-_nk/2);
 	};
+	
 	// void dielectric(); // calculate static dielectric function
+	
 	// void coulomb_int(); // calculate coulomb interaction matrix elements
 };
 

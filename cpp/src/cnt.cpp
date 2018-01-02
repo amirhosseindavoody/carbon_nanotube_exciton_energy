@@ -205,8 +205,8 @@ void cnt::geometry()
 	_K1 = (-double(t2)*_b1 + double(t1)*_b2)/(double(_Nu));
 	_K2 = (double(_m)*_b1-double(_n)*_b2)/(double(_Nu));
   _K2_normed = arma::normalise(_K2);
-	_dk_l = _K2/(double(_number_of_cnt_unit_cells));
   _nk = _number_of_cnt_unit_cells;
+	_dk_l = _K2/(double(_nk));
 
 	// calculate positions of atoms in the cnt unit cell
 	_pos_a = arma::mat(_Nu,2,arma::fill::zeros);
@@ -407,8 +407,8 @@ void cnt::electron_reduced()
   int number_of_atoms_in_graphene_unit_cell = number_of_bands;
 
   _el_energy_redu = arma::cube(number_of_bands, _nk, _Nu, arma::fill::zeros);
-  _el_psi_redu = arma::field<arma::cx_cube>(_Nu);
-  _el_psi_redu.for_each([&](arma::cx_cube& c){c.zeros(number_of_atoms_in_graphene_unit_cell, number_of_bands, _nk);});
+  _el_psi_redu = arma::field<arma::cx_cube>(_Nu); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+  _el_psi_redu.for_each([&](arma::cx_cube& c){c.zeros(number_of_atoms_in_graphene_unit_cell, number_of_bands, _nk);}); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
 
   const std::complex<double> i1(0,1);
 
@@ -425,16 +425,18 @@ void cnt::electron_reduced()
 
       const int iA = 0;
       const int iB = 1;
-      (_el_psi_redu(i_mu))(iA,ic,ik) = +1./std::sqrt(2.);
-      (_el_psi_redu(i_mu))(iA,iv,ik) = +1./std::sqrt(2.);
-      (_el_psi_redu(i_mu))(iB,ic,ik) = +1./std::sqrt(2.)*std::conj(fk)/std::abs(fk);
-      (_el_psi_redu(i_mu))(iB,iv,ik) = -1./std::sqrt(2.)*std::conj(fk)/std::abs(fk);
+      (_el_psi_redu(i_mu))(iA,ic,ik) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (_el_psi_redu(i_mu))(iA,iv,ik) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (_el_psi_redu(i_mu))(iB,ic,ik) = +1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (_el_psi_redu(i_mu))(iB,iv,ik) = -1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
     }
   }
 
   // save electron energy bands using full Brillouine zone
   std::string filename = _directory.path().string() + _name + ".el_energy_redu.dat";
   _el_energy_redu.save(filename,arma::arma_ascii);
+
+  // find the mu value for bands with extremums
 
 };
 
