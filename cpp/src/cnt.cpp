@@ -145,45 +145,36 @@ void cnt::process_command_line_args(int argc, char* argv[])
   std::cout << std::endl;
 
 };
-// calculates position of atoms and reciprocal lattice vectors
-void cnt::geometry()
+
+void cnt::get_parameters()
 {
-  // unit vectors and reciprocal lattice vectors
+  // graphen unit vectors and reciprocal lattice vectors
   _a1 = arma::vec({_a_l*std::sqrt(3.0)/2.0, +_a_l/2.0});
   _a2 = arma::vec({_a_l*std::sqrt(3.0)/2.0, -_a_l/2.0});
   _b1 = arma::vec({1.0/sqrt(3.0)*2.0*constants::pi/_a_l, +2.0*constants::pi/_a_l});
   _b2 = arma::vec({1.0/sqrt(3.0)*2.0*constants::pi/_a_l, -2.0*constants::pi/_a_l});
 
-  _a1.print("a1:");
-  _a2.print("a2:");
-  _b1.print("b1:");
-  _b2.print("b2:");
+  // carbon-carbon translation vector
+  _aCC_vec = 1.0/3.0*(_a1+_a2);
 
-
-	_aCC_vec = 1.0/3.0*(_a1+_a2);
-
-  _aCC_vec.print("aCC vector:");
-
-	// calculate chirality and translational vectors of CNT unit cell
+  // cnt chirality vector and its length
 	_ch_vec = double(_n) * _a1 + double(_m) * _a2;
 	_ch_len = arma::norm(_ch_vec,2);
 
-  _ch_vec.print("chirality vector:");
-  std::cout << "ch_vec length:\n   " << _ch_len << std::endl;
+  // cnt radius
+  _radius = _ch_len/2.0/constants::pi;
+
+  // calculate cnt t_vector
+  int dR = std::gcd(2*_n+_m,_n+2*_m);
+	_t1 = +(2*_m+_n)/dR;
+	_t2 = -(2*_n+_m)/dR;
+  _t_vec = double(_t1)*_a1 + double(_t2)*_a2;
+
+  // number of hexagons in cnt unit cells which is equal to number of carbon atoms divided by half
+  _Nu = 2*(std::pow(_n,2)+std::pow(_m,2)+_n*_m)/dR;
 
 
-	_radius = _ch_len/2.0/constants::pi;
-
-	int dR = std::gcd(2*_n+_m,_n+2*_m);
-	int t1 = +(2*_m+_n)/dR;
-	int t2 = -(2*_n+_m)/dR;
-
-	_t_vec = double(t1)*_a1 + double(t2)*_a2;
-  _t_vec.print("t_vec:");
-
-	_Nu = 2*(std::pow(_n,2)+std::pow(_m,2)+_n*_m)/dR;
-
-	// rotate basis vectors so that ch_vec is along the x_axis
+  // rotate basis vectors so that ch_vec is along the x_axis and t_vec is along y_axis
 	double cos_theta = _ch_vec(0)/arma::norm(_ch_vec);
 	double sin_theta = _ch_vec(1)/arma::norm(_ch_vec);
 	arma::mat rot = {{+cos_theta, +sin_theta},
@@ -197,31 +188,88 @@ void cnt::geometry()
 	_b2 = rot*_b2;
 	_aCC_vec = rot*_aCC_vec;
 
+  	//make 3d t_vec where the cnt axis is parallel to y-axis
+	_t_vec_3d = arma::vec(3,arma::fill::zeros);
+	_t_vec_3d(1) = _t_vec(1);
+
+
+  std::cout << "\n...graphene unit cell vectors:\n";
+  _a1.print("a1:");
+  _a2.print("a2:");
+
+  std::cout << "\n...graphene reciprocal lattice vectors:\n";
+  _b1.print("b1:");
+  _b2.print("b2:");
+
+  std::cout << "\n...vector connecting basis carbon atoms:\n";
+  _aCC_vec.print("aCC vector:");
+
   _ch_vec.print("chirality vector:");
+  std::cout << "ch_vec length:\n   " << _ch_len << std::endl;
+
   _t_vec.print("t_vec:");
+  _t_vec_3d.print("3d t_vec:");
 
 
 	// calculate reciprocal lattice of CNT
-	_K1 = (-double(t2)*_b1 + double(t1)*_b2)/(double(_Nu));
+	_K1 = (-double(_t2)*_b1 + double(_t1)*_b2)/(double(_Nu));
 	_K2 = (double(_m)*_b1-double(_n)*_b2)/(double(_Nu));
   _K2_normed = arma::normalise(_K2);
   _nk = _number_of_cnt_unit_cells;
 	_dk_l = _K2/(double(_nk));
 
+  std::cout << "\n...cnt reciprocal lattice vectors:\n";
+  _K1.print("K1:");
+  _K2.print("K2:");
+
+	// calculate K2-extended representation parameters
+  {
+    double p_min = (1./double(_t1)+1./double(_n))/(double(_m)/double(_n)-double(_t2)/double(_t1));
+    double p_max = (1./double(_t1)+double(_Nu)/double(_n))/(double(_m)/double(_n)-double(_t2)/double(_t1));
+
+    double q_min = double(_t2)/double(_t1)*p_max + 1./double(_t1);
+    double q_max = double(_t2)/double(_t1)*p_min + 1./double(_t1);
+
+    bool found = false;
+
+    for (int p=std::ceil(p_min); p<std::ceil(p_max); p++)
+    {
+      if (((1+_t2*p) % _t1) == 0)
+      {
+        int q = (1+_t2*p)/_t1;
+        _M = _m*p - _n*q;
+        _Q = std::gcd(_Nu,_M);
+        std::cout << "\n...K2-extended representation parameters:\n M: " << _M << " ,Q: " << _Q << "\n";
+        found = true;
+        break;
+      }
+    }
+    if (not found)
+    {
+      std::cout << "Failed to calculate p and q for K2-extended representation .... investigate! .... aborting the simulation!!!\n";
+    }
+  }
+
+}
+
+// calculates position of atoms and reciprocal lattice vectors
+void cnt::get_atom_coordinates()
+{
+  
 	// calculate positions of atoms in the cnt unit cell
 	_pos_a = arma::mat(_Nu,2,arma::fill::zeros);
 	_pos_b = arma::mat(_Nu,2,arma::fill::zeros);
 
 	int k = 0;
 
-	for (int i=0; i<=t1+_n; i++)
+	for (int i=0; i<=_t1+_n; i++)
 	{
-		for (int j=t2; j<=_m; j++)
+		for (int j=_t2; j<=_m; j++)
 		{
-			bool flag1 = double(t2*i)/(double)t1 <= double(j);
+			bool flag1 = double(_t2*i)/(double)_t1 <= double(j);
 			bool flag2 = double(_m*i)/(double)_n >= double(j);
-			bool flag3 = double(t2*(i-_n))/double(t1) > double(j-_m);
-			bool flag4 = double(_m*(i-t1))/double(_n) < double(j-t2);
+			bool flag3 = double(_t2*(i-_n))/double(_t1) > double(j-_m);
+			bool flag4 = double(_m*(i-_t1))/double(_n) < double(j-_t2);
 
 			if(flag1 && flag2 && flag3 && flag4)
 			{
@@ -251,6 +299,7 @@ void cnt::geometry()
 		}
 	}
 
+  std::cout << "\n...atom coordinates:\n";
   _pos_a.print("pos_a:");
   _pos_b.print("pos_b:");
 
@@ -261,28 +310,28 @@ void cnt::geometry()
 		exit(1);
 	}
 
-	// calculate distances between atoms in a warped cnt unit cell.
-	_pos_aa = arma::mat(_Nu,2,arma::fill::zeros);
-	_pos_ab = arma::mat(_Nu,2,arma::fill::zeros);
-	_pos_ba = arma::mat(_Nu,2,arma::fill::zeros);
-	_pos_bb = arma::mat(_Nu,2,arma::fill::zeros);
+	// // calculate distances between atoms in a warped cnt unit cell.
+	// _pos_aa = arma::mat(_Nu,2,arma::fill::zeros);
+	// _pos_ab = arma::mat(_Nu,2,arma::fill::zeros);
+	// _pos_ba = arma::mat(_Nu,2,arma::fill::zeros);
+	// _pos_bb = arma::mat(_Nu,2,arma::fill::zeros);
 
-	for (int i=0; i<_Nu; i++)
-	{
-    _pos_aa.row(i) = _pos_a.row(i)-_pos_a.row(0);
-    _pos_ab.row(i) = _pos_a.row(i)-_pos_b.row(0);
-    _pos_ba.row(i) = _pos_b.row(i)-_pos_a.row(0);
-    _pos_bb.row(i) = _pos_b.row(i)-_pos_b.row(0);
+	// for (int i=0; i<_Nu; i++)
+	// {
+  //   _pos_aa.row(i) = _pos_a.row(i)-_pos_a.row(0);
+  //   _pos_ab.row(i) = _pos_a.row(i)-_pos_b.row(0);
+  //   _pos_ba.row(i) = _pos_b.row(i)-_pos_a.row(0);
+  //   _pos_bb.row(i) = _pos_b.row(i)-_pos_b.row(0);
 
-		if(_pos_aa(i,0) > _ch_vec(0)/2)
-      _pos_aa(i,0) -= _ch_vec(0);
-		if(_pos_ab(i,0) > _ch_vec(0)/2)
-      _pos_ab(i,0) -= _ch_vec(0);
-		if(_pos_ba(i,0) > _ch_vec(0)/2)
-      _pos_ba(i,0) -= _ch_vec(0);
-		if(_pos_bb(i,0) > _ch_vec(0)/2)
-      _pos_bb(i,0) -= _ch_vec(0);
-	}
+	// 	if(_pos_aa(i,0) > _ch_vec(0)/2)
+  //     _pos_aa(i,0) -= _ch_vec(0);
+	// 	if(_pos_ab(i,0) > _ch_vec(0)/2)
+  //     _pos_ab(i,0) -= _ch_vec(0);
+	// 	if(_pos_ba(i,0) > _ch_vec(0)/2)
+  //     _pos_ba(i,0) -= _ch_vec(0);
+	// 	if(_pos_bb(i,0) > _ch_vec(0)/2)
+  //     _pos_bb(i,0) -= _ch_vec(0);
+	// }
 
 	// put position of all atoms in a single variable in 2d space(unrolled graphene sheet)
 	_pos_2d = arma::mat(2*_Nu,2,arma::fill::zeros);
@@ -298,11 +347,6 @@ void cnt::geometry()
 		_pos_3d(i,2) = _radius*sin(_pos_2d(i,0)/_radius);
 	}
 
-	//make 3d t_vec
-	_t_vec_3d = arma::vec(3,arma::fill::zeros);
-	_t_vec_3d(1) = _t_vec(1);
-
-
 	// save coordinates of atoms in 2d space
   std::string filename = _directory.path().string() + _name + ".pos_2d.dat";
   _pos_2d.save(filename, arma::arma_ascii);
@@ -311,7 +355,8 @@ void cnt::geometry()
   filename = _directory.path().string() + _name + ".pos_3d.dat";
   _pos_3d.save(filename, arma::arma_ascii);
 
-}
+};
+
 // calculate electron dispersion energies using full unit cell (2*Nu atoms)
 void cnt::electron_full()
 {
@@ -399,9 +444,10 @@ void cnt::electron_full()
   // filename = _directory.path().string() + _name + ".el_psi_full.dat";
   // _el_psi_full.save(filename, arma::arma_ascii);
 
-}
-// calculate electron dispersion energies using the reduced graphene unit cell (2 atoms)
-void cnt::electron_reduced()
+};
+
+// calculate electron dispersion energies using the K1-extended representation
+void cnt::electron_K1_extended()
 {
   int number_of_bands = 2;
   int number_of_atoms_in_graphene_unit_cell = number_of_bands;
@@ -412,23 +458,23 @@ void cnt::electron_reduced()
 
   const std::complex<double> i1(0,1);
 
-  for (int i_mu=0; i_mu<_Nu; i_mu++)
+  for (int mu=0; mu<_Nu; mu++)
   {
     for (int ik=0; ik<_nk; ik++)
     {
-      arma::vec k_vec = mu(i_mu)*_K1 + k(ik)*_dk_l;
+      arma::vec k_vec = mu*_K1 + ik*_dk_l;
       std::complex<double> fk = std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1+_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1-2.*_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a2-2.*_a1)/3.)));
       const int ic = 0;
       const int iv = 1;
-      _el_energy_redu(ic,ik,i_mu) = -_t0*std::abs(fk);
-      _el_energy_redu(iv,ik,i_mu) = +_t0*std::abs(fk);
+      _el_energy_redu(ic,ik,mu) = -_t0*std::abs(fk);
+      _el_energy_redu(iv,ik,mu) = +_t0*std::abs(fk);
 
       const int iA = 0;
       const int iB = 1;
-      (_el_psi_redu(i_mu))(iA,ic,ik) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-      (_el_psi_redu(i_mu))(iA,iv,ik) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-      (_el_psi_redu(i_mu))(iB,ic,ik) = +1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-      (_el_psi_redu(i_mu))(iB,iv,ik) = -1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (_el_psi_redu(mu))(iA,ic,ik) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (_el_psi_redu(mu))(iA,iv,ik) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (_el_psi_redu(mu))(iB,ic,ik) = +1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (_el_psi_redu(mu))(iB,iv,ik) = -1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
     }
   }
 
@@ -440,394 +486,305 @@ void cnt::electron_reduced()
 
 };
 
+// calculate electron dispersion energies using the K2-extended representation
+void cnt::electron_K2_extended()
+{
+  int number_of_bands = 2;
+  int number_of_atoms_in_graphene_unit_cell = number_of_bands;
 
-//
-//
-// void cnt::dielectric()
-// {
-//
-//
-// 	// calculate v_q
-// 	int Nq = nk;
-// 	nr::mat3d_complex v_q(2*Nu, 2*Nu, Nq, nr::cmplx(0.0));
-// 	nr::vec_doub wave_vec(Nq, 0.0);
-//
-// 	double t_len = t_vec_3d.norm2();
-// 	double factor = nr::sqr(4*constants::pi*constants::eps0*Upp/nr::sqr(constants::q0));
-// 	for(int iq = 0; iq<Nq; iq++)
-// 	{
-// 		wave_vec(iq) = double(iq-Nq/2)*dk_l.norm2();
-// 		for (int i=-int(number_of_cnt_unit_cells/2); i<int(number_of_cnt_unit_cells/2); i++)
-// 		{
-// 			for (int b=0; b<2*Nu; b++)
-// 			{
-// 				for (int bp=0; bp<2*Nu; bp++)
-// 				{
-// 					double dx = pos_3d(b,0) - (pos_3d(bp,0) + double(i)*t_vec_3d(0));
-// 					double dy = pos_3d(b,1) - (pos_3d(bp,1) + double(i)*t_vec_3d(1));
-// 					double dz = pos_3d(b,2) - (pos_3d(bp,2) + double(i)*t_vec_3d(2));
-// 					double dR2 = dx*dx+dy*dy+dz*dz;
-//
-// 					double I = Upp/sqrt(1+factor*dR2);
-// 					v_q(b,bp,iq) += nr::cmplx(1.0/double(number_of_cnt_unit_cells))*exp(nr::cmplx(0.0,wave_vec(iq)*double(i)*t_len))*I;
-// 				}
-// 			}
-// 		}
-// 	}
-//
-// 	// open file to save v_q
-// 	std::ofstream file_vq_real, file_vq_imag;
-// 	file_vq_real.open(name+".vq.real.dat", std::ios::app);
-// 	file_vq_imag.open(name+".vq.imag.dat", std::ios::app);
-//
-// 	file_vq_real << std::scientific;
-// 	file_vq_real << std::showpos;
-// 	file_vq_imag << std::scientific;
-// 	file_vq_imag << std::showpos;
-// 	for (int iq=0; iq<v_q.dim3(); iq++)
-// 	{
-// 		file_vq_real << wave_vec(iq) << "\t";
-// 		file_vq_imag << wave_vec(iq) << "\t";
-// 	}
-// 	file_vq_real << "\n";
-// 	file_vq_imag << "\n";
-// 	for (int b=0; b<v_q.dim1(); b++)
-// 	{
-// 		for (int bp=0; bp<v_q.dim2(); bp++)
-// 		{
-// 			for (int iq=0; iq<v_q.dim3(); iq++)
-// 			{
-// 				file_vq_real << std::real(v_q(b,bp,iq)/constants::eV) << "\t";
-// 				file_vq_imag << std::imag(v_q(b,bp,iq)/constants::eV) << "\t";
-// 			}
-// 			file_vq_real << "\n";
-// 			file_vq_imag << "\n";
-// 		}
-// 	}
-// 	file_vq_real.close();
-// 	file_vq_imag.close();
-//
-//
-// 	// // calculate polarization (PI)
-// 	// nr::vec_doub PI(Nq,0.0);
-// 	// for (int i=0; i<Nq; i++)
-// 	// {
-// 	// 	int iq = i-Nq/2;
-// 	// 	nr::cmplx num1, num2;
-// 	// 	double denom1, denom2;
-//
-// 	// 	for (int ik=0; ik<nk; ik++)
-// 	// 	{
-// 	// 		int ik_p = iq+ik;
-// 	// 		while(ik_p>=nk)	ik_p = ik_p-nk;
-// 	// 		while(ik_p<0) ik_p = ik_p+nk;
-//
-// 	// 		for (int alpha_v=0; alpha_v<Nu; alpha_v++)
-// 	// 		{
-// 	// 			for (int alpha_c=Nu; alpha_c<2*Nu; alpha_c++)
-// 	// 			{
-// 	// 				num1 = nr::cmplx(0.0,0.0);
-// 	// 				num2 = nr::cmplx(0.0,0.0);
-// 	// 				for(int b=0; b<2*Nu; b++)
-// 	// 				{
-// 	// 					num1 += std::conj(el_psi(b,alpha_v,ik)) * el_psi(b,alpha_c,ik_p);
-// 	// 					num2 += std::conj(el_psi(b,alpha_c,ik)) * el_psi(b,alpha_v,ik_p);
-// 	// 				}
-// 	// 				denom1 = el_energy(alpha_c,ik_p)-el_energy(alpha_v,ik);
-// 	// 				denom2 = el_energy(alpha_c,ik)-el_energy(alpha_v,ik_p);
-//
-// 	// 				PI(i) += std::norm(num1)/denom1 + std::norm(num2)/denom2;
-// 	// 			}
-// 	// 		}
-// 	// 	}
-//
-// 	// 	std::cout << "calculating dielectric function: PI(" << i << ") = " << PI(i) << std::endl;
-// 	// }
-//
-// 	// PI = 2.0*PI;
-//
-// 	// // open file to save polarization (PI)
-// 	// std::ofstream file_pi;
-// 	// file_pi.open(name+".pi.dat", std::ios::app);
-//
-// 	// file_pi << std::scientific;
-// 	// file_pi << std::showpos;
-// 	// for (int i=0; i<wave_vec.size(); i++)
-// 	// {
-// 	// 	file_pi << wave_vec(i) << "\t";
-// 	// }
-// 	// file_pi << "\n";
-// 	// for (int i=0; i<PI.size(); i++)
-// 	// {
-// 	// 	file_pi << PI(i) << "\t";
-// 	// }
-// 	// file_pi.close();
-//
-// 	// // calculate dielectric function (epsilon)
-// 	// epsilon.assign(Nq,nr::cmplx(0));
-// 	// for (int i=0; i<epsilon.size(); i++)
-// 	// {
-// 	// 	nr::cmplx sum = nr::cmplx(0);
-// 	// 	for (int b=0; b<2*Nu; b++)
-// 	// 	{
-// 	// 		for (int bp=0; bp<2*Nu; bp++)
-// 	// 		{
-// 	// 			sum += v_q(b,bp,i);
-// 	// 		}
-// 	// 	}
-// 	// 	sum = sum/nr::cmplx((2*Nu)*(2*Nu));
-// 	// 	epsilon(i) = nr::cmplx(1)+sum*nr::cmplx(PI(i));
-// 	// }
-//
-// 	// // open file to save epsilon
-// 	// std::ofstream file_eps;
-// 	// file_eps.open(name+".epsilon.dat", std::ios::app);
-//
-// 	// file_eps << std::scientific;
-// 	// file_eps << std::showpos;
-// 	// for (int i=0; i<wave_vec.size(); i++)
-// 	// {
-// 	// 	file_eps << wave_vec(i) << "\t";
-// 	// }
-// 	// file_eps << "\n";
-// 	// for (int i=0; i<epsilon.size(); i++)
-// 	// {
-// 	// 	file_eps << std::real(epsilon(i)) << "\t";
-// 	// }
-// 	// file_eps << "\n";
-// 	// for (int i=0; i<epsilon.size(); i++)
-// 	// {
-// 	// 	file_eps << std::imag(epsilon(i)) << "\t";
-// 	// }
-// 	// file_eps.close();
-// }
-//
-//
-// void cnt::coulomb_int()
-// {
-//
-//
-// 	// calculate v_q
-// 	const int Nq = nk;
-// 	nr::mat3d_complex v_q(2*Nu, 2*Nu, Nq, nr::cmplx(0.0));
-// 	nr::vec_doub wave_vec(Nq, 0.0);
-//
-// 	double t_len = t_vec_3d.norm2();
-// 	double factor = nr::sqr(4*constants::pi*constants::eps0*Upp/nr::sqr(constants::q0));
-// 	for(int iq = 0; iq<Nq; iq++)
-// 	{
-// 		wave_vec(iq) = double(iq)*dk_l.norm2();
-// 		for (int i=-int(number_of_cnt_unit_cells/2); i<int(number_of_cnt_unit_cells/2); i++)
-// 		{
-// 			for (int b=0; b<2*Nu; b++)
-// 			{
-// 				for (int bp=0; bp<2*Nu; bp++)
-// 				{
-// 					double dx = pos_3d(b,0) - (pos_3d(bp,0) + double(i)*t_vec_3d(0));
-// 					double dy = pos_3d(b,1) - (pos_3d(bp,1) + double(i)*t_vec_3d(1));
-// 					double dz = pos_3d(b,2) - (pos_3d(bp,2) + double(i)*t_vec_3d(2));
-// 					double dR2 = dx*dx+dy*dy+dz*dz;
-//
-// 					double I = Upp/sqrt(1+factor*dR2);
-// 					v_q(b,bp,iq) += nr::cmplx(1.0/double(number_of_cnt_unit_cells))*exp(nr::cmplx(0.0,wave_vec(iq)*double(i)*t_len))*I;
-// 				}
-// 			}
-// 		}
-// 	}
-//
-// 	const int Nb = 4;
-//
-// 	// direct interaction matrix
-// 	nr::mat_complex V_dir(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
-// 	nr::mat_complex V_xch(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
-// 	nr::mat_complex dE(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
-//
-// 	nr::mat_complex tmp_dir(2*Nu,2*Nu,nr::cmplx(0));
-// 	nr::mat_complex tmp_xch(2*Nu,2*Nu,nr::cmplx(0));
-//
-// 	const int iKcm=0; // center of mass wave vector
-//
-// 	for (int ic=0; ic<Nb; ic++)
-// 	{
-// 		int ac = Nu+ic;
-// 		std::cout << "ic = " << ic << "\n";
-// 		for (int icp=0; icp<Nb; icp++)
-// 		{
-// 			int acp = Nu+icp;
-// 			for (int iv=0; iv<Nb; iv++)
-// 			{
-// 				int av = Nu-1-iv;
-// 				for (int ivp=0; ivp<Nb; ivp++)
-// 				{
-// 					int avp = Nu-1-ivp;
-// 					for (int ikc=0; ikc<nk; ikc++)
-// 					{
-// 						int ikv = int(ikc+iKcm);
-// 						while(ikv>=nk)	ikv -= nk;
-// 						while(ikv<0) ikv += nk;
-//
-// 						// int iq_xch = int(ikc-ikv);
-// 						// while(iq_xch>=Nq) iq_xch -= Nq;
-// 						// while(iq_xch<0) iq_xch += Nq;
-//
-// 						// for (int b=0; b<2*Nu; b++)
-// 						// {
-// 						// 	for (int bp=0; bp<2*Nu; bp++)
-// 						// 	{
-// 						// 		tmp_dir(b,bp) = std::conj(el_psi(b,ac,ikc))*el_psi(bp,av,ikv)/kappa;
-// 						// 		tmp_xch(b,bp) = std::conj(el_psi(b,ac,ikc))*el_psi(b,av,ikv)*v_q(b,bp,iq_xch);
-// 						// 	}
-// 						// }
-//
-// 						// int row = (nk)*((Nb)*ic+iv)+ikc;
-//
-// 						dE((nk)*((Nb)*ic+iv)+ikc,(nk)*((Nb)*ic+iv)+ikc) = nr::cmplx(el_energy(ac,ikc)-el_energy(av,ikv));
-//
-// 						for (int ikcp=0; ikcp<nk; ikcp++)
-// 						{
-// 							int ikvp = int(ikcp+iKcm);
-// 							while(ikv>=nk)	ikv -= nk;
-// 							while(ikv<0) ikv += nk;
-//
-// 							int iq_dir = ikc-ikcp;
-// 							while(iq_dir>=Nq) iq_dir = iq_dir-Nq;
-// 							while(iq_dir<0) iq_dir = iq_dir+Nq;
-//
-// 							int iq_xch = int(ikc-ikv);
-// 							while(iq_xch>=Nq) iq_xch -= Nq;
-// 							while(iq_xch<0) iq_xch += Nq;
-//
-// 							// int col = (nk)*((Nb)*icp+ivp)+ikcp;
-//
-// 							for (int b=0; b<2*Nu; b++)
-// 							{
-// 								for (int bp=0; bp<2*Nu; bp++)
-// 								{
-// 									V_dir((nk)*((Nb)*ic+iv)+ikc,(nk)*((Nb)*icp+ivp)+ikcp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,acp,ikcp)*el_psi(bp,av,ikv)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_dir)/kappa;
-// 									V_xch((nk)*((Nb)*ic+iv)+ikc,(nk)*((Nb)*icp+ivp)+ikcp) += std::conj(el_psi(b,ac,ikc))*el_psi(b,av,ikv)*el_psi(bp,acp,ikcp)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_xch);
-//
-// 									// V_dir(row,col) += tmp_dir(b,bp)*el_psi(b,acp,ikcp)*std::conj(el_psi(bp,avp,ikvp))*v_q(b,bp,iq_dir);
-// 									// V_xch(row,col) += tmp_xch(b,bp)*el_psi(bp,acp,ikcp)*std::conj(el_psi(bp,avp,ikvp));
-//
-// 								}
-// 							}
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-//
-//
-// 	// open file to save V_dir
-// 	std::ofstream file_V_dir_real, file_V_dir_imag;
-// 	file_V_dir_real.open(name+".v_dir.real.dat", std::ios::app);
-// 	file_V_dir_imag.open(name+".v_dir.imag.dat", std::ios::app);
-//
-// 	file_V_dir_real << std::scientific << std::showpos;
-// 	file_V_dir_imag << std::scientific << std::showpos;
-//
-// 	file_V_dir_real << double(0.0) << "\t";
-// 	file_V_dir_imag << double(0.0) << "\t";
-// 	for (int ikcp=0; ikcp<V_dir.dim2(); ikcp++)
-// 	{
-// 		double wave_vec = double(ikcp)*dk_l.norm2();
-// 		file_V_dir_real << wave_vec << "\t";
-// 		file_V_dir_imag << wave_vec << "\t";
-// 	}
-// 	file_V_dir_real << "\n";
-// 	file_V_dir_imag << "\n";
-//
-// 	for (int ikc=0; ikc<V_dir.dim1(); ikc++)
-// 	{
-// 		double wave_vec = double(ikc)*dk_l.norm2();
-// 		file_V_dir_real << wave_vec << "\t";
-// 		file_V_dir_imag << wave_vec << "\t";
-//
-// 		for (int ikcp=0; ikcp<V_dir.dim2(); ikcp++)
-// 		{
-// 			file_V_dir_real << std::real(V_dir(ikc,ikcp)/constants::eV) << "\t";
-// 			file_V_dir_imag << std::imag(V_dir(ikc,ikcp)/constants::eV) << "\t";
-// 		}
-// 		file_V_dir_real << "\n";
-// 		file_V_dir_imag << "\n";
-// 	}
-// 	file_V_dir_real.close();
-// 	file_V_dir_imag.close();
-//
-// 	// open file to save V_xch
-// 	std::ofstream file_V_xch_real, file_V_xch_imag;
-// 	file_V_xch_real.open(name+".v_xch.real.dat", std::ios::app);
-// 	file_V_xch_imag.open(name+".v_xch.imag.dat", std::ios::app);
-//
-// 	file_V_xch_real << std::scientific << std::showpos;
-// 	file_V_xch_imag << std::scientific << std::showpos;
-//
-// 	file_V_xch_real << double(0.0) << "\t";
-// 	file_V_xch_imag << double(0.0) << "\t";
-// 	for (int ikcp=0; ikcp<V_xch.dim2(); ikcp++)
-// 	{
-// 		double wave_vec = double(ikcp)*dk_l.norm2();
-// 		file_V_xch_real << wave_vec << "\t";
-// 		file_V_xch_imag << wave_vec << "\t";
-// 	}
-// 	file_V_xch_real << "\n";
-// 	file_V_xch_imag << "\n";
-//
-// 	for (int ikc=0; ikc<V_xch.dim1(); ikc++)
-// 	{
-// 		double wave_vec = double(ikc)*dk_l.norm2();
-// 		file_V_xch_real << wave_vec << "\t";
-// 		file_V_xch_imag << wave_vec << "\t";
-//
-// 		for (int ikcp=0; ikcp<V_xch.dim2(); ikcp++)
-// 		{
-// 			file_V_xch_real << std::real(V_xch(ikc,ikcp)/constants::eV) << "\t";
-// 			file_V_xch_imag << std::imag(V_xch(ikc,ikcp)/constants::eV) << "\t";
-// 		}
-// 		file_V_xch_real << "\n";
-// 		file_V_xch_imag << "\n";
-// 	}
-// 	file_V_xch_real.close();
-// 	file_V_xch_imag.close();
-//
-//
-// 	// solve for exciton energy
-// 	nr::mat_complex kernel(dE-V_dir);
-// 	// nr::mat_complex kernel(dE+nr::cmplx(2)*V_xch-V_dir);
-//
-// 	nr::mat_complex ex_psi(Nb*Nb*nk,Nb*Nb*nk);
-// 	nr::vec_doub ex_energy(Nb*Nb*nk);
-// 	nr::eig_sym(ex_energy, ex_psi, kernel);
-//
-// 	// nr::mat_complex ex_psi(Nb*Nb*nk,Nb*Nb*nk,nr::cmplx(0));
-// 	// nr::vec_doub ex_energy(Nb*Nb*nk,0.0);
-// 	// nr::eig_sym_selected(ex_energy, ex_psi, kernel, 20);
-//
-//
-// 	// open file to save exciton energies
-// 	std::ofstream file_ex_energy;
-// 	file_ex_energy.open(name+".ex_energy.dat", std::ios::app);
-// 	file_ex_energy << std::scientific << std::showpos;
-// 	for (int i=0; i<ex_energy.size(); i++)
-// 	{
-// 		file_ex_energy << ex_energy(i)/constants::eV << "\t" << std::real(dE(i,i))/constants::eV << "\n";
-// 	}
-// 	file_ex_energy.close();
-//
-//
-// 	// open file to save exciton energies
-// 	std::ofstream file_ex_psi;
-// 	file_ex_psi.open(name+".ex_psi.dat", std::ios::app);
-// 	file_ex_psi << std::scientific << std::showpos;
-// 	for (int i=0; i<ex_psi.dim1(); i++)
-// 	{
-// 		for (int j=0; j<ex_psi.dim2(); j++)
-// 		{
-// 			file_ex_psi << std::real(ex_psi(i,j)) << "\t";
-// 		}
-// 		file_ex_psi << "\n";
-// 	}
-// 	file_ex_psi.close();
-//
-// }
+  _ik_min_K2 = 0;
+  _ik_max_K2 = _Nu/_Q*_nk;
+  _nk_K2 = _ik_max_K2 - _ik_min_K2;
+
+  _mu_min_K2 = 0;
+  _mu_max_K2 = _Q;
+  _n_mu_K2 = _mu_max_K2 - _mu_min_K2;
+
+
+  _el_energy_K2 = arma::cube(number_of_bands, _nk_K2, _n_mu_K2, arma::fill::zeros);
+  _el_psi_K2 = arma::field<arma::cx_cube>(_n_mu_K2); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+  _el_psi_K2.for_each([&](arma::cx_cube& c){c.zeros(number_of_atoms_in_graphene_unit_cell, number_of_bands, _nk_K2);}); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+
+  const std::complex<double> i1(0,1);
+
+  for (int mu=_mu_min_K2; mu<_mu_max_K2; mu++)
+  {
+    for (int ik=_ik_min_K2; ik<_ik_max_K2; ik++)
+    {
+      arma::vec k_vec = double(mu)*_K1 + double(ik)*_dk_l;
+      std::complex<double> fk = std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1+_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1-2.*_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a2-2.*_a1)/3.)));
+      const int ic = 1;
+      const int iv = 0;
+      _el_energy_K2(ic,ik-_ik_min_K2,mu-_mu_min_K2) = +_t0*std::abs(fk);
+      _el_energy_K2(iv,ik-_ik_min_K2,mu-_mu_min_K2) = -_t0*std::abs(fk);
+
+      const int iA = 0;
+      const int iB = 1;
+      (_el_psi_K2(mu-_mu_min_K2))(iA,ic,ik-_ik_min_K2) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (_el_psi_K2(mu-_mu_min_K2))(iA,iv,ik-_ik_min_K2) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (_el_psi_K2(mu-_mu_min_K2))(iB,ic,ik-_ik_min_K2) = -1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (_el_psi_K2(mu-_mu_min_K2))(iB,iv,ik-_ik_min_K2) = +1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+    }
+  }
+
+  // save electron energy bands using full Brillouine zone
+  std::string filename = _directory.path().string() + _name + ".el_energy_K2.dat";
+  _el_energy_K2.save(filename,arma::arma_ascii);
+
+  std::cout << "\n...calculated K2-extended electron dispersion\n";
+};
+
+void cnt::find_K2_extended_valleys()
+{
+
+
+  // get the indicies of valleys
+  std::vector<std::array<unsigned int,2>> ik_valley_idx;
+
+  int iC = 1;
+  for (int ik_idx=0; ik_idx<_el_energy_K2.n_cols; ik_idx++)
+  {
+    for (int i_mu_idx=0; i_mu_idx<_el_energy_K2.n_slices; i_mu_idx++)
+    {
+      int ik_idx_p1 = ik_idx + 1;
+      int ik_idx_m1 = ik_idx - 1;
+      while(ik_idx_p1 >= _el_energy_K2.n_cols)
+      {
+        ik_idx_p1 -= _el_energy_K2.n_cols;
+      }
+      while(ik_idx_m1 < 0)
+      {
+        ik_idx_m1 += _el_energy_K2.n_cols;
+      }
+
+      if ((_el_energy_K2(iC,ik_idx,i_mu_idx) < _el_energy_K2(iC,ik_idx_m1,i_mu_idx)) \
+            and (_el_energy_K2(iC,ik_idx,i_mu_idx) < _el_energy_K2(iC,ik_idx_p1,i_mu_idx)))
+      {
+        // arma::umat tmp = {{(unsigned int)ik_idx, (unsigned int)i_mu_idx}};
+        // ik_valley_idx.insert_rows(0,tmp);
+        ik_valley_idx.push_back({(unsigned int)ik_idx, (unsigned int)i_mu_idx});
+      }
+
+    }
+  }
+
+  // sort valleys in order of their 
+  std::sort(ik_valley_idx.begin(),ik_valley_idx.end(), [&](const auto& s1, const auto& s2) {
+                                    return _el_energy_K2(1,s1[0],s1[1]) < _el_energy_K2(1,s2[0],s2[1]);
+                                  });
+
+  // put them in a vector with each element containing the two equivalent valleys
+  for (int i=0; i<ik_valley_idx.size()/2; i++)
+  {
+    std::array<std::array<unsigned int, 2>, 2> valley = {ik_valley_idx.at(2*i), ik_valley_idx.at(2*i+1)};
+    _valleys_K2.push_back(valley);
+  }
+
+  std::cout << "\n...found and sorted indices of valleys:\n";
+  for (const auto& valleys: _valleys_K2)
+  {
+    auto v1 = valleys.at(0);
+    auto v2 = valleys.at(1);
+    std::cout << "[" << v1[0] << "," << v1[1] << "] , [" << v2[0] << "," << v2[1] << "]\n";
+  }
+
+  std::cout << "number of valleys: " << _valleys_K2.size() << std::endl;
+  
+};
+
+
+// find ik values that are energetically relevant around the bottom of the valley
+void cnt::find_relev_ik_range(double delta_energy)
+{
+  std::vector<std::vector<std::array<int,2>>> relev_ik_range(2);
+
+  int nk_K2 = _ik_max_K2 - _ik_min_K2;
+  
+  // first get ik for relevant states in the first valley
+  int i_valley = 0;
+  int ik_bottom = _valleys_K2[_i_sub][i_valley][0]+_ik_min_K2;
+  int mu_bottom = _valleys_K2[_i_sub][i_valley][1]+_mu_min_K2;
+  int iC = 1;
+  double max_energy = _el_energy_K2(iC,ik_bottom-_ik_min_K2,mu_bottom-_mu_min_K2)+delta_energy;
+  // std::cout << "max_energy: " << max_energy/constants::eV << std::endl;
+  // std::cout << "delta_energy: " << delta_energy/constants::eV << std::endl;
+  // std::cout << "_el_energy_K2: " << _el_energy_K2(iC,ik_bottom-_ik_min_K2,mu_bottom-_mu_min_K2)/constants::eV << std::endl;
+  
+  relev_ik_range.at(i_valley).push_back({ik_bottom,mu_bottom});
+  bool in_range = true;
+  int count = 0;
+  while (in_range)
+  {
+    in_range = false;
+    count ++;
+    int ik = ik_bottom + count;
+    while(ik >= _ik_max_K2)
+    {
+      ik -= (_ik_max_K2-_ik_min_K2);
+    }
+    if (_el_energy_K2(iC,ik-_ik_min_K2,mu_bottom-_mu_min_K2) < max_energy)
+    {
+      relev_ik_range.at(i_valley).push_back({ik,mu_bottom});
+      in_range = true;
+    }
+
+    ik = ik_bottom - count;
+    while(ik < _ik_min_K2)
+    {
+      ik += (_ik_max_K2-_ik_min_K2);
+    }
+    if (_el_energy_K2(iC,ik-_ik_min_K2,mu_bottom-_mu_min_K2) < max_energy)
+    {
+      // std::array<int,2> relev_state = {ik,mu_bottom};
+      relev_ik_range.at(i_valley).insert(relev_ik_range.at(i_valley).begin(), {ik,mu_bottom});
+      in_range = true;
+    }
+  }
+
+  // do the same thing for the second valley
+  i_valley = 1;
+  ik_bottom = _valleys_K2[_i_sub][i_valley][0]+_ik_min_K2;
+  mu_bottom = _valleys_K2[_i_sub][i_valley][1]+_mu_min_K2;
+  max_energy = _el_energy_K2(iC,ik_bottom-_ik_min_K2,mu_bottom-_mu_min_K2)+delta_energy;
+  
+  relev_ik_range.at(i_valley).push_back({ik_bottom,mu_bottom});
+  in_range = true;
+  count = 0;
+  while (in_range)
+  {
+    in_range = false;
+    count ++;
+    int ik = ik_bottom + count;
+    while(ik >= _ik_max_K2)
+    {
+      ik -= (_ik_max_K2-_ik_min_K2);
+    }
+    if (_el_energy_K2(iC,ik-_ik_min_K2,mu_bottom-_mu_min_K2) < max_energy)
+    {
+      relev_ik_range.at(i_valley).push_back({ik,mu_bottom});
+      in_range = true;
+    }
+
+    ik = ik_bottom - count;
+    while(ik < _ik_min_K2)
+    {
+      ik += (_ik_max_K2-_ik_min_K2);
+    }
+    if (_el_energy_K2(iC,ik-_ik_min_K2,mu_bottom-_mu_min_K2) < max_energy)
+    {
+      relev_ik_range.at(i_valley).insert(relev_ik_range.at(i_valley).begin(), {ik,mu_bottom});
+      in_range = true;
+    }
+  }
+
+
+  std::cout << "\n...ik for relevant states calculated:\n";
+  std::cout << "relev_ik_range has length of " << relev_ik_range[0].size() << std::endl;
+  
+  // i_valley = 0;
+  // std::cout << "valley: " << i_valley << "\n";
+  // for (const auto& state: relev_ik_range.at(i_valley))
+  // {
+  //   std::cout << "   [" << state.at(0) << "," << state.at(1) << "]\n";
+  // }
+
+  // i_valley = 1;
+  // std::cout << "\nvalley: " << i_valley << "\n";
+  // for (const auto& state: relev_ik_range.at(i_valley))
+  // {
+  //   std::cout << "   [" << state.at(0) << "," << state.at(1) << "]\n";
+  // }
+
+  _relev_ik_range = relev_ik_range;
+
+};
+
+// fourier transformation of the coulomb interaction a.k.a v(q)
+void cnt::calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, unsigned int no_of_cnt_unit_cells)
+{
+  // primary checks for function input
+  int nq = iq_range.at(1) - iq_range.at(0);
+  if (nq <= 0) {
+    throw "Incorrect range for iq!";
+  }
+  int n_mu = mu_range.at(1) - mu_range.at(0);
+  if (n_mu <= 0) {
+    throw "Incorrect range for mu_q!";
+  }
+  if (no_of_cnt_unit_cells % 2 == 0)  no_of_cnt_unit_cells ++;
+
+  // calculate distances between atoms in a warped cnt unit cell.
+	arma::mat pos_aa = arma::mat(_Nu,2,arma::fill::zeros);
+	arma::mat pos_ab = arma::mat(_Nu,2,arma::fill::zeros);
+	arma::mat pos_ba = arma::mat(_Nu,2,arma::fill::zeros);
+  arma::mat pos_bb = arma::mat(_Nu,2,arma::fill::zeros);
+
+	for (int i=0; i<_Nu; i++)
+	{
+    pos_aa.row(i) = _pos_a.row(i)-_pos_a.row(0);
+    pos_ab.row(i) = _pos_a.row(i)-_pos_b.row(0);
+    pos_ba.row(i) = _pos_b.row(i)-_pos_a.row(0);
+    pos_bb.row(i) = _pos_b.row(i)-_pos_b.row(0);
+
+		if(pos_aa(i,0) > _ch_vec(0)/2)
+      pos_aa(i,0) -= _ch_vec(0);
+		if(pos_ab(i,0) > _ch_vec(0)/2)
+      pos_ab(i,0) -= _ch_vec(0);
+		if(pos_ba(i,0) > _ch_vec(0)/2)
+      pos_ba(i,0) -= _ch_vec(0);
+		if(pos_bb(i,0) > _ch_vec(0)/2)
+      pos_bb(i,0) -= _ch_vec(0);
+	}
+
+  arma::cube rel_pos(_Nu*no_of_cnt_unit_cells,2,4,arma::fill::zeros);
+  for (int i=-std::floor(double(no_of_cnt_unit_cells)/2.); i<=std::floor(double(no_of_cnt_unit_cells)/2.); i++)
+  {
+    int idx = (i+std::floor(double(no_of_cnt_unit_cells)/2.))*_Nu;
+    for (int j=0; j<_Nu; j++)
+    {
+      rel_pos.slice(0).row(idx+j) = pos_aa.row(j)+(i*_t_vec.t());
+      rel_pos.slice(1).row(idx+j) = pos_ab.row(j)+(i*_t_vec.t());
+      rel_pos.slice(2).row(idx+j) = pos_ba.row(j)+(i*_t_vec.t());
+      rel_pos.slice(3).row(idx+j) = pos_bb.row(j)+(i*_t_vec.t());
+    }
+  }
+
+  arma::cx_cube vq(nq,n_mu,4,arma::fill::zeros);
+  arma::vec q_vec(nq,arma::fill::zeros);
+
+  arma::vec q(2,arma::fill::zeros);
+  const double coeff = std::pow(4.*constants::pi*constants::eps0*_Upp/constants::q0/constants::q0,2);
+  const std::complex<double> i1(0.,1.);
+  auto Uhno = [&](const arma::mat& R) { return std::exp(i1*arma::dot(q,R))/std::sqrt(coeff*(std::pow(R(0),2)+std::pow(R(1),2))+1); };
+
+  for (int iq=iq_range[0]; iq<iq_range[1]; iq++)
+  {
+    int iq_idx = iq-iq_range[0];
+    q_vec(iq_idx) = iq*arma::norm(_dk_l,2);
+    for (int mu=mu_range[0]; mu<mu_range[1]; mu++)
+    {
+      int mu_idx = mu - mu_range[0];
+      q = iq*_dk_l + mu*_K1;
+      // std::cout << "after addition!\n";
+      for (int i=0; i<4; i++)
+      {
+        for (int k=0; k<_Nu*no_of_cnt_unit_cells; k++)
+        {
+          vq(iq_idx,mu_idx,i) += Uhno(rel_pos.slice(i).row(k));
+        }
+      }
+    }
+  }
+
+  std::cout << "\n...calculated vq\n";
+
+  std::cout << "saved real part of vq\n";
+  arma::cube vq_real = arma::real(vq);
+  std::string filename = _directory.path().string() + _name + ".real_vq.dat";
+  vq_real.save(filename, arma::arma_ascii);
+
+  std::cout << "saved imaginary part of vq\n";
+  arma::cube vq_imag = arma::imag(vq);
+  filename = _directory.path().string() + _name + ".imag_vq.dat";
+  vq_imag.save(filename, arma::arma_ascii);
+};

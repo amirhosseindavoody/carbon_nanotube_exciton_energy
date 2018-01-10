@@ -30,7 +30,7 @@ private:
 
 	int _n, _m; // chirailty parameters
 	int _number_of_cnt_unit_cells; // length of cnt in units of cnt unit cell.
-	int _nk; // number of k vector elements corresponding to the length of the cnt.
+	int _nk; // number of k vector elements in the K1-extended representation calculated based on the length of the cnt.
 
 	arma::vec _a1, _a2; // real space lattice primitive vectors
 	arma::vec _b1, _b2; // reciprocal lattice primitive vectors
@@ -39,6 +39,9 @@ private:
 
 	double _ch_len; // length of the chirality vector
 	double _radius; // radius of the cnt
+
+	int _t1, _t2; // translation vector elemens in terms of _a1 and _a2
+	int _M, _Q; // cnt parameters for K2-extended representation, Q is the number of cutting line in this representation
 
 	arma::vec _t_vec; // translational vector for cnt unit cell in unrolled graphene sheet
 	arma::vec _t_vec_3d; // translational vector for cnt unit cell in rolled graphene sheed (3d)
@@ -60,6 +63,17 @@ private:
 	arma::cube _el_energy_redu; // energy of electronic states calculated using the reduced graphene unit cell (2 atoms)
 	arma::field<arma::cx_cube> _el_psi_redu; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms)
 
+	int _ik_min_K2, _ik_max_K2; // limits of ik-vector in the K2-extended representation
+	int _nk_K2; // number of ik vector elements in the K2-extended representation
+	int _mu_min_K2, _mu_max_K2; // limits of mu in the K2-extended representation
+	int _n_mu_K2; // number of cutting lines in the K2-extended representation
+	arma::cube _el_energy_K2; // energy of electronic states in K2-extended rep. calculated using the reduced graphene unit cell (2 atoms)
+	arma::field<arma::cx_cube> _el_psi_K2; // electronic wave functions in K2-extended rep. corresponding to electronic states using the reduced graphene unit cell (2 atoms)
+	std::vector<std::array<std::array<unsigned int, 2>, 2>> _valleys_K2; // index of valleys in K2-extended representation
+	std::vector<std::vector<std::array<int,2>>> _relev_ik_range;
+
+	int _i_sub = 0; // index of the selected subband from _valleys_K2 vector
+
 	arma::cx_vec _epsilon; // static dielectric function
 
 
@@ -69,31 +83,72 @@ public:
 	
 	// set the output directory and the output file name
 	void process_command_line_args(int argc, char* argv[]);
+
+	// calculate the parameters of the cnt
+	void get_parameters();
 	
 	// calculates position of atoms and reciprocal lattice vectors
-	void geometry();
+	void get_atom_coordinates();
 	
 	// calculate electron dispersion energies using full unit cell (2*Nu atoms)
 	void electron_full();
 	
 	// calculate electron dispersion energies using the reduced graphene unit cell (2 atoms)
-	void electron_reduced();
-	
-	// given index i_mu between [0,Nu-1] return the value of mu between [1-Nu/2, Nu/2]
-	const double mu(const int& i_mu) const
+	void electron_K1_extended();
+
+	// calculate electron dispersion energies using the K2-extended representation
+	void electron_K2_extended();
+
+	// find valley ik and i_mu indices in K2-extended representation
+	void find_K2_extended_valleys();
+
+	// find ik values that are energetically relevant around the bottom of the valley
+	void find_relev_ik_range(double delta_energy);
+
+	// get ik of valence band state by taking care of wrapping around K2-extended zone
+	int get_ikv(int ik_c, int ik_cm)
 	{
-		return double(i_mu+1-_Nu/2);
+		int ik_v = ik_c - ik_cm;
+		while (ik_v >= _ik_max_K2){
+			ik_v -= _nk_K2;
+		}
+		while (ik_v < _ik_min_K2){
+			ik_v += _nk_K2;
+		}
+		return ik_v;
+	};
+
+	// get ik of conduction band state by taking care of wrapping around K2-extended zone
+	int get_ikc(int ik_v, int ik_cm)
+	{
+		int ik_c = ik_v + ik_cm;
+		while (ik_c >= _ik_max_K2){
+			ik_c -= _nk_K2;
+		}
+		while (ik_c < _ik_min_K2){
+			ik_c += _nk_K2;
+		}
+		return ik_c;
 	};
 	
-	// given index ik shift it by -_nk/2;
-	const double k(const int& ik) const
-	{
-		return double(ik-_nk/2);
-	};
+	
 	
 	// void dielectric(); // calculate static dielectric function
 	
-	// void coulomb_int(); // calculate coulomb interaction matrix elements
+	// fourier transformation of the coulomb interaction a.k.a v(q)
+	void calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, const unsigned int no_of_cnt_unit_cells);
+
+	// call this to do all the calculations at once
+	void calculate_exciton_dispersion()
+	{
+		get_parameters();
+		get_atom_coordinates();
+		electron_K2_extended();
+		find_K2_extended_valleys();
+		find_relev_ik_range(1.*constants::eV);
+		int ik_cm_max = _el_energy_K2.n_cols;
+		calculate_vq({-ik_cm_max,ik_cm_max+1}, {0,_Q}, 100);
+	};
 };
 
 #endif // end _cnt_h_

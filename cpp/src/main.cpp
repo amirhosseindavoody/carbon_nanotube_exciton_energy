@@ -7,6 +7,12 @@
 int main(int argc, char *argv[])
 {
 
+	// arma::vec A = {3,4 };
+	// A.print("A:");
+	// std::cout << "norm=" << arma::norm(A,"fro") << "\n";
+
+	// std::exit(0);
+
 	std::clock_t start = std::clock();
 
 	std::time_t start_time = std::time(nullptr);
@@ -15,13 +21,7 @@ int main(int argc, char *argv[])
 	cnt m_cnt;
 
 	m_cnt.process_command_line_args(argc, argv);
-	m_cnt.geometry();
-	m_cnt.electron_full();
-	m_cnt.electron_reduced();
-	
-
-	// cnts[0].dielectric();
-	// cnts[0].coulomb_int();
+	m_cnt.calculate_exciton_dispersion();
 
 	std::clock_t end = std::clock();
 
