@@ -55,7 +55,6 @@ private:
 
 	arma::mat _pos_a, _pos_b; // position of atoms in A and B sites
 	arma::mat _pos_2d, _pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space
-	arma::mat _pos_aa, _pos_ab, _pos_ba, _pos_bb; // distance between atoms and A and B sites which conserves lattice symmetry.
 
 	arma::mat _el_energy_full; // energy of electronic states calculated using the full unit cell (2*Nu atoms)
 	arma::cx_cube _el_psi_full; // electronic wave functions corresponding to electronic states using the full unit cell (2*Nu atoms)
@@ -71,6 +70,18 @@ private:
 	arma::field<arma::cx_cube> _el_psi_K2; // electronic wave functions in K2-extended rep. corresponding to electronic states using the reduced graphene unit cell (2 atoms)
 	std::vector<std::array<std::array<unsigned int, 2>, 2>> _valleys_K2; // index of valleys in K2-extended representation
 	std::vector<std::vector<std::array<int,2>>> _relev_ik_range;
+
+	// struct to hold data of vq
+	struct vq_struct
+	{
+		arma::cx_cube data; // actual data of vq in the format of (iq,mu,atom_pair_index) where atom pair index is aa=0, ab=1, ba=2, bb=3
+		std::array<int,2> iq_range; // range of iq values in the half-open range format [a,b)
+		std::array<int,2> mu_range; // range of mu values in the half-open range format [a,b)
+		int nq, n_mu; // number of iq and mu elements
+	};
+
+	// instantiation of vq_struct to hold data of vq calculated via calculate vq
+	vq_struct _vq;
 
 	int _i_sub = 0; // index of the selected subband from _valleys_K2 vector
 
@@ -131,24 +142,11 @@ public:
 		return ik_c;
 	};
 	
-	
-	
-	// void dielectric(); // calculate static dielectric function
-	
 	// fourier transformation of the coulomb interaction a.k.a v(q)
-	void calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, const unsigned int no_of_cnt_unit_cells);
+	vq_struct calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, const unsigned int no_of_cnt_unit_cells);
 
 	// call this to do all the calculations at once
-	void calculate_exciton_dispersion()
-	{
-		get_parameters();
-		get_atom_coordinates();
-		electron_K2_extended();
-		find_K2_extended_valleys();
-		find_relev_ik_range(1.*constants::eV);
-		int ik_cm_max = _el_energy_K2.n_cols;
-		calculate_vq({-ik_cm_max,ik_cm_max+1}, {0,_Q}, 100);
-	};
+	void calculate_exciton_dispersion();
 };
 
 #endif // end _cnt_h_

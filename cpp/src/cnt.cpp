@@ -310,29 +310,6 @@ void cnt::get_atom_coordinates()
 		exit(1);
 	}
 
-	// // calculate distances between atoms in a warped cnt unit cell.
-	// _pos_aa = arma::mat(_Nu,2,arma::fill::zeros);
-	// _pos_ab = arma::mat(_Nu,2,arma::fill::zeros);
-	// _pos_ba = arma::mat(_Nu,2,arma::fill::zeros);
-	// _pos_bb = arma::mat(_Nu,2,arma::fill::zeros);
-
-	// for (int i=0; i<_Nu; i++)
-	// {
-  //   _pos_aa.row(i) = _pos_a.row(i)-_pos_a.row(0);
-  //   _pos_ab.row(i) = _pos_a.row(i)-_pos_b.row(0);
-  //   _pos_ba.row(i) = _pos_b.row(i)-_pos_a.row(0);
-  //   _pos_bb.row(i) = _pos_b.row(i)-_pos_b.row(0);
-
-	// 	if(_pos_aa(i,0) > _ch_vec(0)/2)
-  //     _pos_aa(i,0) -= _ch_vec(0);
-	// 	if(_pos_ab(i,0) > _ch_vec(0)/2)
-  //     _pos_ab(i,0) -= _ch_vec(0);
-	// 	if(_pos_ba(i,0) > _ch_vec(0)/2)
-  //     _pos_ba(i,0) -= _ch_vec(0);
-	// 	if(_pos_bb(i,0) > _ch_vec(0)/2)
-  //     _pos_bb(i,0) -= _ch_vec(0);
-	// }
-
 	// put position of all atoms in a single variable in 2d space(unrolled graphene sheet)
 	_pos_2d = arma::mat(2*_Nu,2,arma::fill::zeros);
   _pos_2d(arma::span(0,_Nu-1),arma::span::all) = _pos_a;
@@ -700,7 +677,7 @@ void cnt::find_relev_ik_range(double delta_energy)
 };
 
 // fourier transformation of the coulomb interaction a.k.a v(q)
-void cnt::calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, unsigned int no_of_cnt_unit_cells)
+cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, unsigned int no_of_cnt_unit_cells)
 {
   // primary checks for function input
   int nq = iq_range.at(1) - iq_range.at(0);
@@ -749,13 +726,14 @@ void cnt::calculate_vq(const std::array<int,2> iq_range, const std::array<int,2>
     }
   }
 
+  // calculate vq
   arma::cx_cube vq(nq,n_mu,4,arma::fill::zeros);
   arma::vec q_vec(nq,arma::fill::zeros);
 
   arma::vec q(2,arma::fill::zeros);
   const double coeff = std::pow(4.*constants::pi*constants::eps0*_Upp/constants::q0/constants::q0,2);
   const std::complex<double> i1(0.,1.);
-  auto Uhno = [&](const arma::mat& R) { return std::exp(i1*arma::dot(q,R))/std::sqrt(coeff*(std::pow(R(0),2)+std::pow(R(1),2))+1); };
+  auto Uhno = [&](const arma::mat& R) { return std::exp(i1*arma::dot(q,R))*_Upp/std::sqrt(coeff*(std::pow(R(0),2)+std::pow(R(1),2))+1); };
 
   for (int iq=iq_range[0]; iq<iq_range[1]; iq++)
   {
@@ -776,6 +754,8 @@ void cnt::calculate_vq(const std::array<int,2> iq_range, const std::array<int,2>
     }
   }
 
+  vq = vq/(2*_Nu*no_of_cnt_unit_cells);
+
   std::cout << "\n...calculated vq\n";
 
   std::cout << "saved real part of vq\n";
@@ -787,4 +767,31 @@ void cnt::calculate_vq(const std::array<int,2> iq_range, const std::array<int,2>
   arma::cube vq_imag = arma::imag(vq);
   filename = _directory.path().string() + _name + ".imag_vq.dat";
   vq_imag.save(filename, arma::arma_ascii);
+
+  std::cout << "saved q_vector for vq\n";
+  filename = _directory.path().string() + _name + ".q_vec.dat";
+  q_vec.save(filename, arma::arma_ascii);
+
+  // make the vq_struct that is to be returned
+  vq_struct vq_s;
+  vq_s.data = vq;
+  vq_s.iq_range = iq_range;
+  vq_s.mu_range = mu_range;
+  vq_s.nq = nq;
+  vq_s.n_mu = n_mu;
+
+  return vq_s;
+};
+
+
+// call this to do all the calculations at once
+void cnt::calculate_exciton_dispersion()
+{
+  get_parameters();
+  get_atom_coordinates();
+  electron_K2_extended();
+  find_K2_extended_valleys();
+  find_relev_ik_range(1.*constants::eV);
+  int ik_cm_max = _el_energy_K2.n_cols;
+  _vq = calculate_vq({-ik_cm_max,ik_cm_max+1}, {0,_Q}, 100);
 };
