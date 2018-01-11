@@ -7,6 +7,7 @@ Stores all relevant information for a carbon nanotube
 #include <numeric>
 #include <armadillo>
 #include <complex>
+#include <stdexcept>
 
 #include "constants.h"
 #include "cnt.h"
@@ -215,8 +216,8 @@ void cnt::get_parameters()
 	_K1 = (-double(_t2)*_b1 + double(_t1)*_b2)/(double(_Nu));
 	_K2 = (double(_m)*_b1-double(_n)*_b2)/(double(_Nu));
   _K2_normed = arma::normalise(_K2);
-  _nk = _number_of_cnt_unit_cells;
-	_dk_l = _K2/(double(_nk));
+  _nk_K1 = _number_of_cnt_unit_cells;
+	_dk_l = _K2/(double(_nk_K1));
 
   std::cout << "\n...cnt reciprocal lattice vectors:\n";
   _K1.print("K1:");
@@ -369,7 +370,7 @@ void cnt::electron_full()
   arma::vec E;
   arma::cx_mat C;
 
-	int NK = _nk;
+	int NK = _nk_K1;
 
 	_el_energy_full = arma::mat(2*_Nu, NK, arma::fill::zeros);
 	_el_psi_full = arma::cx_cube(2*_Nu, 2*_Nu, NK, arma::fill::zeros);
@@ -378,7 +379,7 @@ void cnt::electron_full()
 
 	for (int n=0; n<NK; n++)
 	{
-		double wave_vec = double(n-_nk/2)*arma::norm(_dk_l);
+		double wave_vec = double(n-_nk_K1/2)*arma::norm(_dk_l);
 
 		H.zeros();
 		S.zeros();
@@ -429,15 +430,15 @@ void cnt::electron_K1_extended()
   int number_of_bands = 2;
   int number_of_atoms_in_graphene_unit_cell = number_of_bands;
 
-  _el_energy_redu = arma::cube(number_of_bands, _nk, _Nu, arma::fill::zeros);
+  _el_energy_redu = arma::cube(number_of_bands, _nk_K1, _Nu, arma::fill::zeros);
   _el_psi_redu = arma::field<arma::cx_cube>(_Nu); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-  _el_psi_redu.for_each([&](arma::cx_cube& c){c.zeros(number_of_atoms_in_graphene_unit_cell, number_of_bands, _nk);}); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+  _el_psi_redu.for_each([&](arma::cx_cube& c){c.zeros(number_of_atoms_in_graphene_unit_cell, number_of_bands, _nk_K1);}); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
 
   const std::complex<double> i1(0,1);
 
   for (int mu=0; mu<_Nu; mu++)
   {
-    for (int ik=0; ik<_nk; ik++)
+    for (int ik=0; ik<_nk_K1; ik++)
     {
       arma::vec k_vec = mu*_K1 + ik*_dk_l;
       std::complex<double> fk = std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1+_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1-2.*_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a2-2.*_a1)/3.)));
@@ -470,7 +471,7 @@ void cnt::electron_K2_extended()
   int number_of_atoms_in_graphene_unit_cell = number_of_bands;
 
   _ik_min_K2 = 0;
-  _ik_max_K2 = _Nu/_Q*_nk;
+  _ik_max_K2 = _Nu/_Q*_nk_K1;
   _nk_K2 = _ik_max_K2 - _ik_min_K2;
 
   _mu_min_K2 = 0;
@@ -760,16 +761,16 @@ cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::ar
 
   std::cout << "saved real part of vq\n";
   arma::cube vq_real = arma::real(vq);
-  std::string filename = _directory.path().string() + _name + ".real_vq.dat";
+  std::string filename = _directory.path().string() + _name + ".vq_real.dat";
   vq_real.save(filename, arma::arma_ascii);
 
   std::cout << "saved imaginary part of vq\n";
   arma::cube vq_imag = arma::imag(vq);
-  filename = _directory.path().string() + _name + ".imag_vq.dat";
+  filename = _directory.path().string() + _name + ".vq_imag.dat";
   vq_imag.save(filename, arma::arma_ascii);
 
   std::cout << "saved q_vector for vq\n";
-  filename = _directory.path().string() + _name + ".q_vec.dat";
+  filename = _directory.path().string() + _name + ".vq_q_vec.dat";
   q_vec.save(filename, arma::arma_ascii);
 
   // make the vq_struct that is to be returned
@@ -783,6 +784,149 @@ cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::ar
   return vq_s;
 };
 
+// polarization of electronic states a.k.a PI(q)
+cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, const std::array<int,2> mu_range)
+{
+  // primary checks for function input
+  int nq = iq_range.at(1) - iq_range.at(0);
+  if (nq <= 0) {
+    throw "Incorrect range for iq in calculate_polarization!";
+  }
+  int n_mu = mu_range.at(1) - mu_range.at(0);
+  if (n_mu <= 0) {
+    throw "Incorrect range for mu_q in calculate_polarization!";
+  }
+
+  // function to wrap iq+ik and mu_k+mu_q inside the K2-extended brillouine zone
+  int ikq, mu_kq;
+  int ik, mu_k;
+  int iq, mu_q;
+  auto get_kq = [&](){
+    mu_kq = mu_k+mu_q;
+    ikq = ik+iq;
+    while (mu_kq >= _mu_max_K2) {
+      mu_kq -= _n_mu_K2;
+      ikq += _nk_K1*_M;
+    }
+    while (mu_kq < _mu_min_K2) {
+      mu_kq += _n_mu_K2;
+      ikq -= _nk_K1*_M;
+    }
+    while (ikq >= _ik_max_K2){
+      ikq -= _nk_K2;
+    }
+    while (ikq < _ik_min_K2){
+      ikq += _nk_K2;
+    }
+  };
+
+  arma::mat PI(nq,n_mu,arma::fill::zeros);
+  arma::vec q_vec(nq,arma::fill::zeros);
+
+  const int iv = 0;
+  const int ic = 1;
+  const int iA = 0;
+  const int iB = 1;
+
+  int iq_idx, mu_q_idx;
+  int ik_idx, mu_k_idx;
+  int i_kq_idx, mu_kq_idx;
+  for (iq=iq_range[0]; iq<iq_range[1]; iq++)
+  {
+    iq_idx = iq - iq_range[0];
+    q_vec(iq_idx) = iq*arma::norm(_dk_l);
+    for (mu_q=mu_range[0]; mu_q<mu_range[1]; mu_q++)
+    {
+      mu_q_idx = mu_q - mu_range[0];
+      for (ik=_ik_min_K2; ik<_ik_max_K2; ik++)
+      {
+        ik_idx = ik - _ik_min_K2;
+        for (mu_k=_mu_min_K2; mu_k<_mu_max_K2; mu_k++)
+        {
+          mu_k_idx = mu_k - _mu_min_K2;
+          get_kq();
+          mu_kq_idx = mu_kq - _mu_min_K2;
+          i_kq_idx = ikq - _ik_min_K2;
+
+          PI(iq_idx,mu_q_idx) += std::pow(std::abs(arma::dot(arma::conj(_el_psi_K2(mu_k_idx).slice(ik_idx).col(iv)),_el_psi_K2(mu_kq_idx).slice(i_kq_idx).col(ic))),2)/ \
+                                 (_el_energy_K2(ic,i_kq_idx,mu_kq_idx)-_el_energy_K2(iv,ik_idx,mu_k_idx)) + \
+                                 std::pow(std::abs(arma::dot(arma::conj(_el_psi_K2(mu_k_idx).slice(ik_idx).col(ic)),_el_psi_K2(mu_kq_idx).slice(i_kq_idx).col(iv))),2)/ \
+                                 (_el_energy_K2(ic,ik_idx,mu_k_idx)-_el_energy_K2(iv,i_kq_idx,mu_kq_idx));
+        }
+      }
+    }
+  }
+
+  PI = 2*PI;
+
+  std::cout << "\n...calculated polarization: PI(q)\n";
+
+  std::cout << "saved PI\n";
+  std::string filename = _directory.path().string() + _name + ".PI.dat";
+  PI.save(filename, arma::arma_ascii);
+
+  std::cout << "saved q_vector for PI\n";
+  filename = _directory.path().string() + _name + ".PI_q_vec.dat";
+  q_vec.save(filename, arma::arma_ascii);
+
+  // make the vq_struct that is to be returned
+  PI_struct PI_s;
+  PI_s.data = PI;
+  PI_s.iq_range = iq_range;
+  PI_s.mu_range = mu_range;
+  PI_s.nq = nq;
+  PI_s.n_mu = n_mu;
+
+  return PI_s;
+};
+
+// dielectric function a.k.a eps(q)
+cnt::epsilon_struct cnt::calculate_dielectric(const std::array<int,2> iq_range, const std::array<int,2> mu_range)
+{
+  // check if vq has been calculated properly before
+  if (not (in_range(iq_range,_vq.iq_range) and in_range(mu_range,_vq.mu_range))){
+    throw std::logic_error("You need to calculate vq with correct range before \
+                            trying to calculate dielectric function");
+  }
+  // check if PI has been calculated properly before
+  if (not (in_range(iq_range,_PI.iq_range) and in_range(mu_range,_PI.mu_range))){
+    throw std::logic_error("You need to calculate PI with correct range before \
+                            trying to calculate dielectric function");
+  }
+
+  int nq = iq_range[1] - iq_range[0];
+  int n_mu = mu_range[1] - mu_range[0];
+  arma::mat eps = arma::real(arma::mean(_vq.data,2));
+  eps = eps.submat(iq_range[0]-_vq.iq_range[0],mu_range[0]-_vq.mu_range[0],arma::size(nq,n_mu));
+  eps %= _PI.data.submat(iq_range[0]-_PI.iq_range[0],mu_range[0]-_PI.mu_range[0],arma::size(nq,n_mu));
+  std::cout << "size of dielectric function matrix: " << arma::size(eps) << std::endl;
+  eps += 1.;
+
+  arma::vec q_vec(nq);
+  for (int iq=iq_range[0]; iq<iq_range[1]; iq++)
+  {
+    int iq_idx = iq - iq_range[0];
+    q_vec(iq_idx) = iq*arma::norm(_dk_l);
+  }
+
+  std::cout << "\n...calculated dielectric function: epsilon(q)\n";
+
+  std::cout << "saved epsilon\n";
+  std::string filename = _directory.path().string() + _name + ".eps.dat";
+  eps.save(filename, arma::arma_ascii);
+
+  std::cout << "saved q_vector for epsilon\n";
+  filename = _directory.path().string() + _name + ".eps_q_vec.dat";
+  q_vec.save(filename, arma::arma_ascii);
+
+  epsilon_struct eps_s;
+  eps_s.data = eps;
+  eps_s.iq_range = iq_range;
+  eps_s.mu_range = mu_range;
+  eps_s.nq = nq;
+  eps_s.n_mu = n_mu;
+  return eps_s;
+};
 
 // call this to do all the calculations at once
 void cnt::calculate_exciton_dispersion()
@@ -792,6 +936,10 @@ void cnt::calculate_exciton_dispersion()
   electron_K2_extended();
   find_K2_extended_valleys();
   find_relev_ik_range(1.*constants::eV);
-  int ik_cm_max = _el_energy_K2.n_cols;
-  _vq = calculate_vq({-ik_cm_max,ik_cm_max+1}, {0,_Q}, 100);
+
+  std::array<int,2> iq_range = {-(_ik_max_K2-1),_ik_max_K2};
+  std::array<int,2> mu_range = {-(_Q-1),_Q};
+  _vq = calculate_vq(iq_range, mu_range, 100);
+  _PI = calculate_polarization(iq_range, mu_range);
+  _eps = calculate_dielectric(iq_range, mu_range);
 };

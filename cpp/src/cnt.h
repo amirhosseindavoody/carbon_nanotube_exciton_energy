@@ -30,7 +30,7 @@ private:
 
 	int _n, _m; // chirailty parameters
 	int _number_of_cnt_unit_cells; // length of cnt in units of cnt unit cell.
-	int _nk; // number of k vector elements in the K1-extended representation calculated based on the length of the cnt.
+	int _nk_K1; // number of k vector elements in the K1-extended representation calculated based on the length of the cnt.
 
 	arma::vec _a1, _a2; // real space lattice primitive vectors
 	arma::vec _b1, _b2; // reciprocal lattice primitive vectors
@@ -71,7 +71,14 @@ private:
 	std::vector<std::array<std::array<unsigned int, 2>, 2>> _valleys_K2; // index of valleys in K2-extended representation
 	std::vector<std::vector<std::array<int,2>>> _relev_ik_range;
 
-	// struct to hold data of vq
+	// // struct to bundle information of electronic energy state
+	// struct el_energy_struct
+	// {
+	// 	arma::cube e; // energy of electronic states calculated using the reduced graphene unit cell (2 atoms)
+	// 	arma::field<arma::cx_cube> psi; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms)
+	// }
+
+	// struct to bundle data and metadata of coulomg interaction fourier transform (vq)
 	struct vq_struct
 	{
 		arma::cx_cube data; // actual data of vq in the format of (iq,mu,atom_pair_index) where atom pair index is aa=0, ab=1, ba=2, bb=3
@@ -79,9 +86,30 @@ private:
 		std::array<int,2> mu_range; // range of mu values in the half-open range format [a,b)
 		int nq, n_mu; // number of iq and mu elements
 	};
-
-	// instantiation of vq_struct to hold data of vq calculated via calculate vq
+	// instantiation of vq_struct to hold data of vq calculated via calculate_vq function
 	vq_struct _vq;
+
+	// struct to bundle data and metadata of electronic state polarization (PI)
+	struct PI_struct
+	{
+		arma::mat data; // actual data of PI in the format of (iq,mu)
+		std::array<int,2> iq_range; // range of iq values in the half-open range format [a,b)
+		std::array<int,2> mu_range; // range of mu values in the half-open range format [a,b)
+		int nq, n_mu; // number of iq and mu elements
+	};
+	// instantiation of PI_struct to hold data of PI calculated via calculate_polarization function
+	PI_struct _PI;
+
+	// struct to bundle data and metadata of dielectric function (epsilon)
+	struct epsilon_struct
+	{
+		arma::mat data; // actual data of dielectric function in the format of (iq,mu)
+		std::array<int,2> iq_range; // range of iq values in the half-open range format [a,b)
+		std::array<int,2> mu_range; // range of mu values in the half-open range format [a,b)
+		int nq, n_mu; // number of iq and mu elements
+	};
+	// instantiation of epsilon_struct to hold data of dielectric function calculated via calculate_dielectric function
+	epsilon_struct _eps;
 
 	int _i_sub = 0; // index of the selected subband from _valleys_K2 vector
 
@@ -141,9 +169,44 @@ public:
 		}
 		return ik_c;
 	};
+
+	// helper function to check if a number is inside another range
+	bool in_range(const int& guest, const std::array<int,2>& host) const
+	{
+		if (guest < host[0]){
+			return false;
+		}
+		if (guest >= host[1]){
+			return false;
+		}
+		return true;
+	};
+	// helper function to check if a range is inside another range
+	bool in_range(const std::array<int,2>& guest, const std::array<int,2>& host) const
+	{
+		if (guest[0] < host[0]){
+			return false;
+		}
+		if (guest[0] >= host[1]){
+			return false;
+		}
+		if (guest[1] < host[0]){
+			return false;
+		}
+		if (guest[1] > host[1]){
+			return false;
+		}
+		return true;
+	};
 	
 	// fourier transformation of the coulomb interaction a.k.a v(q)
 	vq_struct calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, const unsigned int no_of_cnt_unit_cells);
+
+	// polarization of electronic states a.k.a PI(q)
+	PI_struct calculate_polarization(const std::array<int,2> iq_range, const std::array<int,2> mu_range);
+
+	// dielectric function a.k.a eps(q)
+	epsilon_struct calculate_dielectric(const std::array<int,2> iq_range, const std::array<int,2> mu_range);
 
 	// call this to do all the calculations at once
 	void calculate_exciton_dispersion();
