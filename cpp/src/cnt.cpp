@@ -734,11 +734,18 @@ cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::ar
   arma::vec q(2,arma::fill::zeros);
   const double coeff = std::pow(4.*constants::pi*constants::eps0*_Upp/constants::q0/constants::q0,2);
   const std::complex<double> i1(0.,1.);
-  auto Uhno = [&](const arma::mat& R) { return std::exp(i1*arma::dot(q,R))*_Upp/std::sqrt(coeff*(std::pow(R(0),2)+std::pow(R(1),2))+1); };
+  auto Uhno = [&](const arma::mat& R){
+    return std::exp(i1*arma::dot(q,R))*_Upp/std::sqrt(coeff*(std::pow(R(0),2)+std::pow(R(1),2))+1);
+  };
+
+  progress_bar prog;
 
   for (int iq=iq_range[0]; iq<iq_range[1]; iq++)
   {
     int iq_idx = iq-iq_range[0];
+    
+    prog.step(iq_idx, nq, "vq",5);
+
     q_vec(iq_idx) = iq*arma::norm(_dk_l,2);
     for (int mu=mu_range[0]; mu<mu_range[1]; mu++)
     {
@@ -797,7 +804,7 @@ cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, con
     throw "Incorrect range for mu_q in calculate_polarization!";
   }
 
-  // function to wrap iq+ik and mu_k+mu_q inside the K2-extended brillouine zone
+  // lambda function to wrap iq+ik and mu_k+mu_q inside the K2-extended brillouine zone
   int ikq, mu_kq;
   int ik, mu_k;
   int iq, mu_q;
@@ -828,6 +835,8 @@ cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, con
   const int iA = 0;
   const int iB = 1;
 
+  progress_bar prog;
+
   int iq_idx, mu_q_idx;
   int ik_idx, mu_k_idx;
   int i_kq_idx, mu_kq_idx;
@@ -835,6 +844,9 @@ cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, con
   {
     iq_idx = iq - iq_range[0];
     q_vec(iq_idx) = iq*arma::norm(_dk_l);
+
+    prog.step(iq_idx, nq, "polarization", 5);
+
     for (mu_q=mu_range[0]; mu_q<mu_range[1]; mu_q++)
     {
       mu_q_idx = mu_q - mu_range[0];
@@ -928,6 +940,174 @@ cnt::epsilon_struct cnt::calculate_dielectric(const std::array<int,2> iq_range, 
   return eps_s;
 };
 
+// calculate exciton dispersion
+void cnt::calculate_exciton_energy(const std::array<int,2> ik_cm_range)
+{
+  // some utility variables that are going to be used over and over again
+  int ik_c, mu_c;
+  int ik_v, mu_v;
+  int ik_cp, mu_cp;
+  int ik_vp, mu_vp;
+  int ik_c_diff, mu_c_diff;
+  int ik_cm, mu_cm;
+
+  std::complex<double> dir_interaction;
+  std::complex<double> xch_interaction;
+
+  const int iv = 0;
+  const int ic = 1;
+
+  const int i_valley_1 = 0;
+  const int i_valley_2 = 1;
+
+  // lambda function to calculate direct interaction
+  auto get_direct_interaction = [&](){
+    ik_c_diff = ik_c-ik_cp;
+    mu_c_diff = mu_c-mu_cp;
+    while(ik_c_diff < _ik_min_K2){
+      ik_c_diff += _nk_K2;
+    }
+    while(ik_c_diff >= _ik_max_K2){
+      ik_c_diff -= _nk_K2;
+    }
+
+    dir_interaction = 0;
+    for (int i=0; i<2; i++)
+    {
+      for (int j=0; j<2; j++) 
+      {
+        dir_interaction += std::conj(_el_psi_K2(mu_c -_mu_min_K2)(i,ic,ik_c -_ik_min_K2))* \
+                                     _el_psi_K2(mu_v -_mu_min_K2)(j,iv,ik_v -_ik_min_K2) * \
+                                     _el_psi_K2(mu_cp-_mu_min_K2)(i,ic,ik_cp-_ik_min_K2) * \
+                           std::conj(_el_psi_K2(mu_vp-_mu_min_K2)(j,iv,ik_vp-_ik_min_K2))* \
+                      _vq.data(ik_c_diff-_vq.iq_range[0],mu_c_diff-_vq.mu_range[0],2*i+j)/ \
+                      _eps.data(ik_c_diff-_eps.iq_range[0],mu_c_diff-_eps.mu_range[0]);
+      }
+    }
+    return dir_interaction;
+  };
+
+  // lambda function to calculate exchange interaction
+  auto get_exchange_interaction = [&](){
+    xch_interaction = 0;
+    for (int i=0; i<2; i++)
+    {
+      for (int j=0; j<2; j++) 
+      {
+        xch_interaction += std::conj(_el_psi_K2(mu_c -_mu_min_K2)(i,ic,ik_c -_ik_min_K2))* \
+                                     _el_psi_K2(mu_v -_mu_min_K2)(i,iv,ik_v -_ik_min_K2) * \
+                                     _el_psi_K2(mu_cp-_mu_min_K2)(j,ic,ik_cp-_ik_min_K2) * \
+                           std::conj(_el_psi_K2(mu_vp-_mu_min_K2)(j,iv,ik_vp-_ik_min_K2))* \
+                              _vq.data(ik_cm-_vq.iq_range[0],mu_cm-_vq.mu_range[0],2*i+j);
+      }
+    }
+    return xch_interaction;
+  };
+
+
+  progress_bar prog;
+
+  int nk_cm = ik_cm_range[1] - ik_cm_range[0];
+  int nk_relev = int(_relev_ik_range[0].size());
+
+  arma::mat ex_energy_A1(nk_cm,nk_relev,arma::fill::zeros);
+  arma::mat ex_energy_A2_singlet(nk_cm,nk_relev,arma::fill::zeros);
+  arma::mat ex_energy_A2_triplet(nk_cm,nk_relev,arma::fill::zeros);
+
+  arma::cx_mat kernel_11(nk_relev,nk_relev,arma::fill::zeros);
+  arma::cx_mat kernel_12(nk_relev,nk_relev,arma::fill::zeros);
+  arma::cx_mat kernel_exchange(nk_relev,nk_relev,arma::fill::zeros);
+  arma::vec energy;
+  arma::vec k_cm_vec(nk_cm,arma::fill::zeros);
+
+  // loop to calculate exciton dispersion
+  for (ik_cm=ik_cm_range[0]; ik_cm<ik_cm_range[1]; ik_cm++)
+  {
+    kernel_11.zeros();
+    kernel_12.zeros();
+    kernel_exchange.zeros();
+    mu_cm = 0;
+    int ik_cm_idx = ik_cm - ik_cm_range[0];
+    k_cm_vec(ik_cm_idx) = ik_cm*arma::norm(_dk_l);
+
+    prog.step(ik_cm_idx, nk_cm, "ex_energy", 5);
+
+    
+    for (int ik_c_idx=0; ik_c_idx<nk_relev; ik_c_idx++)
+    {
+      ik_c = _relev_ik_range[i_valley_1][ik_c_idx][0];
+      mu_c = _relev_ik_range[i_valley_1][ik_c_idx][1];
+      ik_v = get_ikv(ik_c,ik_cm);
+      mu_v = mu_c;
+
+      kernel_11(ik_c_idx, ik_c_idx) += _el_energy_K2(ic,ik_c-_ik_min_K2,mu_c-_mu_min_K2) - _el_energy_K2(iv,ik_v-_ik_min_K2,mu_c-_mu_min_K2);
+
+      // interaction  between valley_1 and valley_1
+      for (int ik_cp_idx=0; ik_cp_idx<=ik_c_idx; ik_cp_idx++)
+      {
+        ik_cp = _relev_ik_range[i_valley_1][ik_cp_idx][0];
+        mu_cp = _relev_ik_range[i_valley_1][ik_cp_idx][1];
+        ik_vp = get_ikv(ik_cp,ik_cm);
+        mu_vp = mu_cp;
+
+        kernel_11(ik_c_idx,ik_cp_idx) -= get_direct_interaction();
+        kernel_exchange(ik_c_idx,ik_cp_idx) += std::complex<double>(2,0)*get_exchange_interaction();
+      }
+
+      // interaction  between valley_1 and valley_2
+      for (int ik_vp_idx=ik_c_idx; ik_vp_idx<nk_relev; ik_vp_idx++)
+      {
+        ik_vp = _relev_ik_range[i_valley_2][ik_vp_idx][0];
+        mu_vp = _relev_ik_range[i_valley_2][ik_vp_idx][1];
+        ik_cp = get_ikc(ik_vp,ik_cm);
+        mu_cp = mu_vp;
+
+        kernel_12(ik_c_idx,nk_relev-1-ik_vp_idx) -= get_direct_interaction();
+      }
+    }
+
+
+    kernel_11 += kernel_11.t();
+    kernel_12 += kernel_12.t();
+    kernel_exchange += kernel_exchange.t();
+    for (int ik_c_idx=0; ik_c_idx<nk_relev; ik_c_idx++)
+    {
+      kernel_11(ik_c_idx,ik_c_idx) /= std::complex<double>(2,0);
+      kernel_12(ik_c_idx,ik_c_idx) /= std::complex<double>(2,0);
+      kernel_exchange(ik_c_idx,ik_c_idx) /= std::complex<double>(2,0);
+    }
+
+    energy = arma::eig_sym(kernel_11-kernel_12);
+    ex_energy_A1.row(ik_cm_idx) = energy.t();
+
+    energy = arma::eig_sym(kernel_11+kernel_12);
+    ex_energy_A2_triplet.row(ik_cm_idx) = energy.t();
+    
+    // kernel += kernel_exchange;
+    energy = arma::eig_sym(kernel_11+kernel_12+std::complex<double>(2,0)*kernel_exchange);
+    ex_energy_A2_singlet.row(ik_cm_idx) = energy.t();
+  }
+
+  std::cout << "\n...calculated exciton dispersion\n";
+
+  std::cout << "saved exciton dispersion: A2 singlet\n";
+  std::string filename = _directory.path().string() + _name + ".ex_energy_A2_singlet.dat";
+  ex_energy_A2_singlet.save(filename, arma::arma_ascii);
+
+  std::cout << "saved exciton dispersion: A2 triplet\n";
+  filename = _directory.path().string() + _name + ".ex_energy_A2_triplet.dat";
+  ex_energy_A2_triplet.save(filename, arma::arma_ascii);
+
+  std::cout << "saved exciton dispersion: A1\n";
+  filename = _directory.path().string() + _name + ".ex_energy_A1.dat";
+  ex_energy_A1.save(filename, arma::arma_ascii);
+
+  std::cout << "saved k_vector for center of mass\n";
+  filename = _directory.path().string() + _name + ".exciton_k_cm_vec.dat";
+  k_cm_vec.save(filename, arma::arma_ascii);
+
+};
+
 // call this to do all the calculations at once
 void cnt::calculate_exciton_dispersion()
 {
@@ -939,7 +1119,10 @@ void cnt::calculate_exciton_dispersion()
 
   std::array<int,2> iq_range = {-(_ik_max_K2-1),_ik_max_K2};
   std::array<int,2> mu_range = {-(_Q-1),_Q};
-  _vq = calculate_vq(iq_range, mu_range, 100);
+  _vq = calculate_vq(iq_range, mu_range, _number_of_cnt_unit_cells);
   _PI = calculate_polarization(iq_range, mu_range);
   _eps = calculate_dielectric(iq_range, mu_range);
+  
+  std::array<int,2> ik_cm_range = {-int(_relev_ik_range[0].size()), int(_relev_ik_range[0].size())};
+  calculate_exciton_energy(ik_cm_range);
 };

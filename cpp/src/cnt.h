@@ -69,7 +69,7 @@ private:
 	arma::cube _el_energy_K2; // energy of electronic states in K2-extended rep. calculated using the reduced graphene unit cell (2 atoms)
 	arma::field<arma::cx_cube> _el_psi_K2; // electronic wave functions in K2-extended rep. corresponding to electronic states using the reduced graphene unit cell (2 atoms)
 	std::vector<std::array<std::array<unsigned int, 2>, 2>> _valleys_K2; // index of valleys in K2-extended representation
-	std::vector<std::vector<std::array<int,2>>> _relev_ik_range;
+	std::vector<std::vector<std::array<int,2>>> _relev_ik_range; // ik of relevant states in the following form [[[ik,mu],...], [[ik,mu],...]]
 
 	// // struct to bundle information of electronic energy state
 	// struct el_energy_struct
@@ -144,6 +144,21 @@ public:
 	// find ik values that are energetically relevant around the bottom of the valley
 	void find_relev_ik_range(double delta_energy);
 
+	// fourier transformation of the coulomb interaction a.k.a v(q)
+	vq_struct calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, const unsigned int no_of_cnt_unit_cells);
+
+	// polarization of electronic states a.k.a PI(q)
+	PI_struct calculate_polarization(const std::array<int,2> iq_range, const std::array<int,2> mu_range);
+
+	// dielectric function a.k.a eps(q)
+	epsilon_struct calculate_dielectric(const std::array<int,2> iq_range, const std::array<int,2> mu_range);
+
+	// calculate exciton dispersion
+	void calculate_exciton_energy(const std::array<int,2> ik_cm_range);
+
+	// call this to do all the calculations at once
+	void calculate_exciton_dispersion();
+
 	// get ik of valence band state by taking care of wrapping around K2-extended zone
 	int get_ikv(int ik_c, int ik_cm)
 	{
@@ -198,18 +213,28 @@ public:
 		}
 		return true;
 	};
-	
-	// fourier transformation of the coulomb interaction a.k.a v(q)
-	vq_struct calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, const unsigned int no_of_cnt_unit_cells);
 
-	// polarization of electronic states a.k.a PI(q)
-	PI_struct calculate_polarization(const std::array<int,2> iq_range, const std::array<int,2> mu_range);
+	// helper class to monitor progress of the loops
+	class progress_bar
+	{
+		private:
+		float counter = 0;
 
-	// dielectric function a.k.a eps(q)
-	epsilon_struct calculate_dielectric(const std::array<int,2> iq_range, const std::array<int,2> mu_range);
+		public:
+		void step(const int& i, const int& i_max, const std::string& message, const int& increments=1)
+		{
+			if ((float(i)/float(i_max))>(counter/100.))
+			{
+				std::cout << message << ": " << int(counter) << "%\n";
+				counter += increments;
+			}
+		};
 
-	// call this to do all the calculations at once
-	void calculate_exciton_dispersion();
+		void reset()
+		{
+			counter = 0;
+		}
+	};
 };
 
 #endif // end _cnt_h_
