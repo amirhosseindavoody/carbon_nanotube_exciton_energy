@@ -256,7 +256,7 @@ void cnt::get_parameters()
 // calculates position of atoms and reciprocal lattice vectors
 void cnt::get_atom_coordinates()
 {
-  
+
 	// calculate positions of atoms in the cnt unit cell
 	_pos_a = arma::mat(_Nu,2,arma::fill::zeros);
 	_pos_b = arma::mat(_Nu,2,arma::fill::zeros);
@@ -546,7 +546,7 @@ void cnt::find_K2_extended_valleys()
     }
   }
 
-  // sort valleys in order of their 
+  // sort valleys in order of their
   std::sort(ik_valley_idx.begin(),ik_valley_idx.end(), [&](const auto& s1, const auto& s2) {
                                     return _el_energy_K2(1,s1[0],s1[1]) < _el_energy_K2(1,s2[0],s2[1]);
                                   });
@@ -567,7 +567,7 @@ void cnt::find_K2_extended_valleys()
   }
 
   std::cout << "number of valleys: " << _valleys_K2.size() << std::endl;
-  
+
 };
 
 
@@ -577,7 +577,7 @@ void cnt::find_relev_ik_range(double delta_energy)
   std::vector<std::vector<std::array<int,2>>> relev_ik_range(2);
 
   int nk_K2 = _ik_max_K2 - _ik_min_K2;
-  
+
   // first get ik for relevant states in the first valley
   int i_valley = 0;
   int ik_bottom = _valleys_K2[_i_sub][i_valley][0]+_ik_min_K2;
@@ -587,7 +587,7 @@ void cnt::find_relev_ik_range(double delta_energy)
   // std::cout << "max_energy: " << max_energy/constants::eV << std::endl;
   // std::cout << "delta_energy: " << delta_energy/constants::eV << std::endl;
   // std::cout << "_el_energy_K2: " << _el_energy_K2(iC,ik_bottom-_ik_min_K2,mu_bottom-_mu_min_K2)/constants::eV << std::endl;
-  
+
   relev_ik_range.at(i_valley).push_back({ik_bottom,mu_bottom});
   bool in_range = true;
   int count = 0;
@@ -624,7 +624,7 @@ void cnt::find_relev_ik_range(double delta_energy)
   ik_bottom = _valleys_K2[_i_sub][i_valley][0]+_ik_min_K2;
   mu_bottom = _valleys_K2[_i_sub][i_valley][1]+_mu_min_K2;
   max_energy = _el_energy_K2(iC,ik_bottom-_ik_min_K2,mu_bottom-_mu_min_K2)+delta_energy;
-  
+
   relev_ik_range.at(i_valley).push_back({ik_bottom,mu_bottom});
   in_range = true;
   count = 0;
@@ -658,7 +658,7 @@ void cnt::find_relev_ik_range(double delta_energy)
 
   std::cout << "\n...ik for relevant states calculated:\n";
   std::cout << "relev_ik_range has length of " << relev_ik_range[0].size() << std::endl;
-  
+
   // i_valley = 0;
   // std::cout << "valley: " << i_valley << "\n";
   // for (const auto& state: relev_ik_range.at(i_valley))
@@ -743,7 +743,7 @@ cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::ar
   for (int iq=iq_range[0]; iq<iq_range[1]; iq++)
   {
     int iq_idx = iq-iq_range[0];
-    
+
     prog.step(iq_idx, nq, "vq",5);
 
     q_vec(iq_idx) = iq*arma::norm(_dk_l,2);
@@ -941,7 +941,7 @@ cnt::epsilon_struct cnt::calculate_dielectric(const std::array<int,2> iq_range, 
 };
 
 // calculate exciton dispersion
-void cnt::calculate_exciton_energy(const std::array<int,2> ik_cm_range)
+std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,2> ik_cm_range)
 {
   // some utility variables that are going to be used over and over again
   int ik_c, mu_c;
@@ -974,7 +974,7 @@ void cnt::calculate_exciton_energy(const std::array<int,2> ik_cm_range)
     dir_interaction = 0;
     for (int i=0; i<2; i++)
     {
-      for (int j=0; j<2; j++) 
+      for (int j=0; j<2; j++)
       {
         dir_interaction += std::conj(_el_psi_K2(mu_c -_mu_min_K2)(i,ic,ik_c -_ik_min_K2))* \
                                      _el_psi_K2(mu_v -_mu_min_K2)(j,iv,ik_v -_ik_min_K2) * \
@@ -992,7 +992,7 @@ void cnt::calculate_exciton_energy(const std::array<int,2> ik_cm_range)
     xch_interaction = 0;
     for (int i=0; i<2; i++)
     {
-      for (int j=0; j<2; j++) 
+      for (int j=0; j<2; j++)
       {
         xch_interaction += std::conj(_el_psi_K2(mu_c -_mu_min_K2)(i,ic,ik_c -_ik_min_K2))* \
                                      _el_psi_K2(mu_v -_mu_min_K2)(i,iv,ik_v -_ik_min_K2) * \
@@ -1013,11 +1013,16 @@ void cnt::calculate_exciton_energy(const std::array<int,2> ik_cm_range)
   arma::mat ex_energy_A1(nk_cm,nk_relev,arma::fill::zeros);
   arma::mat ex_energy_A2_singlet(nk_cm,nk_relev,arma::fill::zeros);
   arma::mat ex_energy_A2_triplet(nk_cm,nk_relev,arma::fill::zeros);
+  
+  arma::cx_cube ex_psi_A1(nk_relev,nk_relev,nk_cm, arma::fill::zeros);
+  arma::cx_cube ex_psi_A2_singlet(nk_relev,nk_relev,nk_cm, arma::fill::zeros);
+  arma::cx_cube ex_psi_A2_triplet(nk_relev,nk_relev,nk_cm, arma::fill::zeros);
 
   arma::cx_mat kernel_11(nk_relev,nk_relev,arma::fill::zeros);
   arma::cx_mat kernel_12(nk_relev,nk_relev,arma::fill::zeros);
   arma::cx_mat kernel_exchange(nk_relev,nk_relev,arma::fill::zeros);
   arma::vec energy;
+  arma::cx_mat psi;
   arma::vec k_cm_vec(nk_cm,arma::fill::zeros);
 
   // loop to calculate exciton dispersion
@@ -1032,7 +1037,7 @@ void cnt::calculate_exciton_energy(const std::array<int,2> ik_cm_range)
 
     prog.step(ik_cm_idx, nk_cm, "ex_energy", 5);
 
-    
+
     for (int ik_c_idx=0; ik_c_idx<nk_relev; ik_c_idx++)
     {
       ik_c = _relev_ik_range[i_valley_1][ik_c_idx][0];
@@ -1077,15 +1082,20 @@ void cnt::calculate_exciton_energy(const std::array<int,2> ik_cm_range)
       kernel_exchange(ik_c_idx,ik_c_idx) /= std::complex<double>(2,0);
     }
 
-    energy = arma::eig_sym(kernel_11-kernel_12);
+    // energy = arma::eig_sym(kernel_11-kernel_12);
+    arma::eig_sym(energy,psi,kernel_11-kernel_12);
     ex_energy_A1.row(ik_cm_idx) = energy.t();
+    ex_psi_A1.slice(ik_cm_idx) = psi;
 
-    energy = arma::eig_sym(kernel_11+kernel_12);
+    // energy = arma::eig_sym(kernel_11+kernel_12);
+    arma::eig_sym(energy,psi,kernel_11+kernel_12);
     ex_energy_A2_triplet.row(ik_cm_idx) = energy.t();
-    
-    // kernel += kernel_exchange;
-    energy = arma::eig_sym(kernel_11+kernel_12+std::complex<double>(2,0)*kernel_exchange);
+    ex_psi_A2_triplet.slice(ik_cm_idx) = psi;
+
+    // energy = arma::eig_sym(kernel_11+kernel_12+std::complex<double>(2,0)*kernel_exchange);
+    arma::eig_sym(energy,psi,kernel_11+kernel_12+std::complex<double>(2,0)*kernel_exchange);
     ex_energy_A2_singlet.row(ik_cm_idx) = energy.t();
+    ex_psi_A2_singlet.slice(ik_cm_idx) = psi;
   }
 
   std::cout << "\n...calculated exciton dispersion\n";
@@ -1106,6 +1116,38 @@ void cnt::calculate_exciton_energy(const std::array<int,2> ik_cm_range)
   filename = _directory.path().string() + _name + ".exciton_k_cm_vec.dat";
   k_cm_vec.save(filename, arma::arma_ascii);
 
+  // prepare the values that are to be returned
+  std::vector<exciton_struct> excitons(3,exciton_struct());
+  // exciton_struct exciton_s;
+
+  excitons[0].name = "A1 exciton";
+  excitons[0].energy = ex_energy_A1;
+  excitons[0].spin = 0;
+  excitons[0].mu_cm = 0;
+  excitons[0].nk_relev = nk_relev;
+  excitons[0].nk_cm = nk_cm;
+  excitons[0].psi = ex_psi_A1;
+  excitons[0].ik_relev_range = _relev_ik_range;
+
+  excitons[1].name = "A2 triplet exciton";
+  excitons[1].energy = ex_energy_A2_triplet;
+  excitons[1].spin = 1;
+  excitons[1].mu_cm = 0;
+  excitons[1].nk_relev = nk_relev;
+  excitons[1].nk_cm = nk_cm;
+  excitons[1].psi = ex_psi_A2_triplet;
+  excitons[1].ik_relev_range = _relev_ik_range;
+
+  excitons[2].name = "A2 singlet exciton";
+  excitons[2].energy = ex_energy_A2_singlet;
+  excitons[2].spin = 0;
+  excitons[2].mu_cm = 0;
+  excitons[2].nk_relev = nk_relev;
+  excitons[2].nk_cm = nk_cm;
+  excitons[2].psi = ex_psi_A2_singlet;
+  excitons[2].ik_relev_range = _relev_ik_range;
+
+  return excitons;
 };
 
 // call this to do all the calculations at once
@@ -1122,7 +1164,8 @@ void cnt::calculate_exciton_dispersion()
   _vq = calculate_vq(iq_range, mu_range, _number_of_cnt_unit_cells);
   _PI = calculate_polarization(iq_range, mu_range);
   _eps = calculate_dielectric(iq_range, mu_range);
-  
+
   std::array<int,2> ik_cm_range = {-int(_relev_ik_range[0].size()), int(_relev_ik_range[0].size())};
-  calculate_exciton_energy(ik_cm_range);
+  _excitons = calculate_A_excitons(ik_cm_range);
+
 };
