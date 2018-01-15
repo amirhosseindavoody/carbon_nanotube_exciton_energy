@@ -71,12 +71,18 @@ private:
   std::vector<std::array<std::array<unsigned int, 2>, 2>> _valleys_K2; // index of valleys in K2-extended representation
   std::vector<std::vector<std::array<int,2>>> _relev_ik_range; // ik of relevant states in the following form [[[ik,mu],...], [[ik,mu],...]]
 
-  // // struct to bundle information of electronic energy state
-  // struct el_energy_struct
-  // {
-  // 	arma::cube e; // energy of electronic states calculated using the reduced graphene unit cell (2 atoms)
-  // 	arma::field<arma::cx_cube> psi; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms)
-  // }
+  // struct to bundle information of electronic energy state
+  struct el_energy_struct
+  {
+    std::string name; // human interpretable name describing the content of the struct
+  	arma::cube energy; // energy of electronic states calculated using the reduced graphene unit cell (2 atoms)
+  	arma::field<arma::cx_cube> wavefunc; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms)
+    std::array<int,2> ik_range;
+    std::array<int,2> mu_range;
+    int nk, n_mu; // number of elements in the range of ik and mu
+  };
+  // instantiation of el_energy_struct within K2-extended representation
+  el_energy_struct _elec_K2;
 
   // struct to bundle data and metadata of coulomg interaction fourier transform (vq)
   struct vq_struct
@@ -155,6 +161,9 @@ public:
 
   // calculate electron dispersion energies using the K2-extended representation
   void electron_K2_extended();
+
+  // calculate electron dispersion energies for an input range of ik and mu
+  el_energy_struct electron_energy(const std::array<int,2>& ik_range, const std::array<int,2>& mu_range, const std::string& name);
 
   // find valley ik and i_mu indices in K2-extended representation
   void find_K2_extended_valleys();

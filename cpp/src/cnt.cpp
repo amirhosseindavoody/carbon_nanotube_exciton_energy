@@ -512,6 +512,65 @@ void cnt::electron_K2_extended()
   std::cout << "\n...calculated K2-extended electron dispersion\n";
 };
 
+// calculate electron dispersion energies for an input range of ik and mu
+cnt::el_energy_struct cnt::electron_energy(const std::array<int,2>& ik_range, const std::array<int,2>& mu_range, const std::string& name)
+{
+  int number_of_bands = 2;
+  int number_of_atoms_in_graphene_unit_cell = number_of_bands;
+
+  int nk = ik_range[1] - ik_range[0];
+  int n_mu = mu_range[1] - mu_range[0];
+
+
+  arma::cube energy(number_of_bands, nk, n_mu, arma::fill::zeros);
+  arma::field<arma::cx_cube> wavefunc(n_mu); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+  wavefunc.for_each([&](arma::cx_cube& c){c.zeros(number_of_atoms_in_graphene_unit_cell, number_of_bands, nk);}); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+
+  const std::complex<double> i1(0,1);
+  
+  const int ic = 1;
+  const int iv = 0;
+  
+  const int iA = 0;
+  const int iB = 1;
+
+  for (int mu=mu_range[0]; mu<mu_range[1]; mu++)
+  {
+    for (int ik=ik_range[0]; ik<ik_range[1]; ik++)
+    {
+      arma::vec k_vec = double(mu)*_K1 + double(ik)*_dk_l;
+      std::complex<double> fk = std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1+_a2)/3.))) + \
+                                std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1-2.*_a2)/3.))) + \
+                                std::exp(std::complex<double>(0,arma::dot(k_vec,(_a2-2.*_a1)/3.)));
+      
+      energy(ic,ik-ik_range[0],mu-mu_range[0]) = +_t0*std::abs(fk);
+      energy(iv,ik-ik_range[0],mu-mu_range[0]) = -_t0*std::abs(fk);
+
+      (wavefunc(mu-mu_range[0]))(iA,ic,ik-ik_range[0]) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (wavefunc(mu-mu_range[0]))(iA,iv,ik-ik_range[0]) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (wavefunc(mu-mu_range[0]))(iB,ic,ik-ik_range[0]) = -1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+      (wavefunc(mu-mu_range[0]))(iB,iv,ik-ik_range[0]) = +1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
+    }
+  }
+
+  // save electron energy bands using full Brillouine zone
+  std::string filename = _directory.path().string() + _name + "." + name +".el_energy.dat";
+  energy.save(filename,arma::arma_ascii);
+
+  std::cout << "\n...calculated " + name + " electron dispersion\n";
+
+  el_energy_struct energy_s;
+  energy_s.name = name;
+  energy_s.energy = energy;
+  energy_s.wavefunc = wavefunc;
+  energy_s.ik_range = ik_range;
+  energy_s.mu_range = mu_range;
+  energy_s.nk = nk;
+  energy_s.n_mu = n_mu;
+
+  return energy_s;
+};
+
 void cnt::find_K2_extended_valleys()
 {
 
@@ -1156,6 +1215,9 @@ void cnt::calculate_exciton_dispersion()
   get_parameters();
   get_atom_coordinates();
   electron_K2_extended();
+  std::array<int,2> ik_range_K2 = {0,_Nu/_Q*_nk_K1};
+  std::array<int,2> mu_range_K2 = {0,_Q};
+  _elec_K2 = electron_energy(ik_range_K2, mu_range_K2, "K2_extended");
   find_K2_extended_valleys();
   find_relev_ik_range(1.*constants::eV);
 
