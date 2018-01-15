@@ -56,18 +56,6 @@ private:
   arma::mat _pos_a, _pos_b; // position of atoms in A and B sites
   arma::mat _pos_2d, _pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space
 
-  arma::mat _el_energy_full; // energy of electronic states calculated using the full unit cell (2*Nu atoms)
-  arma::cx_cube _el_psi_full; // electronic wave functions corresponding to electronic states using the full unit cell (2*Nu atoms)
-
-  arma::cube _el_energy_redu; // energy of electronic states calculated using the reduced graphene unit cell (2 atoms)
-  arma::field<arma::cx_cube> _el_psi_redu; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms)
-
-  int _ik_min_K2, _ik_max_K2; // limits of ik-vector in the K2-extended representation
-  int _nk_K2; // number of ik vector elements in the K2-extended representation
-  int _mu_min_K2, _mu_max_K2; // limits of mu in the K2-extended representation
-  int _n_mu_K2; // number of cutting lines in the K2-extended representation
-  arma::cube _el_energy_K2; // energy of electronic states in K2-extended rep. calculated using the reduced graphene unit cell (2 atoms)
-  arma::field<arma::cx_cube> _el_psi_K2; // electronic wave functions in K2-extended rep. corresponding to electronic states using the reduced graphene unit cell (2 atoms)
   std::vector<std::array<std::array<unsigned int, 2>, 2>> _valleys_K2; // index of valleys in K2-extended representation
   std::vector<std::vector<std::array<int,2>>> _relev_ik_range; // ik of relevant states in the following form [[[ik,mu],...], [[ik,mu],...]]
 
@@ -75,6 +63,8 @@ private:
   struct el_energy_struct
   {
     std::string name; // human interpretable name describing the content of the struct
+    int no_of_atoms; // number of atoms that are used in the wavefunction: it is 2 when graphen unit cell is used or 2*_Nu when full cnt unit cell is used.
+    int no_of_bands; // number of bands for each choice of ik and mu: it is 2 when graphen unit cell is used and 2*_Nu when full cnt unit cell is used.
   	arma::cube energy; // energy of electronic states calculated using the reduced graphene unit cell (2 atoms)
   	arma::field<arma::cx_cube> wavefunc; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms)
     std::array<int,2> ik_range;
@@ -131,6 +121,7 @@ private:
     arma::cx_cube psi; // exciton wavefunction in the form (ik_c_relev,n,ik_cm) therefore the first element is the \
                           weight of ik_c_relev state in the n-th eigen state with center-of-mass momentum ik_cm
     std::vector<std::vector<std::array<int,2>>> ik_relev_range; // ik of relevant states in the following form [[[ik,mu],...], [[ik,mu],...]]
+    const el_energy_struct* elec_struct = nullptr;
   };
   // vector of exciton structs to hold data of A and E type excitons
   std::vector<exciton_struct>  _excitons;
@@ -153,11 +144,8 @@ public:
   // calculates position of atoms and reciprocal lattice vectors
   void get_atom_coordinates();
   
-  // calculate electron dispersion energies using full unit cell (2*Nu atoms)
-  void electron_full();
-  
-  // calculate electron dispersion energies using the reduced graphene unit cell (2 atoms)
-  void electron_K1_extended();
+  // calculate electron energy dispersions in the K1-extended representation using full unit cell (2*Nu atoms)
+  void electron_full_unit_cell();
 
   // calculate electron dispersion energies using the K2-extended representation
   void electron_K2_extended();
@@ -166,51 +154,25 @@ public:
   el_energy_struct electron_energy(const std::array<int,2>& ik_range, const std::array<int,2>& mu_range, const std::string& name);
 
   // find valley ik and i_mu indices in K2-extended representation
-  void find_K2_extended_valleys();
+  void find_valleys(const el_energy_struct& elec_struct);
 
   // find ik values that are energetically relevant around the bottom of the valley
-  void find_relev_ik_range(double delta_energy);
+  void find_relev_ik_range(double delta_energy, const el_energy_struct& elec_struct);
 
   // fourier transformation of the coulomb interaction a.k.a v(q)
   vq_struct calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, const unsigned int no_of_cnt_unit_cells);
 
   // polarization of electronic states a.k.a PI(q)
-  PI_struct calculate_polarization(const std::array<int,2> iq_range, const std::array<int,2> mu_range);
+  PI_struct calculate_polarization(const std::array<int,2> iq_range, const std::array<int,2> mu_range, const el_energy_struct& elec_struct);
 
   // dielectric function a.k.a eps(q)
   epsilon_struct calculate_dielectric(const std::array<int,2> iq_range, const std::array<int,2> mu_range);
 
   // calculate exciton dispersion
-  std::vector<exciton_struct> calculate_A_excitons(const std::array<int,2> ik_cm_range);
+  std::vector<exciton_struct> calculate_A_excitons(const std::array<int,2> ik_cm_range, const el_energy_struct& elec_struct);
 
   // call this to do all the calculations at once
   void calculate_exciton_dispersion();
-
-  // get ik of valence band state by taking care of wrapping around K2-extended zone
-  int get_ikv(int ik_c, int ik_cm)
-  {
-    int ik_v = ik_c - ik_cm;
-    while (ik_v >= _ik_max_K2){
-      ik_v -= _nk_K2;
-    }
-    while (ik_v < _ik_min_K2){
-      ik_v += _nk_K2;
-    }
-    return ik_v;
-  };
-
-  // get ik of conduction band state by taking care of wrapping around K2-extended zone
-  int get_ikc(int ik_v, int ik_cm)
-  {
-    int ik_c = ik_v + ik_cm;
-    while (ik_c >= _ik_max_K2){
-      ik_c -= _nk_K2;
-    }
-    while (ik_c < _ik_min_K2){
-      ik_c += _nk_K2;
-    }
-    return ik_c;
-  };
 
   // helper function to check if a number is inside another range
   bool in_range(const int& guest, const std::array<int,2>& host) const

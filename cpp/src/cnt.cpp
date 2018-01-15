@@ -335,8 +335,8 @@ void cnt::get_atom_coordinates()
 
 };
 
-// calculate electron dispersion energies using full unit cell (2*Nu atoms)
-void cnt::electron_full()
+// calculate electron energy dispersions in the K1-extended representation using full unit cell (2*Nu atoms)
+void cnt::electron_full_unit_cell()
 {
 
 	// make the list of 1st nearest neighbor atoms
@@ -372,8 +372,8 @@ void cnt::electron_full()
 
 	int NK = _nk_K1;
 
-	_el_energy_full = arma::mat(2*_Nu, NK, arma::fill::zeros);
-	_el_psi_full = arma::cx_cube(2*_Nu, 2*_Nu, NK, arma::fill::zeros);
+	arma::mat el_energy_full(2*_Nu, NK, arma::fill::zeros);
+	arma::cx_cube el_psi_full(2*_Nu, 2*_Nu, NK, arma::fill::zeros);
 
 	double t_len = arma::norm(_t_vec_3d);
 
@@ -409,107 +409,20 @@ void cnt::electron_full()
 			}
 		}
 
-    _el_energy_full.col(n) = E;
-    _el_psi_full.slice(n) = C;
+    el_energy_full.col(n) = E;
+    el_psi_full.slice(n) = C;
 
 	}
 
   // save electron energy bands using full Brillouine zone
+  std::cout << "saved electron energy dispersion in K1-extended representation\n";
   std::string filename = _directory.path().string() + _name + ".el_energy_full.dat";
-  _el_energy_full.save(filename, arma::arma_ascii);
+  el_energy_full.save(filename, arma::arma_ascii);
 
   // // save electron wavefunctions using full Brillouine zone
   // filename = _directory.path().string() + _name + ".el_psi_full.dat";
-  // _el_psi_full.save(filename, arma::arma_ascii);
+  // el_psi_full.save(filename, arma::arma_ascii);
 
-};
-
-// calculate electron dispersion energies using the K1-extended representation
-void cnt::electron_K1_extended()
-{
-  int number_of_bands = 2;
-  int number_of_atoms_in_graphene_unit_cell = number_of_bands;
-
-  _el_energy_redu = arma::cube(number_of_bands, _nk_K1, _Nu, arma::fill::zeros);
-  _el_psi_redu = arma::field<arma::cx_cube>(_Nu); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-  _el_psi_redu.for_each([&](arma::cx_cube& c){c.zeros(number_of_atoms_in_graphene_unit_cell, number_of_bands, _nk_K1);}); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-
-  const std::complex<double> i1(0,1);
-
-  for (int mu=0; mu<_Nu; mu++)
-  {
-    for (int ik=0; ik<_nk_K1; ik++)
-    {
-      arma::vec k_vec = mu*_K1 + ik*_dk_l;
-      std::complex<double> fk = std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1+_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1-2.*_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a2-2.*_a1)/3.)));
-      const int ic = 0;
-      const int iv = 1;
-      _el_energy_redu(ic,ik,mu) = -_t0*std::abs(fk);
-      _el_energy_redu(iv,ik,mu) = +_t0*std::abs(fk);
-
-      const int iA = 0;
-      const int iB = 1;
-      (_el_psi_redu(mu))(iA,ic,ik) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-      (_el_psi_redu(mu))(iA,iv,ik) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-      (_el_psi_redu(mu))(iB,ic,ik) = +1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-      (_el_psi_redu(mu))(iB,iv,ik) = -1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-    }
-  }
-
-  // save electron energy bands using full Brillouine zone
-  std::string filename = _directory.path().string() + _name + ".el_energy_redu.dat";
-  _el_energy_redu.save(filename,arma::arma_ascii);
-
-  // find the mu value for bands with extremums
-
-};
-
-// calculate electron dispersion energies using the K2-extended representation
-void cnt::electron_K2_extended()
-{
-  int number_of_bands = 2;
-  int number_of_atoms_in_graphene_unit_cell = number_of_bands;
-
-  _ik_min_K2 = 0;
-  _ik_max_K2 = _Nu/_Q*_nk_K1;
-  _nk_K2 = _ik_max_K2 - _ik_min_K2;
-
-  _mu_min_K2 = 0;
-  _mu_max_K2 = _Q;
-  _n_mu_K2 = _mu_max_K2 - _mu_min_K2;
-
-
-  _el_energy_K2 = arma::cube(number_of_bands, _nk_K2, _n_mu_K2, arma::fill::zeros);
-  _el_psi_K2 = arma::field<arma::cx_cube>(_n_mu_K2); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-  _el_psi_K2.for_each([&](arma::cx_cube& c){c.zeros(number_of_atoms_in_graphene_unit_cell, number_of_bands, _nk_K2);}); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-
-  const std::complex<double> i1(0,1);
-
-  for (int mu=_mu_min_K2; mu<_mu_max_K2; mu++)
-  {
-    for (int ik=_ik_min_K2; ik<_ik_max_K2; ik++)
-    {
-      arma::vec k_vec = double(mu)*_K1 + double(ik)*_dk_l;
-      std::complex<double> fk = std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1+_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a1-2.*_a2)/3.))) + std::exp(std::complex<double>(0,arma::dot(k_vec,(_a2-2.*_a1)/3.)));
-      const int ic = 1;
-      const int iv = 0;
-      _el_energy_K2(ic,ik-_ik_min_K2,mu-_mu_min_K2) = +_t0*std::abs(fk);
-      _el_energy_K2(iv,ik-_ik_min_K2,mu-_mu_min_K2) = -_t0*std::abs(fk);
-
-      const int iA = 0;
-      const int iB = 1;
-      (_el_psi_K2(mu-_mu_min_K2))(iA,ic,ik-_ik_min_K2) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-      (_el_psi_K2(mu-_mu_min_K2))(iA,iv,ik-_ik_min_K2) = +1./std::sqrt(2.); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-      (_el_psi_K2(mu-_mu_min_K2))(iB,ic,ik-_ik_min_K2) = -1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-      (_el_psi_K2(mu-_mu_min_K2))(iB,iv,ik-_ik_min_K2) = +1./std::sqrt(2.)*std::conj(fk)/std::abs(fk); // this pretty weird order is chosen so than we can select each cutting line easier and more efficiently
-    }
-  }
-
-  // save electron energy bands using full Brillouine zone
-  std::string filename = _directory.path().string() + _name + ".el_energy_K2.dat";
-  _el_energy_K2.save(filename,arma::arma_ascii);
-
-  std::cout << "\n...calculated K2-extended electron dispersion\n";
 };
 
 // calculate electron dispersion energies for an input range of ik and mu
@@ -567,11 +480,13 @@ cnt::el_energy_struct cnt::electron_energy(const std::array<int,2>& ik_range, co
   energy_s.mu_range = mu_range;
   energy_s.nk = nk;
   energy_s.n_mu = n_mu;
+  energy_s.no_of_atoms = number_of_atoms_in_graphene_unit_cell;
+  energy_s.no_of_bands = number_of_bands;
 
   return energy_s;
 };
 
-void cnt::find_K2_extended_valleys()
+void cnt::find_valleys(const cnt::el_energy_struct& elec_struct)
 {
 
 
@@ -579,26 +494,24 @@ void cnt::find_K2_extended_valleys()
   std::vector<std::array<unsigned int,2>> ik_valley_idx;
 
   int iC = 1;
-  for (int ik_idx=0; ik_idx<_el_energy_K2.n_cols; ik_idx++)
+  for (int ik_idx=0; ik_idx<elec_struct.nk; ik_idx++)
   {
-    for (int i_mu_idx=0; i_mu_idx<_el_energy_K2.n_slices; i_mu_idx++)
+    for (int i_mu_idx=0; i_mu_idx<elec_struct.n_mu; i_mu_idx++)
     {
       int ik_idx_p1 = ik_idx + 1;
       int ik_idx_m1 = ik_idx - 1;
-      while(ik_idx_p1 >= _el_energy_K2.n_cols)
+      while(ik_idx_p1 >= elec_struct.nk)
       {
-        ik_idx_p1 -= _el_energy_K2.n_cols;
+        ik_idx_p1 -= elec_struct.nk;
       }
       while(ik_idx_m1 < 0)
       {
-        ik_idx_m1 += _el_energy_K2.n_cols;
+        ik_idx_m1 += elec_struct.nk;
       }
 
-      if ((_el_energy_K2(iC,ik_idx,i_mu_idx) < _el_energy_K2(iC,ik_idx_m1,i_mu_idx)) \
-            and (_el_energy_K2(iC,ik_idx,i_mu_idx) < _el_energy_K2(iC,ik_idx_p1,i_mu_idx)))
+      if ((elec_struct.energy(iC,ik_idx,i_mu_idx) < elec_struct.energy(iC,ik_idx_m1,i_mu_idx)) \
+            and (elec_struct.energy(iC,ik_idx,i_mu_idx) < elec_struct.energy(iC,ik_idx_p1,i_mu_idx)))
       {
-        // arma::umat tmp = {{(unsigned int)ik_idx, (unsigned int)i_mu_idx}};
-        // ik_valley_idx.insert_rows(0,tmp);
         ik_valley_idx.push_back({(unsigned int)ik_idx, (unsigned int)i_mu_idx});
       }
 
@@ -607,7 +520,7 @@ void cnt::find_K2_extended_valleys()
 
   // sort valleys in order of their
   std::sort(ik_valley_idx.begin(),ik_valley_idx.end(), [&](const auto& s1, const auto& s2) {
-                                    return _el_energy_K2(1,s1[0],s1[1]) < _el_energy_K2(1,s2[0],s2[1]);
+                                    return elec_struct.energy(1,s1[0],s1[1]) < elec_struct.energy(1,s2[0],s2[1]);
                                   });
 
   // put them in a vector with each element containing the two equivalent valleys
@@ -629,23 +542,17 @@ void cnt::find_K2_extended_valleys()
 
 };
 
-
 // find ik values that are energetically relevant around the bottom of the valley
-void cnt::find_relev_ik_range(double delta_energy)
+void cnt::find_relev_ik_range(double delta_energy, const cnt::el_energy_struct& elec_struct)
 {
   std::vector<std::vector<std::array<int,2>>> relev_ik_range(2);
 
-  int nk_K2 = _ik_max_K2 - _ik_min_K2;
-
   // first get ik for relevant states in the first valley
   int i_valley = 0;
-  int ik_bottom = _valleys_K2[_i_sub][i_valley][0]+_ik_min_K2;
-  int mu_bottom = _valleys_K2[_i_sub][i_valley][1]+_mu_min_K2;
+  int ik_bottom = _valleys_K2[_i_sub][i_valley][0]+elec_struct.ik_range[0];
+  int mu_bottom = _valleys_K2[_i_sub][i_valley][1]+elec_struct.mu_range[0];
   int iC = 1;
-  double max_energy = _el_energy_K2(iC,ik_bottom-_ik_min_K2,mu_bottom-_mu_min_K2)+delta_energy;
-  // std::cout << "max_energy: " << max_energy/constants::eV << std::endl;
-  // std::cout << "delta_energy: " << delta_energy/constants::eV << std::endl;
-  // std::cout << "_el_energy_K2: " << _el_energy_K2(iC,ik_bottom-_ik_min_K2,mu_bottom-_mu_min_K2)/constants::eV << std::endl;
+  double max_energy = elec_struct.energy(iC, ik_bottom-elec_struct.ik_range[0], mu_bottom-elec_struct.mu_range[0]) + delta_energy;
 
   relev_ik_range.at(i_valley).push_back({ik_bottom,mu_bottom});
   bool in_range = true;
@@ -655,22 +562,22 @@ void cnt::find_relev_ik_range(double delta_energy)
     in_range = false;
     count ++;
     int ik = ik_bottom + count;
-    while(ik >= _ik_max_K2)
+    while(ik >= elec_struct.ik_range[1])
     {
-      ik -= (_ik_max_K2-_ik_min_K2);
+      ik -= elec_struct.nk;
     }
-    if (_el_energy_K2(iC,ik-_ik_min_K2,mu_bottom-_mu_min_K2) < max_energy)
+    if (elec_struct.energy(iC, ik-elec_struct.ik_range[0], mu_bottom-elec_struct.mu_range[0]) < max_energy)
     {
       relev_ik_range.at(i_valley).push_back({ik,mu_bottom});
       in_range = true;
     }
 
     ik = ik_bottom - count;
-    while(ik < _ik_min_K2)
+    while(ik < elec_struct.ik_range[0])
     {
-      ik += (_ik_max_K2-_ik_min_K2);
+      ik += elec_struct.nk;
     }
-    if (_el_energy_K2(iC,ik-_ik_min_K2,mu_bottom-_mu_min_K2) < max_energy)
+    if (elec_struct.energy(iC, ik-elec_struct.ik_range[0], mu_bottom-elec_struct.mu_range[0]) < max_energy)
     {
       // std::array<int,2> relev_state = {ik,mu_bottom};
       relev_ik_range.at(i_valley).insert(relev_ik_range.at(i_valley).begin(), {ik,mu_bottom});
@@ -680,9 +587,9 @@ void cnt::find_relev_ik_range(double delta_energy)
 
   // do the same thing for the second valley
   i_valley = 1;
-  ik_bottom = _valleys_K2[_i_sub][i_valley][0]+_ik_min_K2;
-  mu_bottom = _valleys_K2[_i_sub][i_valley][1]+_mu_min_K2;
-  max_energy = _el_energy_K2(iC,ik_bottom-_ik_min_K2,mu_bottom-_mu_min_K2)+delta_energy;
+  ik_bottom = _valleys_K2[_i_sub][i_valley][0]+elec_struct.ik_range[0];
+  mu_bottom = _valleys_K2[_i_sub][i_valley][1]+elec_struct.mu_range[0];
+  max_energy = elec_struct.energy(iC, ik_bottom-elec_struct.ik_range[0], mu_bottom-elec_struct.mu_range[0]) + delta_energy;
 
   relev_ik_range.at(i_valley).push_back({ik_bottom,mu_bottom});
   in_range = true;
@@ -692,22 +599,22 @@ void cnt::find_relev_ik_range(double delta_energy)
     in_range = false;
     count ++;
     int ik = ik_bottom + count;
-    while(ik >= _ik_max_K2)
+    while(ik >= elec_struct.ik_range[1])
     {
-      ik -= (_ik_max_K2-_ik_min_K2);
+      ik -= elec_struct.nk;
     }
-    if (_el_energy_K2(iC,ik-_ik_min_K2,mu_bottom-_mu_min_K2) < max_energy)
+    if (elec_struct.energy(iC, ik-elec_struct.ik_range[0], mu_bottom-elec_struct.mu_range[0]) < max_energy)
     {
       relev_ik_range.at(i_valley).push_back({ik,mu_bottom});
       in_range = true;
     }
 
     ik = ik_bottom - count;
-    while(ik < _ik_min_K2)
+    while(ik < elec_struct.ik_range[0])
     {
-      ik += (_ik_max_K2-_ik_min_K2);
+      ik += elec_struct.nk;
     }
-    if (_el_energy_K2(iC,ik-_ik_min_K2,mu_bottom-_mu_min_K2) < max_energy)
+    if (elec_struct.energy(iC, ik-elec_struct.ik_range[0], mu_bottom-elec_struct.mu_range[0]) < max_energy)
     {
       relev_ik_range.at(i_valley).insert(relev_ik_range.at(i_valley).begin(), {ik,mu_bottom});
       in_range = true;
@@ -851,7 +758,7 @@ cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::ar
 };
 
 // polarization of electronic states a.k.a PI(q)
-cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, const std::array<int,2> mu_range)
+cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, const std::array<int,2> mu_range, const cnt::el_energy_struct& elec_struct)
 {
   // primary checks for function input
   int nq = iq_range.at(1) - iq_range.at(0);
@@ -863,26 +770,26 @@ cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, con
     throw "Incorrect range for mu_q in calculate_polarization!";
   }
 
-  // lambda function to wrap iq+ik and mu_k+mu_q inside the K2-extended brillouine zone
   int ikq, mu_kq;
   int ik, mu_k;
   int iq, mu_q;
+  // lambda function to wrap iq+ik and mu_k+mu_q inside the K2-extended brillouine zone
   auto get_kq = [&](){
     mu_kq = mu_k+mu_q;
     ikq = ik+iq;
-    while (mu_kq >= _mu_max_K2) {
-      mu_kq -= _n_mu_K2;
+    while (mu_kq >= elec_struct.mu_range[1]) {
+      mu_kq -= elec_struct.n_mu;
       ikq += _nk_K1*_M;
     }
-    while (mu_kq < _mu_min_K2) {
-      mu_kq += _n_mu_K2;
+    while (mu_kq < elec_struct.mu_range[0]) {
+      mu_kq += elec_struct.n_mu;
       ikq -= _nk_K1*_M;
     }
-    while (ikq >= _ik_max_K2){
-      ikq -= _nk_K2;
+    while (ikq >= elec_struct.ik_range[1]){
+      ikq -= elec_struct.nk;
     }
-    while (ikq < _ik_min_K2){
-      ikq += _nk_K2;
+    while (ikq < elec_struct.ik_range[0]){
+      ikq += elec_struct.nk;
     }
   };
 
@@ -909,20 +816,22 @@ cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, con
     for (mu_q=mu_range[0]; mu_q<mu_range[1]; mu_q++)
     {
       mu_q_idx = mu_q - mu_range[0];
-      for (ik=_ik_min_K2; ik<_ik_max_K2; ik++)
+      for (ik=elec_struct.ik_range[0]; ik<elec_struct.ik_range[1]; ik++)
       {
-        ik_idx = ik - _ik_min_K2;
-        for (mu_k=_mu_min_K2; mu_k<_mu_max_K2; mu_k++)
+        ik_idx = ik - elec_struct.ik_range[0];
+        for (mu_k=elec_struct.mu_range[0]; mu_k<elec_struct.mu_range[1]; mu_k++)
         {
-          mu_k_idx = mu_k - _mu_min_K2;
+          mu_k_idx = mu_k - elec_struct.mu_range[0];
           get_kq();
-          mu_kq_idx = mu_kq - _mu_min_K2;
-          i_kq_idx = ikq - _ik_min_K2;
+          mu_kq_idx = mu_kq - elec_struct.mu_range[0];
+          i_kq_idx = ikq - elec_struct.ik_range[0];
 
-          PI(iq_idx,mu_q_idx) += std::pow(std::abs(arma::dot(arma::conj(_el_psi_K2(mu_k_idx).slice(ik_idx).col(iv)),_el_psi_K2(mu_kq_idx).slice(i_kq_idx).col(ic))),2)/ \
-                                 (_el_energy_K2(ic,i_kq_idx,mu_kq_idx)-_el_energy_K2(iv,ik_idx,mu_k_idx)) + \
-                                 std::pow(std::abs(arma::dot(arma::conj(_el_psi_K2(mu_k_idx).slice(ik_idx).col(ic)),_el_psi_K2(mu_kq_idx).slice(i_kq_idx).col(iv))),2)/ \
-                                 (_el_energy_K2(ic,ik_idx,mu_k_idx)-_el_energy_K2(iv,i_kq_idx,mu_kq_idx));
+          PI(iq_idx,mu_q_idx) += std::pow(std::abs(arma::dot(arma::conj(elec_struct.wavefunc(mu_k_idx).slice(ik_idx).col(iv)),\
+                                                             elec_struct.wavefunc(mu_kq_idx).slice(i_kq_idx).col(ic))),2)/ \
+                                          (elec_struct.energy(ic,i_kq_idx,mu_kq_idx)-elec_struct.energy(iv,ik_idx,mu_k_idx)) + \
+                                 std::pow(std::abs(arma::dot(arma::conj(elec_struct.wavefunc(mu_k_idx).slice(ik_idx).col(ic)), \
+                                                             elec_struct.wavefunc(mu_kq_idx).slice(i_kq_idx).col(iv))),2)/ \
+                                          (elec_struct.energy(ic,ik_idx,mu_k_idx)-elec_struct.energy(iv,i_kq_idx,mu_kq_idx));
         }
       }
     }
@@ -1000,7 +909,7 @@ cnt::epsilon_struct cnt::calculate_dielectric(const std::array<int,2> iq_range, 
 };
 
 // calculate exciton dispersion
-std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,2> ik_cm_range)
+std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,2> ik_cm_range, const cnt::el_energy_struct& elec_struct)
 {
   // some utility variables that are going to be used over and over again
   int ik_c, mu_c;
@@ -1023,11 +932,11 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   auto get_direct_interaction = [&](){
     ik_c_diff = ik_c-ik_cp;
     mu_c_diff = mu_c-mu_cp;
-    while(ik_c_diff < _ik_min_K2){
-      ik_c_diff += _nk_K2;
+    while(ik_c_diff < elec_struct.ik_range[0]){
+      ik_c_diff += elec_struct.nk;
     }
-    while(ik_c_diff >= _ik_max_K2){
-      ik_c_diff -= _nk_K2;
+    while(ik_c_diff >= elec_struct.ik_range[1]){
+      ik_c_diff -= elec_struct.nk;
     }
 
     dir_interaction = 0;
@@ -1035,12 +944,12 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
     {
       for (int j=0; j<2; j++)
       {
-        dir_interaction += std::conj(_el_psi_K2(mu_c -_mu_min_K2)(i,ic,ik_c -_ik_min_K2))* \
-                                     _el_psi_K2(mu_v -_mu_min_K2)(j,iv,ik_v -_ik_min_K2) * \
-                                     _el_psi_K2(mu_cp-_mu_min_K2)(i,ic,ik_cp-_ik_min_K2) * \
-                           std::conj(_el_psi_K2(mu_vp-_mu_min_K2)(j,iv,ik_vp-_ik_min_K2))* \
-                      _vq.data(ik_c_diff-_vq.iq_range[0],mu_c_diff-_vq.mu_range[0],2*i+j)/ \
-                      _eps.data(ik_c_diff-_eps.iq_range[0],mu_c_diff-_eps.mu_range[0]);
+        dir_interaction += std::conj(elec_struct.wavefunc(mu_c -elec_struct.mu_range[0])(i,ic,ik_c -elec_struct.ik_range[0]))* \
+                                     elec_struct.wavefunc(mu_v -elec_struct.mu_range[0])(j,iv,ik_v -elec_struct.ik_range[0]) * \
+                                     elec_struct.wavefunc(mu_cp-elec_struct.mu_range[0])(i,ic,ik_cp-elec_struct.ik_range[0]) * \
+                           std::conj(elec_struct.wavefunc(mu_vp-elec_struct.mu_range[0])(j,iv,ik_vp-elec_struct.ik_range[0]))* \
+                                                          _vq.data(ik_c_diff-_vq.iq_range[0],mu_c_diff-_vq.mu_range[0],2*i+j)/ \
+                                                             _eps.data(ik_c_diff-_eps.iq_range[0],mu_c_diff-_eps.mu_range[0]);
       }
     }
     return dir_interaction;
@@ -1053,16 +962,39 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
     {
       for (int j=0; j<2; j++)
       {
-        xch_interaction += std::conj(_el_psi_K2(mu_c -_mu_min_K2)(i,ic,ik_c -_ik_min_K2))* \
-                                     _el_psi_K2(mu_v -_mu_min_K2)(i,iv,ik_v -_ik_min_K2) * \
-                                     _el_psi_K2(mu_cp-_mu_min_K2)(j,ic,ik_cp-_ik_min_K2) * \
-                           std::conj(_el_psi_K2(mu_vp-_mu_min_K2)(j,iv,ik_vp-_ik_min_K2))* \
-                              _vq.data(ik_cm-_vq.iq_range[0],mu_cm-_vq.mu_range[0],2*i+j);
+        xch_interaction += std::conj(elec_struct.wavefunc(mu_c -elec_struct.mu_range[0])(i,ic,ik_c -elec_struct.ik_range[0]))* \
+                                     elec_struct.wavefunc(mu_v -elec_struct.mu_range[0])(i,iv,ik_v -elec_struct.ik_range[0]) * \
+                                     elec_struct.wavefunc(mu_cp-elec_struct.mu_range[0])(j,ic,ik_cp-elec_struct.ik_range[0]) * \
+                           std::conj(elec_struct.wavefunc(mu_vp-elec_struct.mu_range[0])(j,iv,ik_vp-elec_struct.ik_range[0]))* \
+                                                                  _vq.data(ik_cm-_vq.iq_range[0],mu_cm-_vq.mu_range[0],2*i+j);
       }
     }
     return xch_interaction;
   };
 
+  // get ik of valence band state by taking care of wrapping around K2-extended zone
+  auto get_ikv = [&elec_struct](const int& ik_c, const int& ik_cm){
+    int ik_v = ik_c - ik_cm;
+    while (ik_v >= elec_struct.ik_range[1]){
+      ik_v -= elec_struct.nk;
+    }
+    while (ik_v < elec_struct.ik_range[0]){
+      ik_v += elec_struct.nk;
+    }
+    return ik_v;
+  };
+  
+  // get ik of conduction band state by taking care of wrapping around K2-extended zone
+  auto get_ikc = [&elec_struct](const int& ik_v, const int& ik_cm){
+    int ik_c = ik_v + ik_cm;
+    while (ik_c >= elec_struct.ik_range[1]){
+      ik_c -= elec_struct.nk;
+    }
+    while (ik_c < elec_struct.ik_range[0]){
+      ik_c += elec_struct.nk;
+    }
+    return ik_c;
+  };
 
   progress_bar prog;
 
@@ -1104,7 +1036,8 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
       ik_v = get_ikv(ik_c,ik_cm);
       mu_v = mu_c;
 
-      kernel_11(ik_c_idx, ik_c_idx) += _el_energy_K2(ic,ik_c-_ik_min_K2,mu_c-_mu_min_K2) - _el_energy_K2(iv,ik_v-_ik_min_K2,mu_c-_mu_min_K2);
+      kernel_11(ik_c_idx, ik_c_idx) += elec_struct.energy(ic,ik_c-elec_struct.ik_range[0],mu_c-elec_struct.mu_range[0]) - \
+                                       elec_struct.energy(iv,ik_v-elec_struct.ik_range[0],mu_c-elec_struct.mu_range[0]);
 
       // interaction  between valley_1 and valley_1
       for (int ik_cp_idx=0; ik_cp_idx<=ik_c_idx; ik_cp_idx++)
@@ -1187,6 +1120,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   excitons[0].nk_cm = nk_cm;
   excitons[0].psi = ex_psi_A1;
   excitons[0].ik_relev_range = _relev_ik_range;
+  excitons[0].elec_struct = &elec_struct;
 
   excitons[1].name = "A2 triplet exciton";
   excitons[1].energy = ex_energy_A2_triplet;
@@ -1196,6 +1130,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   excitons[1].nk_cm = nk_cm;
   excitons[1].psi = ex_psi_A2_triplet;
   excitons[1].ik_relev_range = _relev_ik_range;
+  excitons[1].elec_struct = &elec_struct;
 
   excitons[2].name = "A2 singlet exciton";
   excitons[2].energy = ex_energy_A2_singlet;
@@ -1205,6 +1140,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   excitons[2].nk_cm = nk_cm;
   excitons[2].psi = ex_psi_A2_singlet;
   excitons[2].ik_relev_range = _relev_ik_range;
+  excitons[2].elec_struct = &elec_struct;
 
   return excitons;
 };
@@ -1214,20 +1150,25 @@ void cnt::calculate_exciton_dispersion()
 {
   get_parameters();
   get_atom_coordinates();
-  electron_K2_extended();
+
+  // calculate K2-extended representation of electron energy
   std::array<int,2> ik_range_K2 = {0,_Nu/_Q*_nk_K1};
   std::array<int,2> mu_range_K2 = {0,_Q};
   _elec_K2 = electron_energy(ik_range_K2, mu_range_K2, "K2_extended");
-  find_K2_extended_valleys();
-  find_relev_ik_range(1.*constants::eV);
 
-  std::array<int,2> iq_range = {-(_ik_max_K2-1),_ik_max_K2};
-  std::array<int,2> mu_range = {-(_Q-1),_Q};
+  // find valleys and select a range of relevant iks in the focus valleys
+  find_valleys(_elec_K2);
+  find_relev_ik_range(1.*constants::eV, _elec_K2);
+
+  // calculate vq, and dielectric function for a sufficiently large range of mu and ik.
+  std::array<int,2> iq_range = {-(_elec_K2.ik_range[1]-1),_elec_K2.ik_range[1]};
+  std::array<int,2> mu_range = {-(_elec_K2.mu_range[1]-1),_elec_K2.mu_range[1]};
   _vq = calculate_vq(iq_range, mu_range, _number_of_cnt_unit_cells);
-  _PI = calculate_polarization(iq_range, mu_range);
+  _PI = calculate_polarization(iq_range, mu_range, _elec_K2);
   _eps = calculate_dielectric(iq_range, mu_range);
 
+  // calculate exciton dispersions using the information calculated above
   std::array<int,2> ik_cm_range = {-int(_relev_ik_range[0].size()), int(_relev_ik_range[0].size())};
-  _excitons = calculate_A_excitons(ik_cm_range);
+  _excitons = calculate_A_excitons(ik_cm_range, _elec_K2);
 
 };
