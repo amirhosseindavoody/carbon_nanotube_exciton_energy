@@ -70,10 +70,10 @@ void first_order()
   // match the states based on their energy
   std::vector<matching_states> state_pairs = match_states(d_exciton, a_exciton, d_relevant_states_indices, a_relevant_states_indices);
 
-  // for (const auto& pair:state_pairs)
-  // { 
-  //   calculate_Q(d_exciton, a_exciton, pair);
-  // }
+  for (const auto& pair:state_pairs)
+  { 
+    calculate_Q(pair);
+  }
 
 };
 
@@ -151,8 +151,11 @@ struct matching_states
 };
 
 // calculate Q()
-void calculate_Q(const cnt::exciton_struct& d_exciton, const cnt::exciton_struct& a_exciton, const matching_states& pair)
+void calculate_Q(const matching_states& pair)
 {
+  std::complex<double> Q = 0;
+  // for (int ik_c=pair.; ik_c<)
+
   // std::cout << "\n...calculating Q matrix element\n";
 }
 

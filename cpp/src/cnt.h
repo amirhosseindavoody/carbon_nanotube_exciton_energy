@@ -122,14 +122,19 @@ public:
     int spin; // exciton total spin
     std::array<int,2> ik_cm_range; // range of ik_cm values in the half-open range format [a,b)
     int mu_cm = 0; // exciton center of mass mu
-    int n_principal; // number of states equivalent to the the principal quantum number in hydrogen atom
-    int nk_relev; // number of relevant states to make the exciton wave function
-    int nk_cm; // number of ik_cm states
+    int n_principal=0; // number of states equivalent to the the principal quantum number in hydrogen atom
+    int nk_c=0; // number of relevant states to make the exciton wave function
+    int nk_cm=0; // number of ik_cm states
     arma::cx_cube psi; // exciton wavefunction in the form (ik_c_relev,n,ik_cm) therefore the first element is the \
                           weight of ik_c_relev state in the n-th eigen state with center-of-mass momentum ik_cm
-    std::vector<std::vector<std::array<int,2>>> ik_relev_range; // ik of relevant states in the following form [[[ik,mu],...], [[ik,mu],...]]
     const el_energy_struct& elec_struct;
     const arma::vec& dk_l;
+
+    arma::ucube ik_idx; // cube to hold index of kc and kv states for each element in psi.\
+                           The cube has dimensions of (4, nk_relev, nk_cm) where \
+                           element (j, i_elec_state, ik_cm_idx) shows index of ik_c, mu_c, ik_v, mu_v \
+                           for the corresponding excitonic state: \
+                           j=0 --> ik_c_idx, j=1 --> mu_c_idx, j=2 --> ik_v_idx, j=3 --> mu_v_idx
     
   private:
     const cnt& owner_cnt;

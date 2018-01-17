@@ -1000,14 +1000,17 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
 
   int nk_cm = ik_cm_range[1] - ik_cm_range[0];
   int nk_relev = int(_relev_ik_range[0].size());
+  int nk_c = 2*nk_relev;
 
   arma::mat ex_energy_A1(nk_cm,nk_relev,arma::fill::zeros);
   arma::mat ex_energy_A2_singlet(nk_cm,nk_relev,arma::fill::zeros);
   arma::mat ex_energy_A2_triplet(nk_cm,nk_relev,arma::fill::zeros);
   
-  arma::cx_cube ex_psi_A1(nk_relev,nk_relev,nk_cm, arma::fill::zeros);
-  arma::cx_cube ex_psi_A2_singlet(nk_relev,nk_relev,nk_cm, arma::fill::zeros);
-  arma::cx_cube ex_psi_A2_triplet(nk_relev,nk_relev,nk_cm, arma::fill::zeros);
+  arma::cx_cube ex_psi_A1(nk_c,nk_relev,nk_cm, arma::fill::zeros);
+  arma::cx_cube ex_psi_A2_singlet(nk_c,nk_relev,nk_cm, arma::fill::zeros);
+  arma::cx_cube ex_psi_A2_triplet(nk_c,nk_relev,nk_cm, arma::fill::zeros);
+
+  arma::ucube ik_idx(4, nk_c, nk_cm);
 
   arma::cx_mat kernel_11(nk_relev,nk_relev,arma::fill::zeros);
   arma::cx_mat kernel_12(nk_relev,nk_relev,arma::fill::zeros);
@@ -1063,7 +1066,6 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
       }
     }
 
-
     kernel_11 += kernel_11.t();
     kernel_12 += kernel_12.t();
     kernel_exchange += kernel_exchange.t();
@@ -1074,20 +1076,52 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
       kernel_exchange(ik_c_idx,ik_c_idx) /= std::complex<double>(2,0);
     }
 
-    // energy = arma::eig_sym(kernel_11-kernel_12);
     arma::eig_sym(energy,psi,kernel_11-kernel_12);
     ex_energy_A1.row(ik_cm_idx) = energy.t();
-    ex_psi_A1.slice(ik_cm_idx) = psi;
+    ex_psi_A1.slice(ik_cm_idx).head_rows(nk_relev) = (+1/std::sqrt(2.))*psi;
+    ex_psi_A1.slice(ik_cm_idx).tail_rows(nk_relev) = (-1/std::sqrt(2.))*psi;
 
     // energy = arma::eig_sym(kernel_11+kernel_12);
     arma::eig_sym(energy,psi,kernel_11+kernel_12);
     ex_energy_A2_triplet.row(ik_cm_idx) = energy.t();
-    ex_psi_A2_triplet.slice(ik_cm_idx) = psi;
+    ex_psi_A2_triplet.slice(ik_cm_idx).head_rows(nk_relev) = (+1/std::sqrt(2.))*psi;
+    ex_psi_A2_triplet.slice(ik_cm_idx).tail_rows(nk_relev) = (+1/std::sqrt(2.))*psi;
 
     // energy = arma::eig_sym(kernel_11+kernel_12+std::complex<double>(2,0)*kernel_exchange);
     arma::eig_sym(energy,psi,kernel_11+kernel_12+std::complex<double>(2,0)*kernel_exchange);
     ex_energy_A2_singlet.row(ik_cm_idx) = energy.t();
-    ex_psi_A2_singlet.slice(ik_cm_idx) = psi;
+    ex_psi_A2_singlet.slice(ik_cm_idx).head_rows(nk_relev) = (+1/std::sqrt(2.))*psi;
+    ex_psi_A2_singlet.slice(ik_cm_idx).tail_rows(nk_relev) = (+1/std::sqrt(2.))*psi;
+
+
+    // save the index of kc and kv states from i_valley_1
+    for (int ik_c_idx=0; ik_c_idx<nk_relev; ik_c_idx++)
+    {
+      ik_c = _relev_ik_range[i_valley_1][ik_c_idx][0];
+      mu_c = _relev_ik_range[i_valley_1][ik_c_idx][1];
+      ik_v = get_ikv(ik_c,ik_cm);
+      mu_v = mu_c;
+
+      ik_idx(0,ik_c_idx,ik_cm_idx) = ik_c-elec_struct.ik_range[0];
+      ik_idx(1,ik_c_idx,ik_cm_idx) = mu_c-elec_struct.mu_range[0];
+      ik_idx(2,ik_c_idx,ik_cm_idx) = ik_v-elec_struct.ik_range[0];
+      ik_idx(3,ik_c_idx,ik_cm_idx) = mu_v-elec_struct.mu_range[0];
+    }
+
+    // save the index of kc and kv states from i_valley_2
+    for (int ik_v_idx=0; ik_v_idx<nk_relev; ik_v_idx++)
+    {
+      ik_v = _relev_ik_range[i_valley_2][ik_v_idx][0];
+      mu_v = _relev_ik_range[i_valley_2][ik_v_idx][1];
+      ik_c = get_ikc(ik_v,ik_cm);
+      mu_c = mu_v;
+
+      ik_idx(0,nk_c-1-ik_v_idx,ik_cm_idx) = ik_c-elec_struct.ik_range[0];
+      ik_idx(1,nk_c-1-ik_v_idx,ik_cm_idx) = mu_c-elec_struct.mu_range[0];
+      ik_idx(2,nk_c-1-ik_v_idx,ik_cm_idx) = ik_v-elec_struct.ik_range[0];
+      ik_idx(3,nk_c-1-ik_v_idx,ik_cm_idx) = mu_v-elec_struct.mu_range[0];
+    }
+
   }
 
   std::cout << "\n...calculated exciton dispersion\n";
@@ -1110,40 +1144,36 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
 
   // prepare the values that are to be returned
   std::vector<exciton_struct> excitons(3,exciton_struct(this));
-  // exciton_struct exciton_s;
 
   excitons[0].name = "A1 exciton";
   excitons[0].energy = ex_energy_A1;
   excitons[0].spin = 0;
   excitons[0].mu_cm = 0;
   excitons[0].n_principal = nk_relev;
-  excitons[0].nk_relev = nk_relev;
+  excitons[0].nk_c = nk_c;
   excitons[0].nk_cm = nk_cm;
   excitons[0].psi = ex_psi_A1;
-  excitons[0].ik_relev_range = _relev_ik_range;
-  // excitons[0].elec_struct = &elec_struct;
+  excitons[0].ik_idx = ik_idx;
 
   excitons[1].name = "A2 triplet exciton";
   excitons[1].energy = ex_energy_A2_triplet;
   excitons[1].spin = 1;
   excitons[1].mu_cm = 0;
   excitons[1].n_principal = nk_relev;
-  excitons[1].nk_relev = nk_relev;
+  excitons[1].nk_c = nk_c;
   excitons[1].nk_cm = nk_cm;
   excitons[1].psi = ex_psi_A2_triplet;
-  excitons[1].ik_relev_range = _relev_ik_range;
-  // excitons[1].elec_struct = &elec_struct;
+  excitons[1].ik_idx = ik_idx;
 
   excitons[2].name = "A2 singlet exciton";
   excitons[2].energy = ex_energy_A2_singlet;
   excitons[2].spin = 0;
   excitons[2].mu_cm = 0;
   excitons[2].n_principal = nk_relev;
-  excitons[2].nk_relev = nk_relev;
+  excitons[2].nk_c = nk_c;
   excitons[2].nk_cm = nk_cm;
   excitons[2].psi = ex_psi_A2_singlet;
-  excitons[2].ik_relev_range = _relev_ik_range;
-  // excitons[2].elec_struct = &elec_struct;
+  excitons[2].ik_idx = ik_idx;
 
   return excitons;
 };
