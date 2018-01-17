@@ -70,7 +70,10 @@ void first_order()
   // match the states based on their energy
   std::vector<matching_states> state_pairs = match_states(d_exciton, a_exciton, d_relevant_states_indices, a_relevant_states_indices);
 
-  // calculate_Q(d_exciton, a_exciton, state_pairs);
+  // for (const auto& pair:state_pairs)
+  // { 
+  //   calculate_Q(d_exciton, a_exciton, pair);
+  // }
 
 };
 
@@ -124,9 +127,34 @@ std::vector<std::array<int,2>> get_relevant_states(const cnt::exciton_struct& ex
 // struct to bundle information about initial and final states that match energetically
 struct matching_states
 {
-  std::array<int,2> init_state;
-  std::vector<std::array<int,2>> final_states;
+  matching_states(const cnt::exciton_struct& d_exciton, const cnt::exciton_struct& a_exciton):
+    i_exciton(d_exciton), f_exciton(a_exciton) {};
+  std::array<int,2> i_state_idx, f_state_idx; // ik_cm_idx and mu_cm_idx of the initial and final states in the exciton_struct
+  double i_energy, f_energy; // energy of the initial and final states
+  const cnt::exciton_struct &i_exciton, &f_exciton; // references to the initial and final excitons so that we don't have to manually carry it everywhere
+  // int ik_cm_i, ik_cm_f; // value of ik_cm for initial and final states
+  // int mu_cm_i, mu_cm_f; // value of mu_cm for initial and final states
+
+  // function to set properties of initial state of the pair
+  void set_i_state(const std::array<int,2>& d_state)
+  {
+    i_state_idx = d_state;
+    i_energy = i_exciton.energy(i_state_idx[0],i_state_idx[1]);
+  }
+
+  // function to set properties of final state of the pair
+  void set_f_state(const std::array<int,2>& a_state)
+  {
+    f_state_idx = a_state;
+    f_energy = f_exciton.energy(f_state_idx[0],f_state_idx[1]);
+  }
 };
+
+// calculate Q()
+void calculate_Q(const cnt::exciton_struct& d_exciton, const cnt::exciton_struct& a_exciton, const matching_states& pair)
+{
+  // std::cout << "\n...calculating Q matrix element\n";
+}
 
 // match states based on energies
 std::vector<matching_states> match_states(const cnt::exciton_struct& d_exciton, \
@@ -135,39 +163,29 @@ std::vector<matching_states> match_states(const cnt::exciton_struct& d_exciton, 
                                           const std::vector<std::array<int,2>>& a_relevant_states_indices )
 {
   std::vector<matching_states> matched;
-
-  int count = 0;
-  int count_all_possibilities = 0;
   
   for (const auto& d_state: d_relevant_states_indices)
   {
-    matching_states my_pair;
-    my_pair.init_state = d_state;
     for (const auto& a_state: a_relevant_states_indices)
     {
-      count_all_possibilities++;
       if (is_matched(d_exciton, a_exciton, d_state, a_state))
       {
-        my_pair.final_states.push_back(a_state);
-        count++;
+        matching_states my_pair(d_exciton, a_exciton);
+        my_pair.set_i_state(d_state);
+        my_pair.set_f_state(a_state);
+        matched.push_back(my_pair);
       }
     }
-    matched.push_back(my_pair);
   }
 
 
 
   std::cout << "\n...calculated pairs of donor and acceptor states\n";
-  std::cout << "number of pairs: " << count << " out of " << count_all_possibilities << "\n\n";
+  std::cout << "number of pairs: " << matched.size() << " out of " << a_relevant_states_indices.size()*d_relevant_states_indices.size() << "\n\n";
   // for (const auto& pair:matched)
   // { 
-  //   auto init = pair.init_state;
-  //   for (const auto& final_state: pair.final_states)
-  //   {
-  //     double delta_e = (d_exciton.energy(init[0],init[1])-a_exciton.energy(final_state[0],final_state[1]));
-  //     std::cout << "delta energy:" << delta_e/constants::eV << " [eV]   , lorentzian:" << lorentzian(delta_e)/lorentzian(0) << "\n";
-  //   }
-  //   std::cout << "\n";
+  //   double delta_e = pair.i_energy-pair.f_energy;
+  //   std::cout << "delta energy:" << delta_e/constants::eV << " [eV]   , lorentzian:" << lorentzian(delta_e)/lorentzian(0) << "\n";
   // }
   
   return matched;

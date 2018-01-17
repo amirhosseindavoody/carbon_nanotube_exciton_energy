@@ -115,6 +115,7 @@ public:
   // struct to bundle data and metadata of exciton
   struct exciton_struct
   {
+    exciton_struct(const cnt* m_cnt): owner_cnt(*m_cnt), dk_l((m_cnt->_dk_l)), elec_struct(m_cnt->_elec_K2) {};
     std::string name; // a human readable name for the exciton
     arma::mat energy; // exciton energy dispersion in the form (ik_cm, n) where n is the \
                          quantum number equivalent to principarl quantum number in hydrogen
@@ -127,7 +128,11 @@ public:
     arma::cx_cube psi; // exciton wavefunction in the form (ik_c_relev,n,ik_cm) therefore the first element is the \
                           weight of ik_c_relev state in the n-th eigen state with center-of-mass momentum ik_cm
     std::vector<std::vector<std::array<int,2>>> ik_relev_range; // ik of relevant states in the following form [[[ik,mu],...], [[ik,mu],...]]
-    const el_energy_struct* elec_struct = nullptr;
+    const el_energy_struct& elec_struct;
+    const arma::vec& dk_l;
+    
+  private:
+    const cnt& owner_cnt;
   };
 
 private:
