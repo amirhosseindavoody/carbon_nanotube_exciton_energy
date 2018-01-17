@@ -1116,6 +1116,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   excitons[0].energy = ex_energy_A1;
   excitons[0].spin = 0;
   excitons[0].mu_cm = 0;
+  excitons[0].n_principal = nk_relev;
   excitons[0].nk_relev = nk_relev;
   excitons[0].nk_cm = nk_cm;
   excitons[0].psi = ex_psi_A1;
@@ -1126,6 +1127,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   excitons[1].energy = ex_energy_A2_triplet;
   excitons[1].spin = 1;
   excitons[1].mu_cm = 0;
+  excitons[1].n_principal = nk_relev;
   excitons[1].nk_relev = nk_relev;
   excitons[1].nk_cm = nk_cm;
   excitons[1].psi = ex_psi_A2_triplet;
@@ -1136,6 +1138,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   excitons[2].energy = ex_energy_A2_singlet;
   excitons[2].spin = 0;
   excitons[2].mu_cm = 0;
+  excitons[2].n_principal = nk_relev;
   excitons[2].nk_relev = nk_relev;
   excitons[2].nk_cm = nk_cm;
   excitons[2].psi = ex_psi_A2_singlet;

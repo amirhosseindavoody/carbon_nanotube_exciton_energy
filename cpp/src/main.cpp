@@ -3,16 +3,10 @@
 #include <armadillo>
 
 #include "cnt.h"
+#include "exciton_transfer.h"
 
 int main(int argc, char *argv[])
 {
-
-	// arma::vec A = {3,4 };
-	// A.print("A:");
-	// std::cout << "norm=" << arma::norm(A,"fro") << "\n";
-
-	// std::exit(0);
-
 	std::clock_t start = std::clock();
 
 	std::time_t start_time = std::time(nullptr);
@@ -22,6 +16,9 @@ int main(int argc, char *argv[])
 
 	m_cnt.process_command_line_args(argc, argv);
 	m_cnt.calculate_exciton_dispersion();
+
+	exciton_transfer ex_transfer(m_cnt, m_cnt);
+	ex_transfer.first_order();
 
 	std::clock_t end = std::clock();
 

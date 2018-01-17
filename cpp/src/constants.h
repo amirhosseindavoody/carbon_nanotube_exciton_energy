@@ -8,6 +8,7 @@ namespace constants
 	// constants();
 
 	static const double pi=3.141592;
+	static const double inv_pi=1./pi;
 
 	static const double eV=1.6*std::pow(10,-19.0); //[Joules]
 	static const double hb=6.5*std::pow(10,-16.0)*eV; //[Joules.s]

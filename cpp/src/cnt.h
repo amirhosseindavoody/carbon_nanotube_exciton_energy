@@ -107,6 +107,11 @@ private:
   // instantiation of epsilon_struct to hold data of dielectric function calculated via calculate_dielectric function
   epsilon_struct _eps;
 
+  int _i_sub = 0; // index of the selected subband from _valleys_K2 vector
+
+  arma::cx_vec _epsilon; // static dielectric function
+
+public:
   // struct to bundle data and metadata of exciton
   struct exciton_struct
   {
@@ -116,6 +121,7 @@ private:
     int spin; // exciton total spin
     std::array<int,2> ik_cm_range; // range of ik_cm values in the half-open range format [a,b)
     int mu_cm = 0; // exciton center of mass mu
+    int n_principal; // number of states equivalent to the the principal quantum number in hydrogen atom
     int nk_relev; // number of relevant states to make the exciton wave function
     int nk_cm; // number of ik_cm states
     arma::cx_cube psi; // exciton wavefunction in the form (ik_c_relev,n,ik_cm) therefore the first element is the \
@@ -123,13 +129,10 @@ private:
     std::vector<std::vector<std::array<int,2>>> ik_relev_range; // ik of relevant states in the following form [[[ik,mu],...], [[ik,mu],...]]
     const el_energy_struct* elec_struct = nullptr;
   };
+
+private:
   // vector of exciton structs to hold data of A and E type excitons
   std::vector<exciton_struct>  _excitons;
-
-  int _i_sub = 0; // index of the selected subband from _valleys_K2 vector
-
-  arma::cx_vec _epsilon; // static dielectric function
-
 
 public:
   //constructor
@@ -201,6 +204,31 @@ public:
       return false;
     }
     return true;
+  };
+
+  // getter function to access cnt radius
+  const double& radius() const
+  {
+    return _radius;
+  };
+
+  // getter function to access all excitons
+  const std::vector<exciton_struct>& excitons() const
+  {
+    return _excitons;
+  };
+
+  // getter function to access A2 singlet exciton
+  const cnt::exciton_struct& A2_singlet() const
+  {
+    for (const auto& exciton: _excitons)
+    {
+      if (exciton.name == "A2 singlet exciton")
+      {
+        return exciton;
+      }
+    }
+    throw std::logic_error("could not find A2 singlet exciton.\nInvestigate.\n");
   };
 
   // helper class to monitor progress of the loops
