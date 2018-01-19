@@ -1154,6 +1154,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   excitons[0].nk_cm = nk_cm;
   excitons[0].psi = ex_psi_A1;
   excitons[0].ik_idx = ik_idx;
+  excitons[0].ik_cm_range = ik_cm_range;
 
   excitons[1].name = "A2 triplet exciton";
   excitons[1].energy = ex_energy_A2_triplet;
@@ -1164,6 +1165,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   excitons[1].nk_cm = nk_cm;
   excitons[1].psi = ex_psi_A2_triplet;
   excitons[1].ik_idx = ik_idx;
+  excitons[1].ik_cm_range = ik_cm_range;
 
   excitons[2].name = "A2 singlet exciton";
   excitons[2].energy = ex_energy_A2_singlet;
@@ -1174,6 +1176,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   excitons[2].nk_cm = nk_cm;
   excitons[2].psi = ex_psi_A2_singlet;
   excitons[2].ik_idx = ik_idx;
+  excitons[2].ik_cm_range = ik_cm_range;
 
   return excitons;
 };

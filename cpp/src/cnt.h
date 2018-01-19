@@ -66,7 +66,8 @@ private:
     int no_of_atoms; // number of atoms that are used in the wavefunction: it is 2 when graphen unit cell is used or 2*_Nu when full cnt unit cell is used.
     int no_of_bands; // number of bands for each choice of ik and mu: it is 2 when graphen unit cell is used and 2*_Nu when full cnt unit cell is used.
   	arma::cube energy; // energy of electronic states calculated using the reduced graphene unit cell (2 atoms)
-  	arma::field<arma::cx_cube> wavefunc; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms)
+  	arma::field<arma::cx_cube> wavefunc; // electronic wave functions corresponding to electronic states using the reduced graphene unit cell (2 atoms) \
+                                            the wavefunc format is (wavefunc(mu-mu_range[0]))(iA,ic,ik-ik_range[0])
     std::array<int,2> ik_range;
     std::array<int,2> mu_range;
     int nk, n_mu; // number of elements in the range of ik and mu
@@ -115,7 +116,8 @@ public:
   // struct to bundle data and metadata of exciton
   struct exciton_struct
   {
-    exciton_struct(const cnt* m_cnt): owner_cnt(*m_cnt), dk_l((m_cnt->_dk_l)), elec_struct(m_cnt->_elec_K2) {};
+    exciton_struct(const cnt* m_cnt): owner_cnt(*m_cnt), dk_l((m_cnt->_dk_l)), elec_struct(m_cnt->_elec_K2),
+      aCC_vec(m_cnt->_aCC_vec) {};
     std::string name; // a human readable name for the exciton
     arma::mat energy; // exciton energy dispersion in the form (ik_cm, n) where n is the \
                          quantum number equivalent to principarl quantum number in hydrogen
@@ -129,6 +131,7 @@ public:
                           weight of ik_c_relev state in the n-th eigen state with center-of-mass momentum ik_cm
     const el_energy_struct& elec_struct;
     const arma::vec& dk_l;
+    const arma::vec& aCC_vec;
 
     arma::ucube ik_idx; // cube to hold index of kc and kv states for each element in psi.\
                            The cube has dimensions of (4, nk_relev, nk_cm) where \
