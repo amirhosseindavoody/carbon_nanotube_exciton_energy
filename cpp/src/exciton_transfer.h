@@ -197,48 +197,51 @@ struct matching_states
 // calculate Q()
 std::complex<double> calculate_Q(const matching_states& pair)
 {
-  std::complex<double> Q = 0;
-  const std::array<int,2>& i_state_idx = pair.i_state_idx;
-  const std::array<int,2>& f_state_idx = pair.f_state_idx;
-  
-  const cnt::exciton_struct& i_exciton = pair.i_exciton;
-  const cnt::exciton_struct& f_exciton = pair.f_exciton;
-
-  const arma::cx_vec& Ai = i_exciton.psi.slice(i_state_idx[0]).col(i_state_idx[1]);
-  const arma::cx_vec& Af = f_exciton.psi.slice(f_state_idx[0]).col(f_state_idx[1]);
-
-  const arma::umat& i_ik_idx = i_exciton.ik_idx.slice(i_state_idx[0]); // (j, i_elec_state)
-  const arma::umat& f_ik_idx = f_exciton.ik_idx.slice(f_state_idx[0]); // (j, i_elec_state)
-
   const int ic = 1;
   const int iv = 0;
 
   const int iA = 0;
   const int iB = 1;
 
+
+  // calculate Q for initial state
+  const std::array<int,2>& i_state_idx = pair.i_state_idx;
+  const cnt::exciton_struct& i_exciton = pair.i_exciton;
+  const arma::cx_vec& Ai = i_exciton.psi.slice(i_state_idx[0]).col(i_state_idx[1]);
+  const arma::umat& i_ik_idx = i_exciton.ik_idx.slice(i_state_idx[0]); // (j, i_elec_state)
+
   const arma::vec dA = {0,0};
   const arma::vec& dB = i_exciton.aCC_vec;
   const arma::cx_vec i_exp_factor({std::exp(std::complex<double>(0.,-1.)*arma::dot(pair.i_ik_cm*i_exciton.dk_l,dA)),\
                                    std::exp(std::complex<double>(0.,-1.)*arma::dot(pair.i_ik_cm*i_exciton.dk_l,dB))});
   
-  const arma::vec dAp = {0,0};
-  const arma::vec& dBp = f_exciton.aCC_vec;
-  const arma::cx_vec f_exp_factor({std::exp(std::complex<double>(0.,-1.)*arma::dot(pair.f_ik_cm*f_exciton.dk_l,dAp)),\
-                                   std::exp(std::complex<double>(0.,-1.)*arma::dot(pair.f_ik_cm*f_exciton.dk_l,dBp))});
-
+  std::complex<double> Q_i = 0;
   for (int ik_c_idx=0; ik_c_idx<i_exciton.nk_c; ik_c_idx++)
   {
     const arma::cx_vec& Cc = i_exciton.elec_struct.wavefunc(i_ik_idx(1,ik_c_idx)).slice(i_ik_idx(0,ik_c_idx)).col(ic);
     const arma::cx_vec& Cv = i_exciton.elec_struct.wavefunc(i_ik_idx(3,ik_c_idx)).slice(i_ik_idx(2,ik_c_idx)).col(iv);
-    for (int ik_cp_idx=0; ik_cp_idx<f_exciton.nk_c; ik_cp_idx++)
-    {
-      const arma::cx_vec& Ccp = f_exciton.elec_struct.wavefunc(f_ik_idx(1,ik_cp_idx)).slice(f_ik_idx(0,ik_cp_idx)).col(ic);
-      const arma::cx_vec& Cvp = f_exciton.elec_struct.wavefunc(f_ik_idx(3,ik_cp_idx)).slice(f_ik_idx(2,ik_cp_idx)).col(iv);
-      Q += std::conj(Ai(ik_c_idx))*Af(ik_cp_idx)*arma::accu(arma::kron(arma::conj(Cc)%Cv%i_exp_factor,Ccp%arma::conj(Cvp)%f_exp_factor));
-    }
+    Q_i += Ai(ik_c_idx)*arma::accu(Cc%arma::conj(Cv)%i_exp_factor);
   }
 
-  return Q;
+  // calculate Q for the final state
+  const std::array<int,2>& f_state_idx = pair.f_state_idx;
+  const cnt::exciton_struct& f_exciton = pair.f_exciton;
+  const arma::cx_vec& Af = f_exciton.psi.slice(f_state_idx[0]).col(f_state_idx[1]);
+  const arma::umat& f_ik_idx = f_exciton.ik_idx.slice(f_state_idx[0]); // (j, i_elec_state)
+  
+  const arma::vec dAp = {0,0};
+  const arma::vec& dBp = f_exciton.aCC_vec;
+  const arma::cx_vec f_exp_factor({std::exp(std::complex<double>(0.,-1.)*arma::dot(pair.f_ik_cm*f_exciton.dk_l,dAp)),\
+                                   std::exp(std::complex<double>(0.,-1.)*arma::dot(pair.f_ik_cm*f_exciton.dk_l,dBp))});
+  std::complex<double> Q_f = 0;  
+  for (int ik_cp_idx=0; ik_cp_idx<f_exciton.nk_c; ik_cp_idx++)
+  {
+    const arma::cx_vec& Ccp = f_exciton.elec_struct.wavefunc(f_ik_idx(1,ik_cp_idx)).slice(f_ik_idx(0,ik_cp_idx)).col(ic);
+    const arma::cx_vec& Cvp = f_exciton.elec_struct.wavefunc(f_ik_idx(3,ik_cp_idx)).slice(f_ik_idx(2,ik_cp_idx)).col(iv);
+    Q_f += Af(ik_cp_idx)*arma::accu(Ccp%arma::conj(Cvp)%arma::conj(f_exp_factor));
+  }
+
+  return std::conj(Q_i)*Q_f;
 };
 
 // match states based on energies

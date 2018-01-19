@@ -244,6 +244,32 @@ public:
     throw std::logic_error("could not find A2 singlet exciton.\nInvestigate.\n");
   };
 
+  // getter function to access A2 triplet exciton
+  const cnt::exciton_struct& A2_triplet() const
+  {
+    for (const auto& exciton: _excitons)
+    {
+      if (exciton.name == "A2 triplet exciton")
+      {
+        return exciton;
+      }
+    }
+    throw std::logic_error("could not find A2 triplet exciton.\nInvestigate.\n");
+  };
+
+  // getter function to access A1 exciton
+  const cnt::exciton_struct& A1() const
+  {
+    for (const auto& exciton: _excitons)
+    {
+      if (exciton.name == "A1 exciton")
+      {
+        return exciton;
+      }
+    }
+    throw std::logic_error("could not find A1 exciton.\nInvestigate.\n");
+  };
+
   // helper class to monitor progress of the loops
   class progress_bar
   {
