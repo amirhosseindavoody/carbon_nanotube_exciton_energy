@@ -10,8 +10,9 @@
 
 class exciton_transfer
 {
-private:  
-  std::experimental::filesystem::directory_entry _directory; // this is the address of the directory that the simulation data is stored
+private:
+  typedef std::experimental::filesystem::directory_entry t_directory; // custom directory type
+  t_directory _directory; // this is the address of the directory that the simulation data is stored
 
   double _temperature; // temperature of the system to calculate thermal distribution for excitons and other particles
   double _c2c_distance; // center to center distance between the cnts.
@@ -26,14 +27,14 @@ private:
     return constants::inv_pi*_broadening_factor/(energy*energy + _broadening_factor*_broadening_factor);
   }
 
-  // prepare the output directory _directory
-  void prepare_directory();
+  // prepare the output directory by deleting its previous content or creating it
+  t_directory prepare_directory();
 
 public:
   // constructor
   exciton_transfer(const cnt& cnt1, const cnt& cnt2)
   {
-    prepare_directory();
+    _directory = prepare_directory();
 
     _cnts = {&cnt1, &cnt2};
     _temperature = 300;
@@ -68,49 +69,16 @@ void first_order()
   const cnt::exciton_struct& a_exciton = acceptor.A2_singlet();
 
   // find lists of relevant states in donor and acceptor excitons
-  std::vector<std::array<int,2>> d_relevant_states_indices = get_relevant_states(d_exciton,min_energy);
-  std::vector<std::array<int,2>> a_relevant_states_indices = get_relevant_states(a_exciton,min_energy);
+  std::vector<ex_state> d_relevant_states = get_relevant_states(d_exciton,min_energy);
+  std::vector<ex_state> a_relevant_states = get_relevant_states(a_exciton,min_energy);
 
   // match the states based on their energy
-  std::vector<matching_states> state_pairs = match_states(d_exciton, a_exciton, d_relevant_states_indices, a_relevant_states_indices);
-
-  auto get_min_idx = [](const auto& relevant_state_indices){
-    int min_idx = 1.e9;
-    for (const auto& idx: relevant_state_indices)
-    {
-      min_idx = (min_idx < idx[0]) ? min_idx : idx[0];
-    }
-    return min_idx;
-  };
-  
-  auto get_max_idx = [](const auto& relevant_state_indices){
-    int max_idx = -1.e9;
-    for (const auto& idx: relevant_state_indices)
-    {
-      max_idx = (max_idx > idx[0]) ? max_idx : idx[0];
-    }
-    return max_idx;
-  };
-
-  int d_min_idx = get_min_idx(d_relevant_states_indices);
-  int d_max_idx = get_max_idx(d_relevant_states_indices);
-  int a_min_idx = get_min_idx(a_relevant_states_indices);
-  int a_max_idx = get_max_idx(a_relevant_states_indices);
-
-  arma::cx_mat Q_mat(d_max_idx-d_min_idx+1, a_max_idx-a_min_idx+1, arma::fill::zeros);
+  std::vector<matching_states> state_pairs = match_states(d_relevant_states, a_relevant_states);
 
   for (const auto& pair:state_pairs)
   { 
     std::complex<double> Q = calculate_Q(pair);
-    // Q_mat(pair.i_state_idx[0]-d_min_idx, pair.f_state_idx[0]-a_min_idx) = Q;
-    Q_mat(pair.i_state_idx[0]-d_min_idx, pair.f_state_idx[0]-a_min_idx) = Q;
   }
-
-  arma::mat tmp_Q(arma::abs(Q_mat));
-
-  // save the matrix element Q to a file
-  std::string filename = _directory.path() / "matrix_element_q.dat";
-  tmp_Q.save(filename,arma::arma_ascii);
 
   std::cout << "\n...calculated Q matrix element\n";
 
@@ -119,13 +87,74 @@ void first_order()
 // calculate and plot Q matrix element between two exciton bands
 void save_Q_matrix_element(const int i_n_principal, const int f_n_principal);
 
-// get the index of relevant energy states in the form [[ik_cm_idx, i_n], ... ]
-std::vector<std::array<int,2>> get_relevant_states(const cnt::exciton_struct& exciton, const double min_energy)
+// struct to bundle information about the excitonic states that are relevant
+struct ex_state
+{
+  ex_state(const cnt::exciton_struct& m_exciton, const int& m_ik_cm_idx, const int& m_i_principal):
+    exciton(m_exciton), cnt_obj(m_exciton.cnt_obj), elec_struct(m_exciton.elec_struct),
+    ik_cm_idx(m_ik_cm_idx), i_principal(m_i_principal), ik_idx(m_exciton.ik_idx.slice(m_ik_cm_idx)), 
+    energy(m_exciton.energy(m_ik_cm_idx,i_principal)), ik_cm(m_ik_cm_idx+m_exciton.ik_cm_range[0])
+  {
+    // std::cout << "psi size:" << arma::size(psi) << ":\n";
+  };
+
+  const cnt& cnt_obj; // reference to the cnt object owning the exciton state
+  const cnt::exciton_struct& exciton; // reference to the exciton struct that owns the state
+  const cnt::el_energy_struct& elec_struct; // reference to the el_energy_struct that is used to calculate the exciton dipersion
+  const arma::umat& ik_idx; // matrix to hold index of kc and kv states for each element in psi.\
+                           The matrix has dimensions of (4, nk_relev) where \
+                           element (j, i_elec_state) shows index of ik_c, mu_c, ik_v, mu_v \
+                           for the corresponding excitonic state: \
+                           j=0 --> ik_c_idx, j=1 --> mu_c_idx, j=2 --> ik_v_idx, j=3 --> mu_v_idx
+
+  const int ik_cm_idx; // index of the ik_cm state in the exciton.energy and exciton.psi matrices
+  const int i_principal; // the principal quantum number of the state in the exciton.energy and exciton.psi matrices
+  const int ik_cm; // value of the ik_cm for the state
+  // const int mu_cm=0; // value of the mu for the state
+  const double energy; // energy of the exciton state
+
+  // access to the whole exciton state wavefunction
+  const arma::cx_vec psi() const
+  {
+    return exciton.psi.slice(ik_cm_idx).col(i_principal);
+  };
+
+  // access to individual elements of exciton state wavefunction
+  const std::complex<double> psi(int ik_c_idx) const
+  {
+    return exciton.psi.slice(ik_cm_idx).col(i_principal)(ik_c_idx);
+  };
+
+  // assignment operator
+  ex_state operator=(const ex_state& other)
+  {
+    ex_state tmp(other.exciton, other.ik_cm_idx, other.i_principal);
+    return tmp;
+  };
+
+  // copy constructor
+  ex_state(const ex_state& other):
+    exciton(other.exciton), cnt_obj(other.cnt_obj), elec_struct(other.elec_struct),
+    ik_cm_idx(other.ik_cm_idx), i_principal(other.i_principal), ik_idx(other.ik_idx), 
+    energy(other.energy), ik_cm(other.ik_cm)
+  {};
+
+  // move constructor
+  ex_state(const ex_state&& other):
+    exciton(other.exciton), cnt_obj(other.cnt_obj), elec_struct(other.elec_struct),
+    ik_cm_idx(other.ik_cm_idx), i_principal(other.i_principal), ik_idx(other.ik_idx), 
+    energy(other.energy), ik_cm(other.ik_cm)
+  {};
+
+};
+
+// get the energetically relevant states in the form a vector of ex_state structs
+std::vector<ex_state> get_relevant_states(const cnt::exciton_struct& exciton, const double min_energy)
 {
   const double threshold_population = 1.e-3;
   const double threshold_energy = min_energy+std::abs(std::log(threshold_population) * constants::kb*_temperature);
 
-  std::vector<std::array<int,2>> relevant_state_indices;
+  std::vector<ex_state> relevant_states;
   
   for (int i_n=0; i_n<exciton.n_principal; i_n++)
   {
@@ -133,136 +162,65 @@ std::vector<std::array<int,2>> get_relevant_states(const cnt::exciton_struct& ex
     {
       if (exciton.energy(ik_cm_idx,i_n) <= threshold_energy)
       {
-        relevant_state_indices.push_back({ik_cm_idx, i_n});
+        relevant_states.emplace_back(ex_state(exciton,ik_cm_idx,i_n));
       }
     }
   }
 
   // sort relevant states in order of their energies
-  std::sort(relevant_state_indices.begin(),relevant_state_indices.end(), \
+  std::sort(relevant_states.begin(),relevant_states.end(), \
               [&](const auto& s1, const auto& s2) {
-                return exciton.energy(s1[0],s1[1]) < exciton.energy(s2[0],s2[1]);
+                return s1.energy < s2.energy;
               }
             );
 
   // calculate normalization factor
   double normalization_factor = 0.;
-  for (const auto& idx: relevant_state_indices)
+  for (const auto& state: relevant_states)
   {
-    double delta_e = (exciton.energy(idx[0],idx[1])-min_energy);
+    double delta_e = (state.energy-min_energy);
     normalization_factor += std::exp(-delta_e/(constants::kb*_temperature));
   }
 
 
   std::cout << "\n...calculated relevant states\n";
-  std::cout << "number of relevant states: " << relevant_state_indices.size() << "\n";
-  // for (const auto& idx: relevant_state_indices)
-  // {
-  //   double delta_e = (exciton.energy(idx[0],idx[1])-min_energy);
-  //   std::cout << "[" << idx[0] << "," << idx[1] <<"] --> energy:" << delta_e/constants::eV \
-  //             << " , population:" << std::exp(-delta_e/(constants::kb*_temperature))/normalization_factor << "\n";
-  // }
+  std::cout << "number of relevant states: " << relevant_states.size() << "\n";
+  for (const auto& state: relevant_states)
+  {
+    double delta_e = (state.energy-min_energy);
+    std::cout << "[" << state.ik_cm_idx << "," << state.i_principal <<"] --> energy:" << delta_e/constants::eV \
+              << " , population:" << std::exp(-delta_e/(constants::kb*_temperature))/normalization_factor << "\n";
+  }
   
-  return relevant_state_indices;
+  return relevant_states;
 };
 
 // struct to bundle information about initial and final states that match energetically
 struct matching_states
 {
-  matching_states(const cnt::exciton_struct& d_exciton, const cnt::exciton_struct& a_exciton):
-    i_exciton(d_exciton), f_exciton(a_exciton) {};
-  std::array<int,2> i_state_idx, f_state_idx; // ik_cm_idx and mu_cm_idx of the initial and final states in the exciton_struct
-  double i_energy, f_energy; // energy of the initial and final states
-  const cnt::exciton_struct &i_exciton, &f_exciton; // references to the initial and final excitons so that we don't have to manually carry it everywhere
-  int i_ik_cm=0, f_ik_cm=0; // ik_cm of the initial and final states
-
-  // function to set properties of initial state of the pair
-  void set_i_state(const std::array<int,2>& d_state)
-  {
-    i_state_idx = d_state;
-    i_energy = i_exciton.energy(i_state_idx[0],i_state_idx[1]);
-    i_ik_cm = i_state_idx[0]+i_exciton.ik_cm_range[0];
-    // std::cout << "i_ik_cm:" << i_ik_cm << ", i_state_idx[0]:" << i_state_idx[0] << ", i_exciton.ik_cm_range[0]:" << i_exciton.ik_cm_range[0] << "\n";
-  }
-
-  // function to set properties of final state of the pair
-  void set_f_state(const std::array<int,2>& a_state)
-  {
-    f_state_idx = a_state;
-    f_energy = f_exciton.energy(f_state_idx[0],f_state_idx[1]);
-    f_ik_cm = f_state_idx[0]+f_exciton.ik_cm_range[0];
-  }
+  matching_states(const ex_state& d_state, const ex_state& a_state): i(d_state), f(a_state) 
+  {};
+  const ex_state i; // initial exciton state
+  const ex_state f; // final exciton state
 };
 
 // calculate Q()
-std::complex<double> calculate_Q(const matching_states& pair)
-{
-  const int ic = 1;
-  const int iv = 0;
-
-  const int iA = 0;
-  const int iB = 1;
-
-
-  // calculate Q for initial state
-  const std::array<int,2>& i_state_idx = pair.i_state_idx;
-  const cnt::exciton_struct& i_exciton = pair.i_exciton;
-  const arma::cx_vec& Ai = i_exciton.psi.slice(i_state_idx[0]).col(i_state_idx[1]);
-  const arma::umat& i_ik_idx = i_exciton.ik_idx.slice(i_state_idx[0]); // (j, i_elec_state)
-
-  const arma::vec dA = {0,0};
-  const arma::vec& dB = i_exciton.aCC_vec;
-  const arma::cx_vec i_exp_factor({std::exp(std::complex<double>(0.,-1.)*arma::dot(pair.i_ik_cm*i_exciton.dk_l,dA)),\
-                                   std::exp(std::complex<double>(0.,-1.)*arma::dot(pair.i_ik_cm*i_exciton.dk_l,dB))});
-  
-  std::complex<double> Q_i = 0;
-  for (int ik_c_idx=0; ik_c_idx<i_exciton.nk_c; ik_c_idx++)
-  {
-    const arma::cx_vec& Cc = i_exciton.elec_struct.wavefunc(i_ik_idx(1,ik_c_idx)).slice(i_ik_idx(0,ik_c_idx)).col(ic);
-    const arma::cx_vec& Cv = i_exciton.elec_struct.wavefunc(i_ik_idx(3,ik_c_idx)).slice(i_ik_idx(2,ik_c_idx)).col(iv);
-    Q_i += Ai(ik_c_idx)*arma::accu(Cc%arma::conj(Cv)%i_exp_factor);
-  }
-
-  // calculate Q for the final state
-  const std::array<int,2>& f_state_idx = pair.f_state_idx;
-  const cnt::exciton_struct& f_exciton = pair.f_exciton;
-  const arma::cx_vec& Af = f_exciton.psi.slice(f_state_idx[0]).col(f_state_idx[1]);
-  const arma::umat& f_ik_idx = f_exciton.ik_idx.slice(f_state_idx[0]); // (j, i_elec_state)
-  
-  const arma::vec dAp = {0,0};
-  const arma::vec& dBp = f_exciton.aCC_vec;
-  const arma::cx_vec f_exp_factor({std::exp(std::complex<double>(0.,-1.)*arma::dot(pair.f_ik_cm*f_exciton.dk_l,dAp)),\
-                                   std::exp(std::complex<double>(0.,-1.)*arma::dot(pair.f_ik_cm*f_exciton.dk_l,dBp))});
-  std::complex<double> Q_f = 0;  
-  for (int ik_cp_idx=0; ik_cp_idx<f_exciton.nk_c; ik_cp_idx++)
-  {
-    const arma::cx_vec& Ccp = f_exciton.elec_struct.wavefunc(f_ik_idx(1,ik_cp_idx)).slice(f_ik_idx(0,ik_cp_idx)).col(ic);
-    const arma::cx_vec& Cvp = f_exciton.elec_struct.wavefunc(f_ik_idx(3,ik_cp_idx)).slice(f_ik_idx(2,ik_cp_idx)).col(iv);
-    Q_f += Af(ik_cp_idx)*arma::accu(Ccp%arma::conj(Cvp)%arma::conj(f_exp_factor));
-  }
-
-  return std::conj(Q_i)*Q_f;
-};
+std::complex<double> calculate_Q(const matching_states& pair);
 
 // match states based on energies
-std::vector<matching_states> match_states(const cnt::exciton_struct& d_exciton, \
-                                          const cnt::exciton_struct& a_exciton, \
-                                          const std::vector<std::array<int,2>>& d_relevant_states_indices, \
-                                          const std::vector<std::array<int,2>>& a_relevant_states_indices,
-                                          const bool& get_all_possible=false)
+std::vector<matching_states> match_states(const std::vector<ex_state>& d_relevant_states, const std::vector<ex_state>& a_relevant_states, const bool& get_all_possible=false)
 {
   std::vector<matching_states> matched;
   
-  for (const auto& d_state: d_relevant_states_indices)
+  for (const auto& d_state: d_relevant_states)
   {
-    for (const auto& a_state: a_relevant_states_indices)
+    for (const auto& a_state: a_relevant_states)
     {
-      if (is_matched(d_exciton, a_exciton, d_state, a_state) or get_all_possible)
+      if (is_matched(d_state, a_state) or get_all_possible)
       {
-        matching_states my_pair(d_exciton, a_exciton);
-        my_pair.set_i_state(d_state);
-        my_pair.set_f_state(a_state);
-        matched.push_back(my_pair);
+        // matching_states my_pair(d_state, a_state);
+        // matched.push_back(my_pair);
+        matched.emplace_back(matching_states(d_state,a_state));
       }
     }
   }
@@ -270,10 +228,10 @@ std::vector<matching_states> match_states(const cnt::exciton_struct& d_exciton, 
 
 
   std::cout << "\n...calculated pairs of donor and acceptor states\n";
-  std::cout << "number of pairs: " << matched.size() << " out of " << a_relevant_states_indices.size()*d_relevant_states_indices.size() << "\n\n";
+  std::cout << "number of pairs: " << matched.size() << " out of " << a_relevant_states.size()*d_relevant_states.size() << "\n\n";
   // for (const auto& pair:matched)
   // { 
-  //   double delta_e = pair.i_energy-pair.f_energy;
+  //   double delta_e = pair.i.energy-pair.f.energy;
   //   std::cout << "delta energy:" << delta_e/constants::eV << " [eV]   , lorentzian:" << lorentzian(delta_e)/lorentzian(0) << "\n";
   // }
   
@@ -281,10 +239,9 @@ std::vector<matching_states> match_states(const cnt::exciton_struct& d_exciton, 
 };
 
 // function to check if a state is energetically matched using a lorentzian
-bool is_matched(const cnt::exciton_struct& d_exciton, const cnt::exciton_struct& a_exciton, \
-             const std::array<int,2>& d_state, const std::array<int,2>& a_state)
+bool is_matched(const ex_state& d_state, const ex_state& a_state)
 {
-  double delta_e = d_exciton.energy(d_state[0],d_state[1]) - a_exciton.energy(a_state[0],a_state[1]);
+  double delta_e = d_state.energy - a_state.energy;
   if (lorentzian(delta_e) > 1.e-2*lorentzian(0))
   {
     return true;

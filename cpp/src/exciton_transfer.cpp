@@ -8,38 +8,41 @@
 #include "cnt.h"
 #include "constants.h"
 
-// set the output directory and the output file name
-void exciton_transfer::prepare_directory()
+// prepare the output directory by deleting its previous content or creating it
+exciton_transfer::t_directory exciton_transfer::prepare_directory()
 {
   namespace fs = std::experimental::filesystem;
+  t_directory directory;
 
-  _directory.assign("/Users/amirhossein/research/exciton_transfer");
-  std::cout << "output_directory: " << _directory.path() << std::endl;
+  directory.assign("/Users/amirhossein/research/exciton_transfer");
+  std::cout << "output_directory: " << directory.path() << std::endl;
 
-  if (not fs::exists(_directory.path()))
+  if (not fs::exists(directory.path()))
   {
     std::cout << "warning: output directory does NOT exist!!!" << std::endl;
-    std::cout << "output directory: " << _directory.path() << std::endl;
-    fs::create_directories(_directory.path());
+    std::cout << "output directory: " << directory.path() << std::endl;
+    fs::create_directories(directory.path());
   }
 
-  if (fs::is_directory(_directory.path()))
+  if (fs::is_directory(directory.path()))
   {
-    if (not fs::is_empty(_directory.path()))
+    if (not fs::is_empty(directory.path()))
     {
       std::cout << "warning: output directory is NOT empty!!!" << std::endl;
-      std::cout << "output directory: " << _directory.path() << std::endl;
+      std::cout << "output directory: " << directory.path() << std::endl;
       std::cout << "deleting the existing directory!!!" << std::endl;
-      fs::remove_all(_directory.path());
-      fs::create_directories(_directory.path());
+      fs::remove_all(directory.path());
+      fs::create_directories(directory.path());
     }
   }
   else
   {
     std::cout << "error: output path is NOT a directory!!!" << std::endl;
-    std::cout << "output path: " << _directory.path() << std::endl;
+    std::cout << "output path: " << directory.path() << std::endl;
     throw std::invalid_argument("The input value for output directory is not acceptable.");
   }
+
+  return directory;
 
 };
 
@@ -65,51 +68,54 @@ void exciton_transfer::save_Q_matrix_element(const int i_n_principal, const int 
 
   // find lists of relevant states in donor and acceptor excitons
   auto get_exciton_band = [](const auto& exciton, const int i_principal){
-    std::vector<std::array<int,2>> states_indices;
+    std::vector<ex_state> states;
     for (int ik_cm_idx=0; ik_cm_idx<exciton.nk_cm; ik_cm_idx++)
     {
-      states_indices.push_back({ik_cm_idx, i_principal});
+      ex_state state(exciton,ik_cm_idx,i_principal);
+      states.emplace_back(state);
     }
-    return states_indices;
+    return states;
   };
-  const auto i_relevant_states_indices = get_exciton_band(i_exciton,i_n_principal);
-  const auto f_relevant_states_indices = get_exciton_band(f_exciton,f_n_principal);
+  const auto i_relevant_states = get_exciton_band(i_exciton,i_n_principal);
+  const auto f_relevant_states = get_exciton_band(f_exciton,f_n_principal);
 
 
   // match the states based on their energy
-  std::vector<matching_states> state_pairs = match_states(i_exciton, f_exciton, i_relevant_states_indices, f_relevant_states_indices, true);
+  std::vector<matching_states> state_pairs = match_states(i_relevant_states, f_relevant_states, true);
 
   // get min of ik_cm_idx from relevant states indices
-  auto get_min_idx = [](const auto& relevant_state_indices){
+  auto get_min_ik_cm_idx = [](const auto& relevant_states){
     int min_idx = 1.e9;
-    for (const auto& idx: relevant_state_indices)
+    for (const auto& state: relevant_states)
     {
-      min_idx = (min_idx < idx[0]) ? min_idx : idx[0];
+      min_idx = (min_idx < state.ik_cm_idx) ? min_idx : state.ik_cm_idx;
     }
     return min_idx;
   };
   // get max of ik_cm_idx from relevant states indices
-  auto get_max_idx = [](const auto& relevant_state_indices){
+  auto get_max_ik_cm_idx = [](const auto& relevant_states){
     int max_idx = -1.e9;
-    for (const auto& idx: relevant_state_indices)
+    for (const auto& state: relevant_states)
     {
-      max_idx = (max_idx > idx[0]) ? max_idx : idx[0];
+      max_idx = (max_idx > state.ik_cm_idx) ? max_idx : state.ik_cm_idx;
     }
     return max_idx;
   };
-  int i_min_idx = get_min_idx(i_relevant_states_indices);
-  int i_max_idx = get_max_idx(i_relevant_states_indices);
-  int f_min_idx = get_min_idx(f_relevant_states_indices);
-  int f_max_idx = get_max_idx(f_relevant_states_indices);
+  int i_min_idx = get_min_ik_cm_idx(i_relevant_states);
+  int i_max_idx = get_max_ik_cm_idx(i_relevant_states);
+  int f_min_idx = get_min_ik_cm_idx(f_relevant_states);
+  int f_max_idx = get_max_ik_cm_idx(f_relevant_states);
 
   arma::cx_mat Q_mat(i_max_idx-i_min_idx+1, f_max_idx-f_min_idx+1, arma::fill::zeros);
   arma::vec init_ik_cm(i_max_idx-i_min_idx+1, arma::fill::zeros);
   arma::vec final_ik_cm(f_max_idx-f_min_idx+1, arma::fill::zeros);
   for (const auto& pair:state_pairs)
   { 
-    Q_mat(pair.i_state_idx[0]-i_min_idx, pair.f_state_idx[0]-f_min_idx) = calculate_Q(pair);
-    init_ik_cm(pair.i_state_idx[0]-i_min_idx) = pair.i_ik_cm;
-    final_ik_cm(pair.f_state_idx[0]-f_min_idx) = pair.f_ik_cm;
+    // std::cout << "pair.i.psi: " << arma::size(pair.i.exciton.psi.slice(pair.i.ik_cm_idx).col(pair.i.i_principal)) << "\n";
+    // std::cout << "pair.i.psi: " << arma::size(pair.i.psi()) << "\n";
+    Q_mat(pair.i.ik_cm_idx-i_min_idx, pair.f.ik_cm_idx-f_min_idx) = calculate_Q(pair);
+    init_ik_cm(pair.i.ik_cm_idx-i_min_idx) = pair.i.ik_cm;
+    final_ik_cm(pair.f.ik_cm_idx-f_min_idx) = pair.f.ik_cm;
   }
 
   arma::mat tmp;
@@ -134,5 +140,38 @@ void exciton_transfer::save_Q_matrix_element(const int i_n_principal, const int 
   final_ik_cm.save(filename,arma::arma_ascii);
 
   std::cout << "\n...calculated and saved Q matrix element\n";
+
+};
+
+// calculate Q()
+std::complex<double> exciton_transfer::calculate_Q(const matching_states& pair)
+{
+  // lambda function to calculate part of the Q matrix element that relates to each pair.
+  auto Q_partial = [](const ex_state& state)
+  {
+    const int ic = 1;
+    const int iv = 0;
+
+    const int iA = 0;
+    const int iB = 1;
+
+    const arma::vec dA = {0,0};
+    const arma::vec& dB = state.exciton.aCC_vec;
+    const arma::cx_vec exp_factor({std::exp(std::complex<double>(0.,-1.)*arma::dot(state.ik_cm*state.exciton.dk_l,dA)),\
+                                   std::exp(std::complex<double>(0.,-1.)*arma::dot(state.ik_cm*state.exciton.dk_l,dB))});
+
+    std::complex<double> Q_partial = 0;
+    for (int ik_c_idx=0; ik_c_idx<state.exciton.nk_c; ik_c_idx++)
+    {
+      const arma::cx_vec& Cc = state.elec_struct.wavefunc(state.ik_idx(1,ik_c_idx)).slice(state.ik_idx(0,ik_c_idx)).col(ic);
+      const arma::cx_vec& Cv = state.elec_struct.wavefunc(state.ik_idx(3,ik_c_idx)).slice(state.ik_idx(2,ik_c_idx)).col(iv);
+      Q_partial += state.psi(ik_c_idx)*arma::accu(Cc%arma::conj(Cv)%exp_factor);
+    }
+
+    return Q_partial;
+
+  };
+
+  return std::conj(Q_partial(pair.i))*Q_partial(pair.f);
 
 };

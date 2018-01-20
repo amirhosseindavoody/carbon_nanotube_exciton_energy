@@ -59,6 +59,7 @@ private:
   std::vector<std::array<std::array<unsigned int, 2>, 2>> _valleys_K2; // index of valleys in K2-extended representation
   std::vector<std::vector<std::array<int,2>>> _relev_ik_range; // ik of relevant states in the following form [[[ik,mu],...], [[ik,mu],...]]
 
+public:
   // struct to bundle information of electronic energy state
   struct el_energy_struct
   {
@@ -72,6 +73,7 @@ private:
     std::array<int,2> mu_range;
     int nk, n_mu; // number of elements in the range of ik and mu
   };
+private:
   // instantiation of el_energy_struct within K2-extended representation
   el_energy_struct _elec_K2;
 
@@ -116,7 +118,7 @@ public:
   // struct to bundle data and metadata of exciton
   struct exciton_struct
   {
-    exciton_struct(const cnt* m_cnt): owner_cnt(*m_cnt), dk_l((m_cnt->_dk_l)), elec_struct(m_cnt->_elec_K2),
+    exciton_struct(const cnt* m_cnt): cnt_obj(*m_cnt), dk_l((m_cnt->_dk_l)), elec_struct(m_cnt->_elec_K2),
       aCC_vec(m_cnt->_aCC_vec) {};
     std::string name; // a human readable name for the exciton
     arma::mat energy; // exciton energy dispersion in the form (ik_cm, n) where n is the \
@@ -129,9 +131,9 @@ public:
     int nk_cm=0; // number of ik_cm states
     arma::cx_cube psi; // exciton wavefunction in the form (ik_c_relev,n,ik_cm) therefore the first element is the \
                           weight of ik_c_relev state in the n-th eigen state with center-of-mass momentum ik_cm
-    const el_energy_struct& elec_struct;
-    const arma::vec& dk_l;
-    const arma::vec& aCC_vec;
+    const el_energy_struct& elec_struct; // reference to the el_energy_struct that is used to calculate the exciton dipersion
+    const arma::vec& dk_l; // reference to _dk_l vector in the owner cnt object
+    const arma::vec& aCC_vec; // const reference to _aCC_vec in the owner cnt object
 
     arma::ucube ik_idx; // cube to hold index of kc and kv states for each element in psi.\
                            The cube has dimensions of (4, nk_relev, nk_cm) where \
@@ -139,8 +141,56 @@ public:
                            for the corresponding excitonic state: \
                            j=0 --> ik_c_idx, j=1 --> mu_c_idx, j=2 --> ik_v_idx, j=3 --> mu_v_idx
     
-  private:
-    const cnt& owner_cnt;
+    const cnt& cnt_obj; // constant reference to the owner cnt object
+    
+    // assignment operator
+    exciton_struct operator=(const exciton_struct& other)
+    {
+      exciton_struct tmp(&(other.cnt_obj));
+      tmp.name = other.name;
+      tmp.energy = other.energy;
+      tmp.spin = other.spin;
+      tmp.mu_cm = other.mu_cm;
+      tmp.n_principal = other.n_principal;
+      tmp.nk_c = other.nk_c;
+      tmp.nk_cm = other.nk_cm;
+      tmp.psi = other.psi;
+      tmp.ik_idx = other.ik_idx;
+      tmp.ik_cm_range = other.ik_cm_range;
+      return tmp;
+    };
+
+    // copy constructor
+    exciton_struct (const exciton_struct& other):cnt_obj(other.cnt_obj), dk_l((other.dk_l)), elec_struct(other.elec_struct),
+      aCC_vec(other.aCC_vec)
+    {
+      (*this).name = other.name;
+      (*this).energy = other.energy;
+      (*this).spin = other.spin;
+      (*this).mu_cm = other.mu_cm;
+      (*this).n_principal = other.n_principal;
+      (*this).nk_c = other.nk_c;
+      (*this).nk_cm = other.nk_cm;
+      (*this).psi = other.psi;
+      (*this).ik_idx = other.ik_idx;
+      (*this).ik_cm_range = other.ik_cm_range;
+    };
+
+    // move constructor
+    exciton_struct (const exciton_struct&& other):cnt_obj(other.cnt_obj), dk_l((other.dk_l)), elec_struct(other.elec_struct),
+      aCC_vec(other.aCC_vec)
+    {
+      (*this).name = other.name;
+      (*this).energy = other.energy;
+      (*this).spin = other.spin;
+      (*this).mu_cm = other.mu_cm;
+      (*this).n_principal = other.n_principal;
+      (*this).nk_c = other.nk_c;
+      (*this).nk_cm = other.nk_cm;
+      (*this).psi = other.psi;
+      (*this).ik_idx = other.ik_idx;
+      (*this).ik_cm_range = other.ik_cm_range;
+    };
   };
 
 private:
