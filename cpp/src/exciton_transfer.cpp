@@ -157,8 +157,8 @@ std::complex<double> exciton_transfer::calculate_Q(const matching_states& pair)
 
     const arma::vec dA = {0,0};
     const arma::vec& dB = state.exciton.aCC_vec;
-    const arma::cx_vec exp_factor({std::exp(std::complex<double>(0.,-1.)*arma::dot(state.ik_cm*state.exciton.dk_l,dA)),\
-                                   std::exp(std::complex<double>(0.,-1.)*arma::dot(state.ik_cm*state.exciton.dk_l,dB))});
+    const arma::cx_vec exp_factor({std::exp(std::complex<double>(0.,+1.)*arma::dot(state.ik_cm*state.exciton.dk_l,dA)),\
+                                   std::exp(std::complex<double>(0.,+1.)*arma::dot(state.ik_cm*state.exciton.dk_l,dB))});
 
     std::complex<double> Q_partial = 0;
     for (int ik_c_idx=0; ik_c_idx<state.exciton.nk_c; ik_c_idx++)
