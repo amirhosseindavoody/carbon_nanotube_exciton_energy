@@ -19,8 +19,8 @@ int main(int argc, char *argv[])
 
 	exciton_transfer ex_transfer(m_cnt, m_cnt);
 	ex_transfer.save_Q_matrix_element(0,0);
-	ex_transfer.save_J_matrix_element(0,0);
-	// ex_transfer.first_order();
+	// ex_transfer.save_J_matrix_element(0,0);
+	ex_transfer.first_order();
 
 	std::clock_t end = std::clock();
 

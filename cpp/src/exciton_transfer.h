@@ -171,10 +171,10 @@ public:
   };
 
   // calculate Q()
-  std::complex<double> calculate_Q(const matching_states& pair);
+  std::complex<double> calculate_Q(const matching_states& pair) const;
 
   // calculate J()
-  std::complex<double> calculate_J(const matching_states& pair, const std::array<double,2>& shifts_along_axis, const double& z_shift, const double& angle);
+  std::complex<double> calculate_J(const matching_states& pair, const std::array<double,2>& shifts_along_axis, const double& z_shift, const double& angle) const;
 
   // match states based on energies
   std::vector<matching_states> match_states(const std::vector<ex_state>& d_relevant_states, const std::vector<ex_state>& a_relevant_states)

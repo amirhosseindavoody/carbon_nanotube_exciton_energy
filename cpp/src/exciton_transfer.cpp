@@ -48,7 +48,7 @@ exciton_transfer::t_directory exciton_transfer::prepare_directory()
 };
 
 // calculate Q()
-std::complex<double> exciton_transfer::calculate_Q(const matching_states& pair)
+std::complex<double> exciton_transfer::calculate_Q(const matching_states& pair) const
 {
   // lambda function to calculate part of the Q matrix element that relates to each pair.
   auto Q_partial = [](const ex_state& state)
@@ -85,7 +85,7 @@ std::complex<double> exciton_transfer::calculate_Q(const matching_states& pair)
 };
 
 // calculate J()
-std::complex<double> exciton_transfer::calculate_J(const matching_states& pair, const std::array<double,2>& shifts_along_axis, const double& z_shift, const double& angle)
+std::complex<double> exciton_transfer::calculate_J(const matching_states& pair, const std::array<double,2>& shifts_along_axis, const double& z_shift, const double& angle) const
 {
   // make position of all atoms in the entire cnt length in 3d space
   auto make_Ru_3d = [](const cnt& m_cnt, const double shift_along_axis, const double z_shift, const double angle) {
@@ -389,8 +389,10 @@ void exciton_transfer::save_J_matrix_element(const int i_n_principal, const int 
 // calculate first order transfer rate
 void exciton_transfer::first_order()
 {
-  _c2c_distance = 1.5e-9;
+  // _c2c_distance = 1.5e-9;
+  _c2c_distance = 1e-7;
   _theta = constants::pi/2.;
+  // _theta = 0;
   _shifts = {0., 0.};
 
   std::cout << "\ncenter to center distance: " << _c2c_distance*1.e9 << " [nm]\n";
@@ -412,14 +414,29 @@ void exciton_transfer::first_order()
   std::vector<ex_state> d_relevant_states = get_relevant_states(d_exciton,min_energy);
   std::vector<ex_state> a_relevant_states = get_relevant_states(a_exciton,min_energy);
 
+  double Z = 0;
+  for (const auto& state:d_relevant_states)
+  {
+    Z += std::exp(-state.energy/(constants::kb*_temperature));
+  }
+
   // match the states based on their energy
   std::vector<matching_states> state_pairs = match_states(d_relevant_states, a_relevant_states);
 
+  double transfer_rate = 0;
+
+  progress_bar prog(state_pairs.size(),"calculate first-order exciton transfer rate");
   for (const auto& pair:state_pairs)
   { 
+    prog.step();
     std::complex<double> Q = calculate_Q(pair);
+    std::complex<double> J = calculate_J(pair, _shifts, _c2c_distance, _theta);
+    double M = std::abs(Q*J)/std::sqrt(pair.i.cnt_obj.length_in_meter()*pair.f.cnt_obj.length_in_meter());
+    transfer_rate += (2*constants::pi/constants::hb)*(std::exp(-pair.i.energy/(constants::kb*_temperature))/Z)*std::pow(M,2)*lorentzian(pair.i.energy-pair.f.energy);
   }
 
-  std::cout << "\n...calculated Q matrix element\n";
-
+  std::cout << "\n";
+  std::cout << "theta: " << _theta/constants::pi*180 << "[degrees]\n";
+  std::cout << "center to center distance: " << _c2c_distance*1e9 << " [nm]\n";
+  std::cout << "exciton transfer rate: " << transfer_rate << "\n";
 };
