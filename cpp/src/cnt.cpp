@@ -11,6 +11,7 @@ Stores all relevant information for a carbon nanotube
 
 #include "constants.h"
 #include "cnt.h"
+#include "progress.hpp"
 
 // set the output directory and the output file name
 void cnt::process_command_line_args(int argc, char* argv[])
@@ -313,8 +314,8 @@ void cnt::get_atom_coordinates()
 
 	// put position of all atoms in a single variable in 2d space(unrolled graphene sheet)
 	_pos_2d = arma::mat(2*_Nu,2,arma::fill::zeros);
-  _pos_2d(arma::span(0,_Nu-1),arma::span::all) = _pos_a;
-  _pos_2d(arma::span(_Nu,2*_Nu-1),arma::span::all) = _pos_b;
+  _pos_2d.rows(0,_Nu-1) = _pos_a;
+  _pos_2d.rows(_Nu,2*_Nu-1) = _pos_b;
 
 	// calculate position of all atoms in the 3d space (rolled graphene sheet)
 	_pos_3d = arma::mat(2*_Nu,3,arma::fill::zeros);
@@ -332,6 +333,16 @@ void cnt::get_atom_coordinates()
   // save coordinates of atoms in 3d space
   filename = _directory.path().string() + _name + ".pos_3d.dat";
   _pos_3d.save(filename, arma::arma_ascii);
+
+  // put position of all graphene unit cells in 2d (unrolled graphene sheet) and 3d space (rolled graphene sheet)
+	_pos_u_2d = _pos_a;
+	_pos_u_3d = arma::mat(_Nu,3,arma::fill::zeros);
+	for (int i=0; i<_pos_u_3d.n_rows; i++)
+	{
+		_pos_u_3d(i,0) = _radius*cos(_pos_u_2d(i,0)/_radius);
+		_pos_u_3d(i,1) = _pos_u_2d(i,1);
+		_pos_u_3d(i,2) = _radius*sin(_pos_u_2d(i,0)/_radius);
+	}
 
 };
 
@@ -704,13 +715,13 @@ cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::ar
     return std::exp(i1*arma::dot(q,R))*_Upp/std::sqrt(coeff*(std::pow(R(0),2)+std::pow(R(1),2))+1);
   };
 
-  progress_bar prog;
+  progress_bar prog(nq, "vq");
 
   for (int iq=iq_range[0]; iq<iq_range[1]; iq++)
   {
     int iq_idx = iq-iq_range[0];
 
-    prog.step(iq_idx, nq, "vq",5);
+    prog.step(iq_idx);
 
     q_vec(iq_idx) = iq*arma::norm(_dk_l,2);
     for (int mu=mu_range[0]; mu<mu_range[1]; mu++)
@@ -801,7 +812,7 @@ cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, con
   const int iA = 0;
   const int iB = 1;
 
-  progress_bar prog;
+  progress_bar prog(nq, "calculate polarization");
 
   int iq_idx, mu_q_idx;
   int ik_idx, mu_k_idx;
@@ -811,7 +822,7 @@ cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, con
     iq_idx = iq - iq_range[0];
     q_vec(iq_idx) = iq*arma::norm(_dk_l);
 
-    prog.step(iq_idx, nq, "polarization", 5);
+    prog.step(iq_idx);
 
     for (mu_q=mu_range[0]; mu_q<mu_range[1]; mu_q++)
     {
@@ -996,7 +1007,6 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
     return ik_c;
   };
 
-  progress_bar prog;
 
   int nk_cm = ik_cm_range[1] - ik_cm_range[0];
   int nk_relev = int(_relev_ik_range[0].size());
@@ -1019,6 +1029,8 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   arma::cx_mat psi;
   arma::vec k_cm_vec(nk_cm,arma::fill::zeros);
 
+  progress_bar prog(nk_cm, "calculate ex_energy");
+
   // loop to calculate exciton dispersion
   for (ik_cm=ik_cm_range[0]; ik_cm<ik_cm_range[1]; ik_cm++)
   {
@@ -1029,7 +1041,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
     int ik_cm_idx = ik_cm - ik_cm_range[0];
     k_cm_vec(ik_cm_idx) = ik_cm*arma::norm(_dk_l);
 
-    prog.step(ik_cm_idx, nk_cm, "ex_energy", 5);
+    prog.step(ik_cm_idx);
 
 
     for (int ik_c_idx=0; ik_c_idx<nk_relev; ik_c_idx++)

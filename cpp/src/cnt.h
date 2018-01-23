@@ -54,7 +54,8 @@ private:
   arma::vec _dk_l; // delta_k in the longitudinal direction with respect to cnt axis
 
   arma::mat _pos_a, _pos_b; // position of atoms in A and B sites
-  arma::mat _pos_2d, _pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space
+  arma::mat _pos_2d, _pos_3d; // position of all atoms in cnt unit cell in 2d and in 3d space, axis of the cnt is in the y direction
+  arma::mat _pos_u_2d, _pos_u_3d; // position of graphene unit cells in cnt unit cells in 2d and 3d space, , axis of the cnt is in the y direction
 
   std::vector<std::array<std::array<unsigned int, 2>, 2>> _valleys_K2; // index of valleys in K2-extended representation
   std::vector<std::vector<std::array<int,2>>> _relev_ik_range; // ik of relevant states in the following form [[[ik,mu],...], [[ik,mu],...]]
@@ -320,27 +321,42 @@ public:
     throw std::logic_error("could not find A1 exciton.\nInvestigate.\n");
   };
 
-  // helper class to monitor progress of the loops
-  class progress_bar
+  // getter function to return length of cnt in units of cnt unit cell
+  const int length_in_cnt_unit_cell() const
   {
-    private:
-    float counter = 0;
+    return _number_of_cnt_unit_cells;
+  }
 
-    public:
-    void step(const int& i, const int& i_max, const std::string& message, const int& increments=1)
-    {
-      if ((float(i)/float(i_max))>(counter/100.))
-      {
-        std::cout << message << ": " << int(counter) << "%\n";
-        counter += increments;
-      }
-    };
+  // getter function to return length of cnt in units meters
+  double length_in_meter() const
+  {
+    return double(_number_of_cnt_unit_cells)*arma::norm(_t_vec);
+  }
 
-    void reset()
-    {
-      counter = 0;
-    }
+  // getter function to return position of all graphene unit cells in cnt unit cell in 3d
+  const arma::mat& pos_u_3d() const
+  {
+    return _pos_u_3d;
   };
+
+  // getter function to return position of all graphene unit cells in cnt unit cell in 2d
+  const arma::mat& pos_u_2d() const
+  {
+    return _pos_u_2d;
+  };
+
+  // getter function to return translation vector
+  const arma::vec& t_vec() const
+  {
+    return _t_vec;
+  };
+
+  // return area of graphene unit cell
+  double Au() const
+  {
+    return std::abs(_a1(0)*_a2(1)-_a1(1)*_a2(0));
+    // return arma::norm(arma::cross(_a1,_a2));
+  }
 };
 
 #endif // end _cnt_h_
