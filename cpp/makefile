@@ -1,6 +1,6 @@
 CC=g++-7
 CC+= -O3
-# CC+= -g
+# CC+= -Wall -Wno-comment -ansi -pedantic-errors -g
 
 CFLAGS = -I./ -std=c++17
 LFLAGS = -lstdc++fs -std=c++17 -larmadillo

@@ -4,9 +4,9 @@
 	</output_directory>
 	<name>cnt1</name>
 	<chirality>
-		4,2
+		6,5
 	</chirality>
 	<length units="cnt_unit_cell">
-		100
+		50
 	</length>
 </document>

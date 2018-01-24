@@ -16,6 +16,6 @@ namespace constants
 
 	static const double eps0 = 8.85*std::pow(10,-12); // permittivity of free space
 	static const double q0 = 1.6*std::pow(10,-19); // charge of electron
-};
+}
 
 #endif // constants_h

@@ -146,7 +146,7 @@ void cnt::process_command_line_args(int argc, char* argv[])
 
   std::cout << std::endl;
 
-};
+}
 
 void cnt::get_parameters()
 {
@@ -228,9 +228,6 @@ void cnt::get_parameters()
   {
     double p_min = (1./double(_t1)+1./double(_n))/(double(_m)/double(_n)-double(_t2)/double(_t1));
     double p_max = (1./double(_t1)+double(_Nu)/double(_n))/(double(_m)/double(_n)-double(_t2)/double(_t1));
-
-    double q_min = double(_t2)/double(_t1)*p_max + 1./double(_t1);
-    double q_max = double(_t2)/double(_t1)*p_min + 1./double(_t1);
 
     bool found = false;
 
@@ -319,7 +316,7 @@ void cnt::get_atom_coordinates()
 
 	// calculate position of all atoms in the 3d space (rolled graphene sheet)
 	_pos_3d = arma::mat(2*_Nu,3,arma::fill::zeros);
-	for (int i=0; i<_pos_3d.n_rows; i++)
+	for (unsigned int i=0; i<_pos_3d.n_rows; i++)
 	{
 		_pos_3d(i,0) = _radius*cos(_pos_2d(i,0)/_radius);
 		_pos_3d(i,1) = _pos_2d(i,1);
@@ -337,14 +334,14 @@ void cnt::get_atom_coordinates()
   // put position of all graphene unit cells in 2d (unrolled graphene sheet) and 3d space (rolled graphene sheet)
 	_pos_u_2d = _pos_a;
 	_pos_u_3d = arma::mat(_Nu,3,arma::fill::zeros);
-	for (int i=0; i<_pos_u_3d.n_rows; i++)
+	for (unsigned int i=0; i<_pos_u_3d.n_rows; i++)
 	{
 		_pos_u_3d(i,0) = _radius*cos(_pos_u_2d(i,0)/_radius);
 		_pos_u_3d(i,1) = _pos_u_2d(i,1);
 		_pos_u_3d(i,2) = _radius*sin(_pos_u_2d(i,0)/_radius);
 	}
 
-};
+}
 
 // calculate electron energy dispersions in the K1-extended representation using full unit cell (2*Nu atoms)
 void cnt::electron_full_unit_cell()
@@ -353,10 +350,10 @@ void cnt::electron_full_unit_cell()
 	// make the list of 1st nearest neighbor atoms
 	arma::umat nn_list(2*_Nu,3,arma::fill::zeros); // contains index of the nearest neighbor atom
 	arma::imat nn_tvec_index(2*_Nu,3,arma::fill::zeros); // contains the index of the cnt unit cell that the nearest neigbor atom is in.
-	for (int i=0; i<_pos_3d.n_rows; i++)
+	for (unsigned int i=0; i<_pos_3d.n_rows; i++)
 	{
 		int k=0;
-		for (int j=0; j<_pos_3d.n_rows; j++)
+		for (unsigned int j=0; j<_pos_3d.n_rows; j++)
 		{
 			for (int l=-1; l<=1; l++)
 			{
@@ -397,7 +394,7 @@ void cnt::electron_full_unit_cell()
 
 		for (int i=0; i<2*_Nu; i++)
 		{
-			H(i,i) = (_e2p,0.e0);
+			H(i,i) = std::complex<double>(_e2p,0.e0);
 			for (int k=0; k<3; k++)
 			{
 				int j = nn_list(i,k);
@@ -411,10 +408,10 @@ void cnt::electron_full_unit_cell()
 		arma::eig_sym(E, C, H);
 
 		// fix the phase of the eigen vectors
-		for (int i=0; i<C.n_cols; i++)
+		for (unsigned int i=0; i<C.n_cols; i++)
 		{
 			arma::cx_double phi = std::conj(C(0,i))/std::abs(C(0,i));
-			for (int j=0; j<C.n_rows; j++)
+			for (unsigned int j=0; j<C.n_rows; j++)
 			{
 				C(j,i) *= phi;
 			}
@@ -434,7 +431,7 @@ void cnt::electron_full_unit_cell()
   // filename = _directory.path().string() + _name + ".el_psi_full.dat";
   // el_psi_full.save(filename, arma::arma_ascii);
 
-};
+}
 
 // calculate electron dispersion energies for an input range of ik and mu
 cnt::el_energy_struct cnt::electron_energy(const std::array<int,2>& ik_range, const std::array<int,2>& mu_range, const std::string& name)
@@ -495,7 +492,7 @@ cnt::el_energy_struct cnt::electron_energy(const std::array<int,2>& ik_range, co
   energy_s.no_of_bands = number_of_bands;
 
   return energy_s;
-};
+}
 
 void cnt::find_valleys(const cnt::el_energy_struct& elec_struct)
 {
@@ -535,7 +532,7 @@ void cnt::find_valleys(const cnt::el_energy_struct& elec_struct)
                                   });
 
   // put them in a vector with each element containing the two equivalent valleys
-  for (int i=0; i<ik_valley_idx.size()/2; i++)
+  for (unsigned int i=0; i<ik_valley_idx.size()/2; i++)
   {
     std::array<std::array<unsigned int, 2>, 2> valley = {ik_valley_idx.at(2*i), ik_valley_idx.at(2*i+1)};
     _valleys_K2.push_back(valley);
@@ -551,7 +548,7 @@ void cnt::find_valleys(const cnt::el_energy_struct& elec_struct)
 
   std::cout << "number of valleys: " << _valleys_K2.size() << std::endl;
 
-};
+}
 
 // find ik values that are energetically relevant around the bottom of the valley
 void cnt::find_relev_ik_range(double delta_energy, const cnt::el_energy_struct& elec_struct)
@@ -652,7 +649,7 @@ void cnt::find_relev_ik_range(double delta_energy, const cnt::el_energy_struct& 
 
   _relev_ik_range = relev_ik_range;
 
-};
+}
 
 // fourier transformation of the coulomb interaction a.k.a v(q)
 cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::array<int,2> mu_range, unsigned int no_of_cnt_unit_cells)
@@ -731,7 +728,7 @@ cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::ar
       // std::cout << "after addition!\n";
       for (int i=0; i<4; i++)
       {
-        for (int k=0; k<_Nu*no_of_cnt_unit_cells; k++)
+        for (unsigned int k=0; k<_Nu*no_of_cnt_unit_cells; k++)
         {
           vq(iq_idx,mu_idx,i) += Uhno(rel_pos.slice(i).row(k));
         }
@@ -766,7 +763,7 @@ cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::ar
   vq_s.n_mu = n_mu;
 
   return vq_s;
-};
+}
 
 // polarization of electronic states a.k.a PI(q)
 cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, const std::array<int,2> mu_range, const cnt::el_energy_struct& elec_struct)
@@ -809,8 +806,6 @@ cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, con
 
   const int iv = 0;
   const int ic = 1;
-  const int iA = 0;
-  const int iB = 1;
 
   progress_bar prog(nq, "calculate polarization");
 
@@ -869,7 +864,7 @@ cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, con
   PI_s.n_mu = n_mu;
 
   return PI_s;
-};
+}
 
 // dielectric function a.k.a eps(q)
 cnt::epsilon_struct cnt::calculate_dielectric(const std::array<int,2> iq_range, const std::array<int,2> mu_range)
@@ -917,7 +912,7 @@ cnt::epsilon_struct cnt::calculate_dielectric(const std::array<int,2> iq_range, 
   eps_s.nq = nq;
   eps_s.n_mu = n_mu;
   return eps_s;
-};
+}
 
 // calculate exciton dispersion
 std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,2> ik_cm_range, const cnt::el_energy_struct& elec_struct)
@@ -1191,7 +1186,7 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   excitons[2].ik_cm_range = ik_cm_range;
 
   return excitons;
-};
+}
 
 // call this to do all the calculations at once
 void cnt::calculate_exciton_dispersion()
@@ -1219,4 +1214,4 @@ void cnt::calculate_exciton_dispersion()
   std::array<int,2> ik_cm_range = {-int(_relev_ik_range[0].size()), int(_relev_ik_range[0].size())};
   _excitons = calculate_A_excitons(ik_cm_range, _elec_K2);
 
-};
+}

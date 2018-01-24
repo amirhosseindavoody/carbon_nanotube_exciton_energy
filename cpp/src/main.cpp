@@ -7,8 +7,6 @@
 
 int main(int argc, char *argv[])
 {
-	std::clock_t start = std::clock();
-
 	std::time_t start_time = std::time(nullptr);
 	std::cout << "\nstart time:" << std::endl << std::asctime(std::localtime(&start_time)) << std::endl;
 
@@ -18,11 +16,7 @@ int main(int argc, char *argv[])
 	m_cnt.calculate_exciton_dispersion();
 
 	exciton_transfer ex_transfer(m_cnt, m_cnt);
-	ex_transfer.save_Q_matrix_element(0,0);
-	// ex_transfer.save_J_matrix_element(0,0);
-	ex_transfer.first_order();
-
-	std::clock_t end = std::clock();
+	ex_transfer.first_order(1.5e-9, {0.,0.}, 0);
 
 	std::time_t end_time = std::time(nullptr);
 	std::cout << std::endl << "end time:" << std::endl << std::asctime(std::localtime(&end_time));
