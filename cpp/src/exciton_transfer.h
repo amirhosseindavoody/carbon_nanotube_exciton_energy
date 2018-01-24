@@ -44,39 +44,32 @@ public:
     std::cout << "\n...exciton transfer parameters:\n";
     std::cout << "temperature: " << _temperature << " [Kelvin]\n";
     std::cout << "energy broadening factor: " << _broadening_factor/constants::eV << " [eV]\n";
-
   };
-
-  // calculate first order transfer rate
-  double first_order(const double& z_shift, const std::array<double,2> axis_shifts, const double& theta);
-
-  // calculate and plot Q matrix element between two exciton bands
-  void save_Q_matrix_element(const int i_n_principal, const int f_n_principal);
-
-  // calculate and plot J matrix element between two exciton bands
-  void save_J_matrix_element(const int i_n_principal, const int f_n_principal);
 
   // struct to bundle information about the excitonic states that are relevant
   struct ex_state
   {
-    ex_state(const cnt::exciton_struct& m_exciton, const int& m_ik_cm_idx, const int& m_i_principal):
-      exciton(&m_exciton), cnt_obj(m_exciton.cnt_obj), elec_struct(m_exciton.elec_struct)
+    ex_state(const cnt::exciton_struct& m_exciton, const int& m_ik_cm_idx, const int& m_i_principal)
     {
+      exciton = &m_exciton;
+      cnt_obj = m_exciton.cnt_obj;
+      elec_struct = m_exciton.elec_struct;
       ik_cm = m_ik_cm_idx+m_exciton.ik_cm_range[0];
       i_principal = m_i_principal;
       ik_cm_idx = m_ik_cm_idx;
       energy = m_exciton.energy(ik_cm_idx,i_principal);
+      mu_cm=0;
     };
 
-    const cnt::exciton_struct* exciton; // reference to the exciton struct that owns the state
-    const cnt* cnt_obj; // reference to the cnt object owning the exciton state
-    const cnt::el_energy_struct* elec_struct; // reference to the el_energy_struct that is used to calculate the exciton dipersion
-    int ik_cm_idx; // index of the ik_cm state in the exciton.energy and exciton.psi matrices
-    int i_principal; // the principal quantum number of the state in the exciton.energy and exciton.psi matrices
+    const cnt::exciton_struct* exciton=nullptr; // reference to the exciton struct that owns the state
+    const cnt* cnt_obj=nullptr; // reference to the cnt object owning the exciton state
+    const cnt::el_energy_struct* elec_struct=nullptr; // reference to the el_energy_struct that is used to calculate the exciton dipersion
+    int ik_cm_idx=0; // index of the ik_cm state in the exciton.energy and exciton.psi matrices
+    int i_principal=0; // the principal quantum number of the state in the exciton.energy and exciton.psi matrices
 
-    double energy; // energy of the exciton state
-    int ik_cm; // value of the ik_cm for the state
-    // const int mu_cm=0; // value of the mu for the state
+    double energy=0; // energy of the exciton state
+    int ik_cm=0; // value of the ik_cm for the state
+    int mu_cm=0; // value of the mu for the state
 
     // access to the whole exciton state wavefunction
     arma::cx_vec psi() const
@@ -112,9 +105,6 @@ public:
 
   };
 
-  // get the energetically relevant states in the form a vector of ex_state structs
-  std::vector<ex_state> get_relevant_states(const cnt::exciton_struct& exciton, const double min_energy);
-
   // struct to bundle information about initial and final states that match energetically
   struct matching_states
   {
@@ -123,6 +113,9 @@ public:
     const ex_state i; // initial exciton state
     const ex_state f; // final exciton state
   };
+
+  // get the energetically relevant states in the form a vector of ex_state structs
+  std::vector<ex_state> get_relevant_states(const cnt::exciton_struct& exciton, const double min_energy);
 
   // calculate Q()
   std::complex<double> calculate_Q(const matching_states& pair) const;
@@ -148,8 +141,8 @@ public:
 
 
 
-    std::cout << "\n...calculated pairs of donor and acceptor states\n";
-    std::cout << "number of pairs: " << matched.size() << " out of " << a_relevant_states.size()*d_relevant_states.size() << "\n\n";
+    // std::cout << "\n...calculated pairs of donor and acceptor states\n";
+    // std::cout << "number of pairs: " << matched.size() << " out of " << a_relevant_states.size()*d_relevant_states.size() << "\n\n";
     // for (const auto& pair:matched)
     // { 
     //   double delta_e = pair.i.energy-pair.f.energy;
@@ -191,6 +184,17 @@ public:
     return matched;
   };
 
+  // calculate and plot Q matrix element between two exciton bands
+  void save_Q_matrix_element(const int i_n_principal, const int f_n_principal);
+
+  // calculate and plot J matrix element between two exciton bands
+  void save_J_matrix_element(const int i_n_principal, const int f_n_principal);
+
+  // calculate first order transfer rate
+  double first_order(const double& z_shift, const std::array<double,2> axis_shifts, const double& theta, const bool& show_results=false);
+
+  // calculate first order transfer rate for varying angle
+  void calculate_first_order_vs_angle(const double& z_shift, const std::array<double,2> axis_shifts);
 };
 
 #endif //_exciton_transfer_h_

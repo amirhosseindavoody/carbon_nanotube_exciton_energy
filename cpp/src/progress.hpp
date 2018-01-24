@@ -17,6 +17,8 @@ private:
   int _i_max=0;
   int _i=0;
 
+  bool _is_silent=false;
+
   bool _start_chrono = true;
   std::time_t _start_time;
   std::time_t _current_time;
@@ -24,12 +26,18 @@ private:
 
 public:
   // constructor to initialize internal state of the progress bar
-  progress_bar(const int& i_max, const std::string& title="")
+  progress_bar(const int& i_max, const std::string& title="", const bool& is_silent=false)
   {
     _title = title;
     _i_max = i_max-1;
     _i=0;
-    std::cout << _title << ":\n";
+    
+    _is_silent = is_silent;
+    
+    if (not _is_silent){
+      std::cout << _title << ":\n";
+    }
+    
   };
 
   std::string estimate_remaining_time()
@@ -63,6 +71,8 @@ public:
   // stepping function to keep track of progress internally
   void step()
   {
+    if (_is_silent) return;
+
     _progress = float(_i)/float(_i_max);
     _pos = _progress*_barWidth;
     std::cout << "[";
@@ -83,6 +93,8 @@ public:
   // stepping function to pass progress level explicitly and do the rest internally
   void step(const int& i)
   {
+    if (_is_silent) return;
+
     _progress = float(i)/float(_i_max);
     _pos = _progress*_barWidth;
     std::cout << "[";
@@ -100,11 +112,16 @@ public:
   };
 
   // constructor without any internal state initialization
-  progress_bar() {};
+  progress_bar(const bool& is_silent=false)
+  {
+    _is_silent = is_silent;
+  };
 
   // stepping function that does not need initialization
   void step(const int& i, const int& i_max, const std::string& title)
   {
+    if (_is_silent) return;
+    
     _progress = float(i)/float(i_max-1);
     _pos = _progress*_barWidth;
     std::cout << title << ": [";
