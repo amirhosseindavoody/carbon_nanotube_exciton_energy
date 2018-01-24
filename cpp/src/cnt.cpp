@@ -718,7 +718,7 @@ cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::ar
   {
     int iq_idx = iq-iq_range[0];
 
-    prog.step(iq_idx);
+    prog.step();
 
     q_vec(iq_idx) = iq*arma::norm(_dk_l,2);
     for (int mu=mu_range[0]; mu<mu_range[1]; mu++)

@@ -197,14 +197,62 @@ double exciton_transfer::first_order(const double& z_shift, const std::array<dou
   }
 
   std::cout << "\n\n";
+  std::cout << "cnt lengths: " << _cnts[0]->length_in_meter()*1.e9 << " [nm], " << _cnts[1]->length_in_meter()*1.e9 << " [nm]\n";
   std::cout << "center to center distance: " << z_shift*1.e9 << " [nm]\n";
   std::cout << "cnt1 radius: " << _cnts[0]->radius()*1.e9 << " [nm], cnt2 radius: " << _cnts[1]->radius()*1.e9 << " [nm]\n";
   std::cout << "wall to wall distance: " << (z_shift - _cnts[0]->radius() - _cnts[1]->radius())*1.e9 << " [nm]\n";
-  std::cout << "theta: " << theta/constants::pi*180 << "[degrees]\n";
+  std::cout << "theta: " << theta/constants::pi*180 << " [degrees]\n";
   std::cout << "axis shifts: " << axis_shifts[0]*1e9 << " [nm] and " << axis_shifts[1]*1e9 << " [nm]\n";
   std::cout << "exciton transfer rate: " << transfer_rate << "\n";
 
   return transfer_rate;
+}
+
+// get the energetically relevant states in the form a vector of ex_state structs
+std::vector<exciton_transfer::ex_state> exciton_transfer::get_relevant_states(const cnt::exciton_struct& exciton, const double min_energy)
+{
+  const double threshold_population = 1.e-3;
+  const double threshold_energy = min_energy+std::abs(std::log(threshold_population) * constants::kb*_temperature);
+
+  std::vector<ex_state> relevant_states;
+  
+  for (int i_n=0; i_n<exciton.n_principal; i_n++)
+  {
+    for (int ik_cm_idx=0; ik_cm_idx<exciton.nk_cm; ik_cm_idx++)
+    {
+      if (exciton.energy(ik_cm_idx,i_n) <= threshold_energy)
+      {
+        relevant_states.emplace_back(ex_state(exciton,ik_cm_idx,i_n));
+      }
+    }
+  }
+
+  // sort relevant states in order of their energies
+  std::sort(relevant_states.begin(),relevant_states.end(), \
+              [](const auto& s1, const auto& s2) {
+                return s1.energy < s2.energy;
+              }
+            );
+
+  // calculate normalization factor
+  double normalization_factor = 0.;
+  for (const auto& state: relevant_states)
+  {
+    double delta_e = (state.energy-min_energy);
+    normalization_factor += std::exp(-delta_e/(constants::kb*_temperature));
+  }
+
+
+  std::cout << "\n...calculated relevant states\n";
+  std::cout << "number of relevant states: " << relevant_states.size() << "\n";
+  // for (const auto& state: relevant_states)
+  // {
+  //   double delta_e = (state.energy-min_energy);
+  //   std::cout << "[" << state.ik_cm_idx << "," << state.i_principal <<"] --> energy:" << delta_e/constants::eV \
+  //             << " , population:" << std::exp(-delta_e/(constants::kb*_temperature))/normalization_factor << "\n";
+  // }
+  
+  return relevant_states;
 }
 
 // calculate and plot Q matrix element between two exciton bands
@@ -420,51 +468,4 @@ void exciton_transfer::save_J_matrix_element(const int i_n_principal, const int 
 
   std::cout << "\n...calculated and saved J matrix element\n";
 
-}
-
-// get the energetically relevant states in the form a vector of ex_state structs
-std::vector<exciton_transfer::ex_state> exciton_transfer::get_relevant_states(const cnt::exciton_struct& exciton, const double min_energy)
-{
-  const double threshold_population = 1.e-3;
-  const double threshold_energy = min_energy+std::abs(std::log(threshold_population) * constants::kb*_temperature);
-
-  std::vector<ex_state> relevant_states;
-  
-  for (int i_n=0; i_n<exciton.n_principal; i_n++)
-  {
-    for (int ik_cm_idx=0; ik_cm_idx<exciton.nk_cm; ik_cm_idx++)
-    {
-      if (exciton.energy(ik_cm_idx,i_n) <= threshold_energy)
-      {
-        relevant_states.emplace_back(ex_state(exciton,ik_cm_idx,i_n));
-      }
-    }
-  }
-
-  // sort relevant states in order of their energies
-  std::sort(relevant_states.begin(),relevant_states.end(), \
-              [](const auto& s1, const auto& s2) {
-                return s1.energy < s2.energy;
-              }
-            );
-
-  // calculate normalization factor
-  double normalization_factor = 0.;
-  for (const auto& state: relevant_states)
-  {
-    double delta_e = (state.energy-min_energy);
-    normalization_factor += std::exp(-delta_e/(constants::kb*_temperature));
-  }
-
-
-  std::cout << "\n...calculated relevant states\n";
-  std::cout << "number of relevant states: " << relevant_states.size() << "\n";
-  // for (const auto& state: relevant_states)
-  // {
-  //   double delta_e = (state.energy-min_energy);
-  //   std::cout << "[" << state.ik_cm_idx << "," << state.i_principal <<"] --> energy:" << delta_e/constants::eV \
-  //             << " , population:" << std::exp(-delta_e/(constants::kb*_temperature))/normalization_factor << "\n";
-  // }
-  
-  return relevant_states;
 }
