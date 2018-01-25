@@ -4,6 +4,7 @@
 
 #include "cnt.h"
 #include "exciton_transfer.h"
+#include "constants.h"
 
 int main(int argc, char *argv[])
 {
@@ -16,8 +17,11 @@ int main(int argc, char *argv[])
 	m_cnt.calculate_exciton_dispersion();
 
 	exciton_transfer ex_transfer(m_cnt, m_cnt);
-	ex_transfer.first_order(1.5e-9, {0.,0.}, 0, true);
-	ex_transfer.calculate_first_order_vs_angle(1.5e-9, {0.,0.});
+	// ex_transfer.first_order(1.5e-9, {0.,0.}, 0, true);
+	// ex_transfer.calculate_first_order_vs_angle(1.5e-9, {0.,0.});
+	// ex_transfer.calculate_first_order_vs_zshift({0.,0.}, 0);
+	ex_transfer.calculate_first_order_vs_axis_shift(1.5e-9, constants::pi/2);
+
 
 	std::time_t end_time = std::time(nullptr);
 	std::cout << std::endl << "end time:" << std::endl << std::asctime(std::localtime(&end_time));

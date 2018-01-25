@@ -195,6 +195,12 @@ public:
 
   // calculate first order transfer rate for varying angle
   void calculate_first_order_vs_angle(const double& z_shift, const std::array<double,2> axis_shifts);
+
+  // calculate first order transfer rate for center to center distance
+  void calculate_first_order_vs_zshift(const std::array<double,2> axis_shifts, const double& theta);
+
+  // calculate first order transfer rate for varying axis shift
+  void calculate_first_order_vs_axis_shift(const double z_shift, const double& theta);
 };
 
 #endif //_exciton_transfer_h_
