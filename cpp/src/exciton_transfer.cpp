@@ -59,8 +59,6 @@ void exciton_transfer::save_Q_matrix_element(const int i_n_principal, const int 
   const cnt::exciton_struct& f_exciton = final_cnt.A2_singlet();
 
   std::cout << "\n...calculating Q matrix element\n";
-  // std::cout << "initial exciton ik_cm_range: [" << i_exciton.ik_cm_range[0] << "," << i_exciton.ik_cm_range[1] << "]\n";
-  // std::cout << "final exciton ik_cm_range: [" << f_exciton.ik_cm_range[0] << "," << f_exciton.ik_cm_range[1] << "]\n";
 
   // some error checking
   if ((i_n_principal >= i_exciton.n_principal) and (f_n_principal >= f_exciton.n_principal)){
@@ -412,7 +410,6 @@ std::complex<double> exciton_transfer::calculate_J(const matching_states& pair, 
   for (unsigned int i=0; i<i_Ru_2d.n_rows; i++)
   {
     std::complex<double> i_exp = std::exp(-i1*arma::dot(pair.i.ik_cm*pair.i.dk_l(),i_Ru_2d.row(i)));    
-
     for (unsigned int j=0; j<f_Ru_2d.n_rows; j++)
     {
       J += i_exp*f_exp(j)/(arma::norm(i_Ru_3d.row(i)-f_Ru_3d.row(j)));

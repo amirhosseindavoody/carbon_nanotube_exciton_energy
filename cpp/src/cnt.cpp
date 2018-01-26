@@ -13,141 +13,6 @@ Stores all relevant information for a carbon nanotube
 #include "cnt.h"
 #include "progress.hpp"
 
-// set the output directory and the output file name
-void cnt::process_command_line_args(int argc, char* argv[])
-{
-  namespace fs = std::experimental::filesystem;
-
-  // first find the xml input file and open it
-  fs::directory_entry xml_file;
-  std::cout << "current path is " << fs::current_path() << std::endl;
-
-  if (argc <= 1)
-  {
-    xml_file.assign("input.xml");
-  }
-  else
-  {
-    xml_file.assign(argv[1]);
-  }
-
-  if(fs::exists(xml_file))
-  {
-    std::cout << "input xml file found: " << xml_file.path() << std::endl;
-  }
-  else
-  {
-    std::cout << "input xml file NOT found: " << xml_file.path() << std::endl;
-    std::exit(1);
-  }
-
-  if (!fs::is_regular_file(xml_file))
-  {
-    std::cout << "input xml file NOT found: " << xml_file.path() << std::endl;
-    std::exit(1);
-  }
-  std::cout << std::endl;
-
-  rapidxml::file<> xmlFile(xml_file.path().c_str()); //open file
-  rapidxml::xml_document<> doc; //create xml object
-  doc.parse<0>(xmlFile.data()); //parse contents of file
-  rapidxml::xml_node<>* curr_node = doc.first_node(); //gets the node "Document" or the root nodes
-  curr_node = curr_node->first_node();
-
-  // get the sibling node with name sibling_name
-  auto get_sibling = [](rapidxml::xml_node<>* node, const std::string& sibling_name)
-  {
-    if (node->name() == sibling_name)
-    {
-      return node;
-    }
-    auto next_node = node->next_sibling(sibling_name.c_str());
-    if (next_node == 0)
-    {
-      next_node = node->previous_sibling(sibling_name.c_str());
-      if (next_node == 0)
-      {
-        std::cout << "sibling not found: " << sibling_name.c_str() << std::endl;
-        std::exit(1);
-      }
-    }
-    return next_node;
-  };
-
-  // get name cnt name
-  {
-    curr_node = get_sibling(curr_node, "name");
-    _name = trim_copy(curr_node->value());
-    std::cout << "cnt name: '" << _name << "'\n";
-  }
-
-  // set the output_directory
-  {
-    curr_node = get_sibling(curr_node,"output_directory");
-
-    std::string attr = curr_node->first_attribute("type")->value();
-    // std::string path = trim_copy(curr_node->value());
-    fs::path path = trim_copy(curr_node->value());
-    if (attr == "absolute")
-    {
-      std::cout << "absolute directory format used!\n";
-    }
-
-    _directory.assign(path);
-    std::cout << "output_directory: " << _directory.path() << std::endl;
-
-    if (not fs::exists(_directory.path()))
-    {
-      std::cout << "warning: output directory does NOT exist!!!" << std::endl;
-      std::cout << "output directory: " << _directory.path() << std::endl;
-      fs::create_directories(_directory.path());
-    }
-
-    if (fs::is_directory(_directory.path()))
-    {
-      if (not fs::is_empty(_directory.path()))
-      {
-        std::cout << "warning: output directory is NOT empty!!!" << std::endl;
-        std::cout << "output directory: " << _directory.path() << std::endl;
-        std::cout << "deleting the existing directory!!!" << std::endl;
-        fs::remove_all(_directory.path());
-        fs::create_directories(_directory.path());
-      }
-    }
-    else
-    {
-      std::cout << "error: output path is NOT a directory!!!" << std::endl;
-      std::cout << "output path: " << _directory.path() << std::endl;
-      std::exit(EXIT_FAILURE);
-    }
-  }
-
-  // read chirality
-  {
-    curr_node = get_sibling(curr_node,"chirality");
-    std::string chirality = curr_node->value();
-    _n = std::stoi(chirality.substr(0,chirality.find(",")));
-    _m = std::stoi(chirality.substr(chirality.find(",")+1));
-    std::cout << "chirality: (" << _n << "," << _m << ")\n";
-  }
-
-  // length of cnt
-  {
-    curr_node = get_sibling(curr_node,"length");
-    std::string units = curr_node->first_attribute("units")->value();
-    if (units != "cnt_unit_cell")
-    {
-      std::cout << "cnt length is not in units '" << units << "'\n";
-      std::exit(1);
-    }
-    _number_of_cnt_unit_cells = std::stoi(curr_node->value());
-    std::cout << "length of cnt: " << _number_of_cnt_unit_cells << " unit cells.\n";
-  }
-
-  std::cout << std::endl;
-
-}
-
 void cnt::get_parameters()
 {
   // graphen unit vectors and reciprocal lattice vectors
@@ -324,11 +189,11 @@ void cnt::get_atom_coordinates()
 	}
 
 	// save coordinates of atoms in 2d space
-  std::string filename = _directory.path().string() + _name + ".pos_2d.dat";
+  std::string filename = _directory.path() / "pos_2d.dat";
   _pos_2d.save(filename, arma::arma_ascii);
 
   // save coordinates of atoms in 3d space
-  filename = _directory.path().string() + _name + ".pos_3d.dat";
+  filename = _directory.path() / "pos_3d.dat";
   _pos_3d.save(filename, arma::arma_ascii);
 
   // put position of all graphene unit cells in 2d (unrolled graphene sheet) and 3d space (rolled graphene sheet)
@@ -424,11 +289,11 @@ void cnt::electron_full_unit_cell()
 
   // save electron energy bands using full Brillouine zone
   std::cout << "saved electron energy dispersion in K1-extended representation\n";
-  std::string filename = _directory.path().string() + _name + ".el_energy_full.dat";
+  std::string filename = _directory.path() / "el_energy_full.dat";
   el_energy_full.save(filename, arma::arma_ascii);
 
   // // save electron wavefunctions using full Brillouine zone
-  // filename = _directory.path().string() + _name + ".el_psi_full.dat";
+  // filename = _directory.path()/"el_psi_full.dat";
   // el_psi_full.save(filename, arma::arma_ascii);
 
 }
@@ -475,7 +340,7 @@ cnt::el_energy_struct cnt::electron_energy(const std::array<int,2>& ik_range, co
   }
 
   // save electron energy bands using full Brillouine zone
-  std::string filename = _directory.path().string() + _name + "." + name +".el_energy.dat";
+  std::string filename = _directory.path() / (name +".el_energy.dat");
   energy.save(filename,arma::arma_ascii);
 
   std::cout << "\n...calculated " + name + " electron dispersion\n";
@@ -742,16 +607,16 @@ cnt::vq_struct cnt::calculate_vq(const std::array<int,2> iq_range, const std::ar
 
   std::cout << "saved real part of vq\n";
   arma::cube vq_real = arma::real(vq);
-  std::string filename = _directory.path().string() + _name + ".vq_real.dat";
+  std::string filename = _directory.path()/"vq_real.dat";
   vq_real.save(filename, arma::arma_ascii);
 
   std::cout << "saved imaginary part of vq\n";
   arma::cube vq_imag = arma::imag(vq);
-  filename = _directory.path().string() + _name + ".vq_imag.dat";
+  filename = _directory.path()/"vq_imag.dat";
   vq_imag.save(filename, arma::arma_ascii);
 
   std::cout << "saved q_vector for vq\n";
-  filename = _directory.path().string() + _name + ".vq_q_vec.dat";
+  filename = _directory.path()/"vq_q_vec.dat";
   q_vec.save(filename, arma::arma_ascii);
 
   // make the vq_struct that is to be returned
@@ -848,11 +713,11 @@ cnt::PI_struct cnt::calculate_polarization(const std::array<int,2> iq_range, con
   std::cout << "\n...calculated polarization: PI(q)\n";
 
   std::cout << "saved PI\n";
-  std::string filename = _directory.path().string() + _name + ".PI.dat";
+  std::string filename = _directory.path()/"PI.dat";
   PI.save(filename, arma::arma_ascii);
 
   std::cout << "saved q_vector for PI\n";
-  filename = _directory.path().string() + _name + ".PI_q_vec.dat";
+  filename = _directory.path()/"PI_q_vec.dat";
   q_vec.save(filename, arma::arma_ascii);
 
   // make the vq_struct that is to be returned
@@ -898,11 +763,11 @@ cnt::epsilon_struct cnt::calculate_dielectric(const std::array<int,2> iq_range, 
   std::cout << "\n...calculated dielectric function: epsilon(q)\n";
 
   std::cout << "saved epsilon\n";
-  std::string filename = _directory.path().string() + _name + ".eps.dat";
+  std::string filename = _directory.path()/"eps.dat";
   eps.save(filename, arma::arma_ascii);
 
   std::cout << "saved q_vector for epsilon\n";
-  filename = _directory.path().string() + _name + ".eps_q_vec.dat";
+  filename = _directory.path()/"eps_q_vec.dat";
   q_vec.save(filename, arma::arma_ascii);
 
   epsilon_struct eps_s;
@@ -1134,19 +999,19 @@ std::vector<cnt::exciton_struct> cnt::calculate_A_excitons(const std::array<int,
   std::cout << "\n...calculated exciton dispersion\n";
 
   std::cout << "saved exciton dispersion: A2 singlet\n";
-  std::string filename = _directory.path().string() + _name + ".ex_energy_A2_singlet.dat";
+  std::string filename = _directory.path()/"ex_energy_A2_singlet.dat";
   ex_energy_A2_singlet.save(filename, arma::arma_ascii);
 
   std::cout << "saved exciton dispersion: A2 triplet\n";
-  filename = _directory.path().string() + _name + ".ex_energy_A2_triplet.dat";
+  filename = _directory.path()/"ex_energy_A2_triplet.dat";
   ex_energy_A2_triplet.save(filename, arma::arma_ascii);
 
   std::cout << "saved exciton dispersion: A1\n";
-  filename = _directory.path().string() + _name + ".ex_energy_A1.dat";
+  filename = _directory.path()/"ex_energy_A1.dat";
   ex_energy_A1.save(filename, arma::arma_ascii);
 
   std::cout << "saved k_vector for center of mass\n";
-  filename = _directory.path().string() + _name + ".exciton_k_cm_vec.dat";
+  filename = _directory.path()/"exciton_k_cm_vec.dat";
   k_cm_vec.save(filename, arma::arma_ascii);
 
   // prepare the values that are to be returned

@@ -8,15 +8,19 @@
 
 #include "constants.h"
 #include "small.h"
-#include "../lib/rapidxml.hpp"
-#include "../lib/rapidxml_utils.hpp"
+#include "../lib/json.hpp"
+#include "prepare_directory.hpp"
 
 class cnt
 {
 private:
 
+  nlohmann::json _json_input;
+
   std::experimental::filesystem::directory_entry _directory; // this is the address of the directory that the cnt data is stored in
   std::string _name; //cnt name
+
+  enum length_units {nanometer, meter, cnt_unit_cell};
 
   const double _a_cc = 1.42e-10; // carbon-carbon distance [meters]
   const double _a_l = std::sqrt(float(3.0))*_a_cc; // graphene lattice constants [meters]
@@ -150,11 +154,44 @@ private:
   std::vector<exciton_struct>  _excitons;
 
 public:
-  //constructor
-  cnt(){};
   
-  // set the output directory and the output file name
-  void process_command_line_args(int argc, char* argv[]);
+  //constructor using json structure
+  cnt(const nlohmann::json j, const std::string parent_directory)
+  {
+    namespace fs = std::experimental::filesystem;
+    using json = nlohmann::json;
+
+    _json_input = j;
+
+    // set chirality
+    std::array<int,2> chirality = j["chirality"];
+    _n = chirality[0];
+    _m = chirality[1];
+
+    _name = std::to_string(_n) + std::to_string(_m);
+
+    // prepare the output directory
+    fs::path directory_path(parent_directory);
+    directory_path /= _name;
+    bool keep_old_results = true;
+    if (j.find("keep old results")!= j.end())
+    {
+      keep_old_results = j["keep old results"];
+    }
+    _directory = prepare_directory(directory_path.string(), keep_old_results);
+    std::cout << "cnt directory is: " << _directory.path() << "\n";
+
+    // set the length of the cnt
+    std::string units = j["length"][1];
+    if (units != "cnt unit cells")
+    {
+      throw std::invalid_argument("units other than \"cnt unit cells\" is not implemented yet!!!");
+    }
+    int length = j["length"][0];
+    _number_of_cnt_unit_cells = length;
+    std::cout << "cnt length: " << _number_of_cnt_unit_cells << " " << units << "\n";
+
+  };
 
   // calculate the parameters of the cnt
   void get_parameters();

@@ -1,0 +1,25 @@
+{
+    "cnts":{
+        "directory": "/Users/amirhossein/research/exciton_energy/",
+        "1": {
+            "keep old results": true,
+            "chirality": [4,2],
+            "length": [100,"cnt unit cells"]
+        },
+        "2": {
+            "chirality": [6,5],
+            "length": [10,"cnt unit cells"]
+        }
+    },
+
+    "exciton transfer":{
+        "directory":"/Users/amirhossein/research/exciton_transfer/",
+        "cnt 1":"1",
+        "cnt 2":"2",
+        "angle": [0,90,"degrees"],
+        "zshift": [1.9,"nm"],
+        "axis shift 1": [0,"nm"],
+        "axis shift 2": [0,"nm"],
+        "temperature": 300
+    }
+}
