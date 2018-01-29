@@ -8,6 +8,7 @@
 #include <type_traits>
 
 #include "cnt.h"
+#include "prepare_directory.hpp"
 
 class exciton_transfer
 {
@@ -15,12 +16,15 @@ private:
   typedef std::experimental::filesystem::directory_entry t_directory; // custom directory type
   t_directory _directory; // this is the address of the directory that the simulation data is stored
 
+  std::string _name;
   double _temperature; // temperature of the system to calculate thermal distribution for excitons and other particles
-  // double _c2c_distance; // center to center distance between the cnts.
-  // double _theta; // angle between the axis of the cnts
   double _broadening_factor; // broadening factor used in the lorenzian to simulate dirac delta function
-  // std::array<double,2> _shifts; // the amount that each cnt is shifted from the center.
-  std::array<const cnt*,2> _cnts; // array of pointers to the target excitons
+  std::array<const cnt*,2> _cnts = {nullptr,nullptr}; // array of pointers to the target excitons
+
+  enum simulation_mode {ex_trans_vs_angle, ex_trans_vs_zshift, ex_trans_vs_axis_shift_1, ex_trans_vs_axis_shift_2};
+  simulation_mode _sim_mode;
+
+  nlohmann::json _j_prop;
 
   // function to return the lorentzian based on the broadening factor
   const double lorentzian(const double& energy)
@@ -28,14 +32,11 @@ private:
     return constants::inv_pi*_broadening_factor/(energy*energy + _broadening_factor*_broadening_factor);
   };
 
-  // prepare the output directory by deleting its previous content or creating it
-  t_directory prepare_directory();
-
 public:
   // constructor
   exciton_transfer(const cnt& cnt1, const cnt& cnt2)
   {
-    _directory = prepare_directory();
+    _directory = prepare_directory("/Users/amirhossein/research/exciton_transfer",true);
 
     _cnts = {&cnt1, &cnt2};
     _temperature = 300;
@@ -44,6 +45,57 @@ public:
     std::cout << "\n...exciton transfer parameters:\n";
     std::cout << "temperature: " << _temperature << " [Kelvin]\n";
     std::cout << "energy broadening factor: " << _broadening_factor/constants::eV << " [eV]\n";
+  };
+
+  // constructor
+  exciton_transfer(nlohmann::json j, const std::vector<cnt>& cnts, std::string parent_directory)
+  {
+    namespace fs = std::experimental::filesystem;
+    
+    // set the the initial and final cnt
+    for (const auto& cnt: cnts){
+      if (cnt.name() == j["cnt 1"]){
+        _cnts[0] = &cnt;
+        std::cout << "donor cnt set to " << cnt.name() << std::endl;
+      }
+    }
+    for (const auto& cnt: cnts){
+      if (cnt.name() == j["cnt 2"]){
+        _cnts[1] = &cnt;
+        std::cout << "acceptor cnt set to " << cnt.name() << std::endl;
+      }
+    }
+
+    // set the name
+    _name = _cnts[0]->name() + "_" + _cnts[1]->name();
+
+    // prepare the directory
+    fs::path directory_path(parent_directory);
+    directory_path /= _name;
+    bool keep_old_results = false;
+    if (j.count("keep old results")==1){
+      keep_old_results = j["keep old results"];
+    }
+    _directory = prepare_directory(directory_path, keep_old_results);
+
+    // set tempareture
+    if ((j["temperature"][1] != "Kelvin" and j["temperature"][1] != "kelvin")){
+      std::cout << "temperature units:..." << j["temperature"][1] << "\n";
+      throw std::invalid_argument("temperature must be in \"Kelvin\" units");
+    }
+    _temperature = j["temperature"][0];
+    
+    // set the broadening factor
+    if (j["broadening factor"][1] != "meV"){
+      throw std::invalid_argument("broadening factor must be in \"meV\" units");
+    }
+    _broadening_factor = double(j["broadening factor"][0])*1.e-3*constants::eV;
+
+    std::cout << "\n...exciton transfer parameters:\n";
+    std::cout << "temperature: " << _temperature << " [Kelvin]\n";
+    std::cout << "energy broadening factor: " << _broadening_factor*1.e3/constants::eV << " [meV]\n";
+
+    _j_prop = j;
   };
 
   // struct to bundle information about the excitonic states that are relevant
@@ -194,13 +246,105 @@ public:
   double first_order(const double& z_shift, const std::array<double,2> axis_shifts, const double& theta, const bool& show_results=false);
 
   // calculate first order transfer rate for varying angle
-  void calculate_first_order_vs_angle(const double& z_shift, const std::array<double,2> axis_shifts);
+  void calculate_first_order_vs_angle(const arma::vec& angle_vec ,const double& z_shift, const std::array<double,2> axis_shifts);
 
   // calculate first order transfer rate for center to center distance
-  void calculate_first_order_vs_zshift(const std::array<double,2> axis_shifts, const double& theta);
+  void calculate_first_order_vs_zshift(const arma::vec& z_shift_vec, const std::array<double,2> axis_shifts, const double& theta);
 
-  // calculate first order transfer rate for varying axis shift
-  void calculate_first_order_vs_axis_shift(const double z_shift, const double& theta);
+  // calculate first order transfer rate for varying axis shift for initial cnt
+  void calculate_first_order_vs_axis_shift_1(const arma::vec& axis_shift_vec_1, const double axis_shift_2, const double z_shift, const double& theta);
+
+  // calculate first order transfer rate for varying axis shift for final cnt
+  void calculate_first_order_vs_axis_shift_2(const arma::vec& axis_shift_vec_2, const double axis_shift_1, const double z_shift, const double& theta);
+
+  void run()
+  {
+    // if flag skip is set do not run this simulation
+    if (_j_prop.count("skip")==1){
+      if (_j_prop["skip"]) return;
+    }
+
+    // determine the execution policy
+    if ((_j_prop["angle"].size()==4) and (_j_prop["zshift"].size()==2) and (_j_prop["axis shift 1"].size()==2) and (_j_prop["axis shift 2"].size()==2))
+    {
+      std::cout << "\nexciton transfer versus angle" << std::endl;
+
+      // check distance units
+      if ((_j_prop["zshift"][1] != "nm") or (_j_prop["axis shift 1"][1] != "nm") or (_j_prop["axis shift 2"][1] != "nm")){
+        throw std::invalid_argument("distance units must be \"nm\"");
+      }
+      double z_shift = double(_j_prop["zshift"][0])*1.e-9;
+      std::array<double,2> axis_shifts={double(_j_prop["axis shift 1"][0])*1.e-9, double(_j_prop["axis shift 2"][0])*1.e-9};
+
+      // check angle units
+      if (_j_prop["angle"][3]!= "degrees"){
+        throw std::invalid_argument("angle units must be \"degrees\"");
+      }
+      arma::vec angle_vec = arma::linspace<arma::vec>(_j_prop["angle"][0],_j_prop["angle"][1],_j_prop["angle"][2])*constants::pi/180;
+
+      calculate_first_order_vs_angle(angle_vec, z_shift, axis_shifts);
+    }
+    else if ((_j_prop["angle"].size()==2) and (_j_prop["zshift"].size()==4) and (_j_prop["axis shift 1"].size()==2) and (_j_prop["axis shift 2"].size()==2))
+    {
+      std::cout << "\nexciton transfer versus z_shift" << std::endl;
+
+      // check distance units
+      if ((_j_prop["zshift"][3] != "nm") or (_j_prop["axis shift 1"][1] != "nm") or (_j_prop["axis shift 2"][1] != "nm")){
+        throw std::invalid_argument("distance units must be \"nm\"");
+      }
+      arma::vec z_shift_vec = arma::linspace<arma::vec>(_j_prop["zshift"][0],_j_prop["zshift"][1],_j_prop["zshift"][2])*1.e-9;
+      std::array<double,2> axis_shifts={double(_j_prop["axis shift 1"][0])*1.e-9, double(_j_prop["axis shift 2"][0])*1.e-9};
+
+      // check angle units
+      if (_j_prop["angle"][3]!= "degrees"){
+        throw std::invalid_argument("angle units must be \"degrees\"");
+      }
+      double angle = double(_j_prop["angle"][0])*constants::pi/180;
+      calculate_first_order_vs_zshift(z_shift_vec, axis_shifts, angle);
+    }
+    else if ((_j_prop["angle"].size()==2) and (_j_prop["zshift"].size()==2) and (_j_prop["axis shift 1"].size()==4) and (_j_prop["axis shift 2"].size()==2))
+    {
+      std::cout << "\nexciton transfer versus axis shift 1" << std::endl;
+
+      // check distance units
+      if ((_j_prop["zshift"][1] != "nm") or (_j_prop["axis shift 1"][3] != "nm") or (_j_prop["axis shift 2"][1] != "nm")){
+        throw std::invalid_argument("distance units must be \"nm\"");
+      }
+      arma::vec axis_shift_vec_1 = arma::linspace<arma::vec>(_j_prop["axis shift 1"][0],_j_prop["axis shift 1"][1],_j_prop["axis shift 1"][2])*1.e-9;
+      double axis_shift_2 = double(_j_prop["axis shift 2"][0])*1.e-9;
+      double z_shift = double(_j_prop["zshift"][0])*1.e-9;
+
+      // check angle units
+      if (_j_prop["angle"][3]!= "degrees"){
+        throw std::invalid_argument("angle units must be \"degrees\"");
+      }
+      double angle = double(_j_prop["angle"][0])*constants::pi/180;
+      calculate_first_order_vs_axis_shift_1(axis_shift_vec_1, axis_shift_2, z_shift, angle);
+    }
+    else if ((_j_prop["angle"].size()==2) and (_j_prop["zshift"].size()==2) and (_j_prop["axis shift 1"].size()==2) and (_j_prop["axis shift 2"].size()==3))
+    {
+      std::cout << "\nexciton transfer versus axis shift 2" << std::endl;
+
+      // check distance units
+      if ((_j_prop["zshift"][1] != "nm") or (_j_prop["axis shift 1"][1] != "nm") or (_j_prop["axis shift 2"][3] != "nm")){
+        throw std::invalid_argument("distance units must be \"nm\"");
+      }
+      arma::vec axis_shift_vec_2 = arma::linspace<arma::vec>(_j_prop["axis shift 2"][0],_j_prop["axis shift 2"][1],_j_prop["axis shift 2"][2])*1.e-9;
+      double axis_shift_1 = double(_j_prop["axis shift 1"][0])*1.e-9;
+      double z_shift = double(_j_prop["zshift"][0])*1.e-9;
+
+      // check angle units
+      if (_j_prop["angle"][3]!= "degrees"){
+        throw std::invalid_argument("angle units must be \"degrees\"");
+      }
+      double angle = double(_j_prop["angle"][0])*constants::pi/180;
+      calculate_first_order_vs_axis_shift_2(axis_shift_vec_2, axis_shift_1, z_shift, angle);
+    }
+    else
+    {
+      throw std::logic_error("Invalid format for specifications of the exciton transfer simulation.");
+    }
+  };
 };
 
 #endif //_exciton_transfer_h_

@@ -9,44 +9,6 @@
 #include "constants.h"
 #include "progress.hpp"
 
-// prepare the output directory by deleting its previous content or creating it
-exciton_transfer::t_directory exciton_transfer::prepare_directory()
-{
-  namespace fs = std::experimental::filesystem;
-  t_directory directory;
-
-  directory.assign("/Users/amirhossein/research/exciton_transfer");
-  std::cout << "output_directory: " << directory.path() << std::endl;
-
-  if (not fs::exists(directory.path()))
-  {
-    std::cout << "warning: output directory does NOT exist!!!" << std::endl;
-    std::cout << "output directory: " << directory.path() << std::endl;
-    fs::create_directories(directory.path());
-  }
-
-  if (fs::is_directory(directory.path()))
-  {
-    if (not fs::is_empty(directory.path()))
-    {
-      std::cout << "warning: output directory is NOT empty!!!" << std::endl;
-      std::cout << "output directory: " << directory.path() << std::endl;
-      std::cout << "deleting the existing directory!!!" << std::endl;
-      fs::remove_all(directory.path());
-      fs::create_directories(directory.path());
-    }
-  }
-  else
-  {
-    std::cout << "error: output path is NOT a directory!!!" << std::endl;
-    std::cout << "output path: " << directory.path() << std::endl;
-    throw std::invalid_argument("The input value for output directory is not acceptable.");
-  }
-
-  return directory;
-
-}
-
 // calculate and plot Q matrix element between two exciton bands
 void exciton_transfer::save_Q_matrix_element(const int i_n_principal, const int f_n_principal)
 {
@@ -442,6 +404,7 @@ double exciton_transfer::first_order(const double& z_shift, const std::array<dou
   // match the states based on their energy
   std::vector<matching_states> state_pairs = match_states(d_relevant_states, a_relevant_states);
 
+
   double transfer_rate = 0;
 
   progress_bar prog(state_pairs.size(),"calculate first-order exciton transfer rate", not show_results);
@@ -470,17 +433,16 @@ double exciton_transfer::first_order(const double& z_shift, const std::array<dou
 }
 
 // calculate first order transfer rate for varying angle
-void exciton_transfer::calculate_first_order_vs_angle(const double& z_shift, const std::array<double,2> axis_shifts)
+void exciton_transfer::calculate_first_order_vs_angle(const arma::vec& angle_vec ,const double& z_shift, const std::array<double,2> axis_shifts)
 {
-  int n_theta = 100;
-  arma::vec theta_vec = arma::linspace<arma::vec>(0,constants::pi/2,n_theta);
-  arma::vec transfer_rate(arma::size(theta_vec), arma::fill::zeros);
+  int n_theta = angle_vec.n_elem;
+  arma::vec transfer_rate(arma::size(angle_vec), arma::fill::zeros);
 
   progress_bar prog(n_theta, "first order transfer rate versus angle");
   for (int i=0; i<n_theta; i++)
   {
     prog.step();
-    transfer_rate(i) = first_order(z_shift, axis_shifts, theta_vec(i));
+    transfer_rate(i) = first_order(z_shift, axis_shifts, angle_vec(i));
   }
 
   // save the transfer rate
@@ -489,7 +451,7 @@ void exciton_transfer::calculate_first_order_vs_angle(const double& z_shift, con
 
   // save theta vector
   filename = _directory.path() / "first_order_transfer_rate_vs_angle.theta.dat";
-  theta_vec.save(filename,arma::arma_ascii);
+  angle_vec.save(filename,arma::arma_ascii);
 
   std::cout << "\n\n";
   std::cout << "cnt lengths: " << _cnts[0]->length_in_meter()*1.e9 << " [nm], " << _cnts[1]->length_in_meter()*1.e9 << " [nm]\n";
@@ -497,24 +459,21 @@ void exciton_transfer::calculate_first_order_vs_angle(const double& z_shift, con
   std::cout << "cnt1 radius: " << _cnts[0]->radius()*1.e9 << " [nm], cnt2 radius: " << _cnts[1]->radius()*1.e9 << " [nm]\n";
   std::cout << "wall to wall distance: " << (z_shift - _cnts[0]->radius() - _cnts[1]->radius())*1.e9 << " [nm]\n";
   std::cout << "axis shifts: " << axis_shifts[0]*1e9 << " [nm] and " << axis_shifts[1]*1e9 << " [nm]\n";
-  std::cout << "max transfer rate: " << transfer_rate.max()/1e12 << " [1/ps] at " << theta_vec(transfer_rate.index_max())*180/constants::pi << " [degrees]\n";
-  std::cout << "min transfer rate: " << transfer_rate.min()/1e12 << " [1/ps] at " << theta_vec(transfer_rate.index_min())*180/constants::pi << " [degrees]\n";
+  std::cout << "max transfer rate: " << transfer_rate.max()/1e12 << " [1/ps] at " << angle_vec(transfer_rate.index_max())*180/constants::pi << " [degrees]\n";
+  std::cout << "min transfer rate: " << transfer_rate.min()/1e12 << " [1/ps] at " << angle_vec(transfer_rate.index_min())*180/constants::pi << " [degrees]\n";
 }
 
 // calculate first order transfer rate for center to center distance
-void exciton_transfer::calculate_first_order_vs_zshift(const std::array<double,2> axis_shifts, const double& theta)
+void exciton_transfer::calculate_first_order_vs_zshift(const arma::vec& z_shift_vec, const std::array<double,2> axis_shifts, const double& theta)
 {
-  int n = 100;
-  double z_shift_min = 1.5e-9;
-  double z_shift_max = 1.5e-7;
-  arma::vec z_shift = arma::linspace<arma::vec>(z_shift_min,z_shift_max,n);
-  arma::vec transfer_rate(arma::size(z_shift), arma::fill::zeros);
+  int n = z_shift_vec.n_elem;
+  arma::vec transfer_rate(arma::size(z_shift_vec), arma::fill::zeros);
 
   progress_bar prog(n, "first order transfer rate versus z_shift");
   for (int i=0; i<n; i++)
   {
     prog.step();
-    transfer_rate(i) = first_order(z_shift(i), axis_shifts, theta);
+    transfer_rate(i) = first_order(z_shift_vec(i), axis_shifts, theta);
   }
 
   // save the transfer rate
@@ -523,47 +482,75 @@ void exciton_transfer::calculate_first_order_vs_zshift(const std::array<double,2
 
   // save theta vector
   filename = _directory.path() / "first_order_transfer_rate_vs_zshift.distance.dat";
-  z_shift.save(filename,arma::arma_ascii);
+  z_shift_vec.save(filename,arma::arma_ascii);
 
   std::cout << "\n\n";
   std::cout << "cnt lengths: " << _cnts[0]->length_in_meter()*1.e9 << " [nm], " << _cnts[1]->length_in_meter()*1.e9 << " [nm]\n";
   std::cout << "cnt1 radius: " << _cnts[0]->radius()*1.e9 << " [nm], cnt2 radius: " << _cnts[1]->radius()*1.e9 << " [nm]\n";
   std::cout << "theta: " << theta*180/constants::pi << " [degrees]\n";
   std::cout << "axis shifts: " << axis_shifts[0]*1e9 << " [nm] and " << axis_shifts[1]*1e9 << " [nm]\n";
-  std::cout << "max transfer rate: " << transfer_rate.max() << " [1/s] at " << z_shift(transfer_rate.index_max())*1e9 << " [nm]\n";
-  std::cout << "min transfer rate: " << transfer_rate.min() << " [1/s] at " << z_shift(transfer_rate.index_min())*1e9 << " [nm]\n";
+  std::cout << "max transfer rate: " << transfer_rate.max() << " [1/s] at " << z_shift_vec(transfer_rate.index_max())*1e9 << " [nm]\n";
+  std::cout << "min transfer rate: " << transfer_rate.min() << " [1/s] at " << z_shift_vec(transfer_rate.index_min())*1e9 << " [nm]\n";
 }
 
-// calculate first order transfer rate for varying axis shifts
-void exciton_transfer::calculate_first_order_vs_axis_shift(const double z_shift, const double& theta)
+// calculate first order transfer rate for varying axis shift for initial cnt
+void exciton_transfer::calculate_first_order_vs_axis_shift_1(const arma::vec& axis_shift_vec_1, const double axis_shift_2, const double z_shift, const double& theta)
 {
-  int n = 100;
-  double axis_shift_min = 1.5e-9;
-  double axis_shift_max = 1.5e-7;
-  arma::vec shift_vec = arma::linspace<arma::vec>(axis_shift_min,axis_shift_max,n);
-  arma::vec transfer_rate(arma::size(shift_vec), arma::fill::zeros);
+  int n = axis_shift_vec_1.n_elem;
+  arma::vec transfer_rate(arma::size(axis_shift_vec_1), arma::fill::zeros);
 
-  progress_bar prog(n, "first order transfer rate versus z_shift");
+  progress_bar prog(n, "first order transfer rate versus axis shift of initial cnt");
   for (int i=0; i<n; i++)
   {
     prog.step();
-    std::array<double,2> axis_shifts = {0,shift_vec(i)};
+    std::array<double,2> axis_shifts = {axis_shift_vec_1(i),axis_shift_2};
     transfer_rate(i) = first_order(z_shift, axis_shifts, theta);
   }
 
   // save the transfer rate
-  std::string filename = _directory.path() / "first_order_transfer_rate_vs_axis_shift.dat";
+  std::string filename = _directory.path() / "first_order_transfer_rate_vs_axis_shift_1.dat";
   transfer_rate.save(filename,arma::arma_ascii);
 
   // save theta vector
-  filename = _directory.path() / "first_order_transfer_rate_vs_axis_shift.shift.dat";
-  shift_vec.save(filename,arma::arma_ascii);
+  filename = _directory.path() / "first_order_transfer_rate_vs_axis_shift_1.shift.dat";
+  axis_shift_vec_1.save(filename,arma::arma_ascii);
 
   std::cout << "\n\n";
   std::cout << "cnt lengths: " << _cnts[0]->length_in_meter()*1.e9 << " [nm], " << _cnts[1]->length_in_meter()*1.e9 << " [nm]\n";
   std::cout << "cnt1 radius: " << _cnts[0]->radius()*1.e9 << " [nm], cnt2 radius: " << _cnts[1]->radius()*1.e9 << " [nm]\n";
   std::cout << "theta: " << theta*180/constants::pi << " [degrees]\n";
   std::cout << "center to center distance: " << z_shift*1.e9 << " [nm]\n";
-  std::cout << "max transfer rate: " << transfer_rate.max() << " [1/s] at " << shift_vec(transfer_rate.index_max())*1e9 << " [nm]\n";
-  std::cout << "min transfer rate: " << transfer_rate.min() << " [1/s] at " << shift_vec(transfer_rate.index_min())*1e9 << " [nm]\n";
+  std::cout << "max transfer rate: " << transfer_rate.max() << " [1/s] at " << axis_shift_vec_1(transfer_rate.index_max())*1e9 << " [nm]\n";
+  std::cout << "min transfer rate: " << transfer_rate.min() << " [1/s] at " << axis_shift_vec_1(transfer_rate.index_min())*1e9 << " [nm]\n";
+}
+
+// calculate first order transfer rate for varying axis shift for final cnt
+void exciton_transfer::calculate_first_order_vs_axis_shift_2(const arma::vec& axis_shift_vec_2, const double axis_shift_1, const double z_shift, const double& theta)
+{
+  int n = axis_shift_vec_2.n_elem;
+  arma::vec transfer_rate(arma::size(axis_shift_vec_2), arma::fill::zeros);
+
+  progress_bar prog(n, "first order transfer rate versus axis shift of final cnt");
+  for (int i=0; i<n; i++)
+  {
+    prog.step();
+    std::array<double,2> axis_shifts = {axis_shift_1, axis_shift_vec_2(i)};
+    transfer_rate(i) = first_order(z_shift, axis_shifts, theta);
+  }
+
+  // save the transfer rate
+  std::string filename = _directory.path() / "first_order_transfer_rate_vs_axis_shift_2.dat";
+  transfer_rate.save(filename,arma::arma_ascii);
+
+  // save theta vector
+  filename = _directory.path() / "first_order_transfer_rate_vs_axis_shift_2.shift.dat";
+  axis_shift_vec_2.save(filename,arma::arma_ascii);
+
+  std::cout << "\n\n";
+  std::cout << "cnt lengths: " << _cnts[0]->length_in_meter()*1.e9 << " [nm], " << _cnts[1]->length_in_meter()*1.e9 << " [nm]\n";
+  std::cout << "cnt1 radius: " << _cnts[0]->radius()*1.e9 << " [nm], cnt2 radius: " << _cnts[1]->radius()*1.e9 << " [nm]\n";
+  std::cout << "theta: " << theta*180/constants::pi << " [degrees]\n";
+  std::cout << "center to center distance: " << z_shift*1.e9 << " [nm]\n";
+  std::cout << "max transfer rate: " << transfer_rate.max() << " [1/s] at " << axis_shift_vec_2(transfer_rate.index_max())*1e9 << " [nm]\n";
+  std::cout << "min transfer rate: " << transfer_rate.min() << " [1/s] at " << axis_shift_vec_2(transfer_rate.index_min())*1e9 << " [nm]\n";
 }

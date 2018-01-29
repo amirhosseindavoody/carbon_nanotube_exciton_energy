@@ -343,7 +343,12 @@ public:
   double Au() const
   {
     return std::abs(_a1(0)*_a2(1)-_a1(1)*_a2(0));
-    // return arma::norm(arma::cross(_a1,_a2));
+  };
+
+  // getter function to access name of the cnt
+  const std::string& name() const
+  {
+    return _name;
   };
 };
 

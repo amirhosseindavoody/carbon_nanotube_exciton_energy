@@ -9,6 +9,9 @@
 
 int main(int argc, char *argv[])
 {
+	std::time_t start_time = std::time(nullptr);
+	std::cout << "\nstart time:" << std::endl << std::asctime(std::localtime(&start_time)) << std::endl;
+
 	using json = nlohmann::json;
 
 	std::string filename;
@@ -23,43 +26,28 @@ int main(int argc, char *argv[])
 	json j;
 	input_file >> j;
 
+	// get the parent directory for cnts
 	std::string parent_directory = j["cnts"]["directory"];
 	j["cnts"].erase("directory");
 
+	// create excitons and calculate exciton dispersions
 	std::vector<cnt> cnts;
+	cnts.reserve(j["cnts"].size()); // this is reservation of space is crucial to ensure we do not move cnts, since the move constructor is not implemented yet
 	for (const auto& j_cnt: j["cnts"])
 	{
 		cnts.emplace_back(cnt(j_cnt,parent_directory));
+		cnts.back().calculate_exciton_dispersion();
 	};
 
+	// get the parent directory for cnts
+	parent_directory = j["exciton transfer"]["directory"];
+	j["exciton transfer"].erase("directory");
 
-	// std::exit(0);
-
-	for (auto& cnt: cnts)
+	for (const auto& j_ex_transfer:j["exciton transfer"])
 	{
-		cnt.calculate_exciton_dispersion();
+		exciton_transfer ex_transfer(j_ex_transfer, cnts, parent_directory);
+		ex_transfer.run();
 	}
-   
-
-	std::exit(0);
-
-
-
-
-	std::time_t start_time = std::time(nullptr);
-	std::cout << "\nstart time:" << std::endl << std::asctime(std::localtime(&start_time)) << std::endl;
-
-	// cnt m_cnt;
-
-	// m_cnt.process_command_line_args(argc, argv);
-	// m_cnt.calculate_exciton_dispersion();
-
-	// exciton_transfer ex_transfer(m_cnt, m_cnt);
-	// ex_transfer.save_J_matrix_element(0,0);
-	// ex_transfer.first_order(1.5e-9, {0.,0.}, 0, true);
-	// ex_transfer.calculate_first_order_vs_angle(1.5e-9, {0.,0.});
-	// ex_transfer.calculate_first_order_vs_zshift({0.,0.}, 0);
-	// ex_transfer.calculate_first_order_vs_axis_shift(1.5e-9, constants::pi/2);
 
 
 	std::time_t end_time = std::time(nullptr);

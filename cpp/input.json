@@ -2,24 +2,42 @@
     "cnts":{
         "directory": "/Users/amirhossein/research/exciton_energy/",
         "1": {
-            "keep old results": true,
+            "keep old results": false,
             "chirality": [4,2],
-            "length": [100,"cnt unit cells"]
+            "length": [10,"cnt unit cells"]
         },
         "2": {
+            "keep old results": false,
             "chirality": [6,5],
             "length": [10,"cnt unit cells"]
         }
     },
 
     "exciton transfer":{
-        "directory":"/Users/amirhossein/research/exciton_transfer/",
-        "cnt 1":"1",
-        "cnt 2":"2",
-        "angle": [0,90,"degrees"],
-        "zshift": [1.9,"nm"],
-        "axis shift 1": [0,"nm"],
-        "axis shift 2": [0,"nm"],
-        "temperature": 300
+        "directory":"/Users/amirhossein/research/exciton_transfer",
+        "1":{
+            "keep old results": false,
+            "skip": true,
+            "cnt 1":"42",
+            "cnt 2":"42",
+            "angle": [0,90,100,"degrees"],
+            "zshift": [1.9,"nm"],
+            "axis shift 1": [0,"nm"],
+            "axis shift 2": [0,"nm"],
+            "temperature": [300,"Kelvin"],
+            "broadening factor": [4,"meV"]
+        },
+        "2":{
+            "keep old results": false,
+            "skip": false,
+            "cnt 1":"42",
+            "cnt 2":"65",
+            "angle": [0,90,10,"degrees"],
+            "zshift": [1.9,"nm"],
+            "axis shift 1": [0,"nm"],
+            "axis shift 2": [0,"nm"],
+            "temperature": [300,"Kelvin"],
+            "broadening factor": [4,"meV"]
+        }
     }
 }
