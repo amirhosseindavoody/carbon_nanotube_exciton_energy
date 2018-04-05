@@ -12,3 +12,5 @@
 
 # jupyter notebook checkpoints
 .ipynb_checkpoints
+
+*.png
