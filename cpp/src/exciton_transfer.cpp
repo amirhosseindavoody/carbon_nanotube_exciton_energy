@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
-#include <experimental/filesystem>
 #include <armadillo>
 #include <stdexcept>
+#include <experimental/filesystem>
 
 #include "exciton_transfer.h"
 #include "cnt.h"
@@ -103,7 +103,7 @@ void exciton_transfer::save_Q_matrix_element(const int i_n_principal, const int 
 
   std::cout << "\n...calculated and saved Q matrix element\n";
 
-}
+};
 
 // calculate and plot J matrix element between two exciton bands
 void exciton_transfer::save_J_matrix_element(const int i_n_principal, const int f_n_principal)
@@ -122,8 +122,8 @@ void exciton_transfer::save_J_matrix_element(const int i_n_principal, const int 
   const cnt::exciton_struct& f_exciton = final_cnt.A2_singlet();
 
   std::cout << "\n...calculating J matrix element\n";
-  // std::cout << "initial exciton ik_cm_range: [" << i_exciton.ik_cm_range[0] << "," << i_exciton.ik_cm_range[1] << "]\n";
-  // std::cout << "final exciton ik_cm_range: [" << f_exciton.ik_cm_range[0] << "," << f_exciton.ik_cm_range[1] << "]\n";
+  std::cout << "initial exciton ik_cm_range: [" << i_exciton.ik_cm_range[0] << "," << i_exciton.ik_cm_range[1] << "]\n";
+  std::cout << "final exciton ik_cm_range: [" << f_exciton.ik_cm_range[0] << "," << f_exciton.ik_cm_range[1] << "]\n";
 
   // some error checking
   if ((i_n_principal >= i_exciton.n_principal) and (f_n_principal >= f_exciton.n_principal)){
@@ -187,10 +187,7 @@ void exciton_transfer::save_J_matrix_element(const int i_n_principal, const int 
 
   for (const auto& pair:state_pairs)
   { 
-    // count++;
-    // prog.step(count, number_of_pairs, "calculate J");
     prog.step();
-    // std::cout << "calculate J: " << count << "/" << number_of_pairs << "\n";
 
     J_mat(pair.i.ik_cm_idx-i_min_idx, pair.f.ik_cm_idx-f_min_idx) = calculate_J(pair, axis_shifts, z_shift, theta);
     init_ik_cm(pair.i.ik_cm_idx-i_min_idx) = pair.i.ik_cm;
@@ -220,7 +217,7 @@ void exciton_transfer::save_J_matrix_element(const int i_n_principal, const int 
 
   std::cout << "\n...calculated and saved J matrix element\n";
 
-}
+};
 
 // get the energetically relevant states in the form a vector of ex_state structs
 std::vector<exciton_transfer::ex_state> exciton_transfer::get_relevant_states(const cnt::exciton_struct& exciton, const double min_energy)
@@ -301,7 +298,7 @@ std::complex<double> exciton_transfer::calculate_Q(const matching_states& pair) 
 
   return std::complex<double>(coeff)*std::conj(Q_partial(pair.i))*Q_partial(pair.f);
 
-}
+};
 
 // calculate J()
 std::complex<double> exciton_transfer::calculate_J(const matching_states& pair, const std::array<double,2>& shifts_along_axis, const double& z_shift, const double& angle) const
@@ -378,7 +375,7 @@ std::complex<double> exciton_transfer::calculate_J(const matching_states& pair, 
     }
   }
   return J;
-}
+};
 
 // calculate first order transfer rate
 double exciton_transfer::first_order(const double& z_shift, const std::array<double,2> axis_shifts, const double& theta, const bool& show_results)
@@ -430,7 +427,7 @@ double exciton_transfer::first_order(const double& z_shift, const std::array<dou
   }
 
   return transfer_rate;
-}
+};
 
 // calculate first order transfer rate for varying angle
 void exciton_transfer::calculate_first_order_vs_angle(const arma::vec& angle_vec ,const double& z_shift, const std::array<double,2> axis_shifts)
@@ -461,6 +458,7 @@ void exciton_transfer::calculate_first_order_vs_angle(const arma::vec& angle_vec
   std::cout << "axis shifts: " << axis_shifts[0]*1e9 << " [nm] and " << axis_shifts[1]*1e9 << " [nm]\n";
   std::cout << "max transfer rate: " << transfer_rate.max()/1e12 << " [1/ps] at " << angle_vec(transfer_rate.index_max())*180/constants::pi << " [degrees]\n";
   std::cout << "min transfer rate: " << transfer_rate.min()/1e12 << " [1/ps] at " << angle_vec(transfer_rate.index_min())*180/constants::pi << " [degrees]\n";
+  std::cout << std::endl;
 }
 
 // calculate first order transfer rate for center to center distance
@@ -491,7 +489,8 @@ void exciton_transfer::calculate_first_order_vs_zshift(const arma::vec& z_shift_
   std::cout << "axis shifts: " << axis_shifts[0]*1e9 << " [nm] and " << axis_shifts[1]*1e9 << " [nm]\n";
   std::cout << "max transfer rate: " << transfer_rate.max() << " [1/s] at " << z_shift_vec(transfer_rate.index_max())*1e9 << " [nm]\n";
   std::cout << "min transfer rate: " << transfer_rate.min() << " [1/s] at " << z_shift_vec(transfer_rate.index_min())*1e9 << " [nm]\n";
-}
+  std::cout << std::endl;
+};
 
 // calculate first order transfer rate for varying axis shift for initial cnt
 void exciton_transfer::calculate_first_order_vs_axis_shift_1(const arma::vec& axis_shift_vec_1, const double axis_shift_2, const double z_shift, const double& theta)
@@ -522,7 +521,8 @@ void exciton_transfer::calculate_first_order_vs_axis_shift_1(const arma::vec& ax
   std::cout << "center to center distance: " << z_shift*1.e9 << " [nm]\n";
   std::cout << "max transfer rate: " << transfer_rate.max() << " [1/s] at " << axis_shift_vec_1(transfer_rate.index_max())*1e9 << " [nm]\n";
   std::cout << "min transfer rate: " << transfer_rate.min() << " [1/s] at " << axis_shift_vec_1(transfer_rate.index_min())*1e9 << " [nm]\n";
-}
+  std::cout << std::endl;
+};
 
 // calculate first order transfer rate for varying axis shift for final cnt
 void exciton_transfer::calculate_first_order_vs_axis_shift_2(const arma::vec& axis_shift_vec_2, const double axis_shift_1, const double z_shift, const double& theta)
@@ -553,4 +553,5 @@ void exciton_transfer::calculate_first_order_vs_axis_shift_2(const arma::vec& ax
   std::cout << "center to center distance: " << z_shift*1.e9 << " [nm]\n";
   std::cout << "max transfer rate: " << transfer_rate.max() << " [1/s] at " << axis_shift_vec_2(transfer_rate.index_max())*1e9 << " [nm]\n";
   std::cout << "min transfer rate: " << transfer_rate.min() << " [1/s] at " << axis_shift_vec_2(transfer_rate.index_min())*1e9 << " [nm]\n";
-}
+  std::cout << std::endl;
+};

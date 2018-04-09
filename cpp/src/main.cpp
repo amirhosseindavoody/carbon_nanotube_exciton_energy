@@ -46,6 +46,10 @@ int main(int argc, char *argv[])
 	for (const auto& j_ex_transfer:j["exciton transfer"])
 	{
 		exciton_transfer ex_transfer(j_ex_transfer, cnts, parent_directory);
+
+		// ex_transfer.save_J_matrix_element(0,0);
+		// ex_transfer.save_Q_matrix_element(0,0);
+
 		ex_transfer.run();
 	}
 

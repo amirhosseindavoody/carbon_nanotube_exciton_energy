@@ -78,18 +78,8 @@ public:
     }
     _directory = prepare_directory(directory_path, keep_old_results);
 
-    // set tempareture
-    if ((j["temperature"][1] != "Kelvin" and j["temperature"][1] != "kelvin")){
-      std::cout << "temperature units:..." << j["temperature"][1] << "\n";
-      throw std::invalid_argument("temperature must be in \"Kelvin\" units");
-    }
-    _temperature = j["temperature"][0];
-    
-    // set the broadening factor
-    if (j["broadening factor"][1] != "meV"){
-      throw std::invalid_argument("broadening factor must be in \"meV\" units");
-    }
-    _broadening_factor = double(j["broadening factor"][0])*1.e-3*constants::eV;
+    _temperature = j["temperature [Kelvin]"];
+    _broadening_factor = double(j["broadening factor [meV]"])*1.e-3*constants::eV;
 
     std::cout << "\n...exciton transfer parameters:\n";
     std::cout << "temperature: " << _temperature << " [Kelvin]\n";
@@ -265,79 +255,59 @@ public:
     }
 
     // determine the execution policy
-    if ((_j_prop["angle"].size()==4) and (_j_prop["zshift"].size()==2) and (_j_prop["axis shift 1"].size()==2) and (_j_prop["axis shift 2"].size()==2))
+    if ((_j_prop["angle [degrees]"].size()==3) &&
+        (_j_prop["zshift [nm]"].size()==1)     && 
+        (_j_prop["axis shift 1 [nm]"].size()==1) &&
+        (_j_prop["axis shift 2 [nm]"].size()==1))
     {
       std::cout << "\nexciton transfer versus angle" << std::endl;
 
-      // check distance units
-      if ((_j_prop["zshift"][1] != "nm") or (_j_prop["axis shift 1"][1] != "nm") or (_j_prop["axis shift 2"][1] != "nm")){
-        throw std::invalid_argument("distance units must be \"nm\"");
-      }
-      double z_shift = double(_j_prop["zshift"][0])*1.e-9;
-      std::array<double,2> axis_shifts={double(_j_prop["axis shift 1"][0])*1.e-9, double(_j_prop["axis shift 2"][0])*1.e-9};
+      double z_shift = double(_j_prop["zshift [nm]"][0])*1.e-9;
+      std::array<double,2> axis_shifts={double(_j_prop["axis shift 1 [nm]"][0])*1.e-9, double(_j_prop["axis shift 2 [nm]"][0])*1.e-9};
 
-      // check angle units
-      if (_j_prop["angle"][3]!= "degrees"){
-        throw std::invalid_argument("angle units must be \"degrees\"");
-      }
-      arma::vec angle_vec = arma::linspace<arma::vec>(_j_prop["angle"][0],_j_prop["angle"][1],_j_prop["angle"][2])*constants::pi/180;
+      arma::vec angle_vec = arma::linspace<arma::vec>(_j_prop["angle [degrees]"][0],_j_prop["angle [degrees]"][1],_j_prop["angle [degrees]"][2])*constants::pi/180;
 
       calculate_first_order_vs_angle(angle_vec, z_shift, axis_shifts);
     }
-    else if ((_j_prop["angle"].size()==2) and (_j_prop["zshift"].size()==4) and (_j_prop["axis shift 1"].size()==2) and (_j_prop["axis shift 2"].size()==2))
+    else if ((_j_prop["angle [degrees]"].size()==1) &&
+        (_j_prop["zshift [nm]"].size()==3)     && 
+        (_j_prop["axis shift 1 [nm]"].size()==1) &&
+        (_j_prop["axis shift 2 [nm]"].size()==1))
     {
       std::cout << "\nexciton transfer versus z_shift" << std::endl;
+      
+      arma::vec z_shift_vec = arma::linspace<arma::vec>(_j_prop["zshift [nm]"][0],_j_prop["zshift [nm]"][1],_j_prop["zshift [nm]"][2])*1.e-9;
+      std::array<double,2> axis_shifts={double(_j_prop["axis shift 1 [nm]"][0])*1.e-9, double(_j_prop["axis shift 2 [nm]"][0])*1.e-9};
 
-      // check distance units
-      if ((_j_prop["zshift"][3] != "nm") or (_j_prop["axis shift 1"][1] != "nm") or (_j_prop["axis shift 2"][1] != "nm")){
-        throw std::invalid_argument("distance units must be \"nm\"");
-      }
-      arma::vec z_shift_vec = arma::linspace<arma::vec>(_j_prop["zshift"][0],_j_prop["zshift"][1],_j_prop["zshift"][2])*1.e-9;
-      std::array<double,2> axis_shifts={double(_j_prop["axis shift 1"][0])*1.e-9, double(_j_prop["axis shift 2"][0])*1.e-9};
-
-      // check angle units
-      if (_j_prop["angle"][3]!= "degrees"){
-        throw std::invalid_argument("angle units must be \"degrees\"");
-      }
-      double angle = double(_j_prop["angle"][0])*constants::pi/180;
+      double angle = double(_j_prop["angle [degrees]"][0])*constants::pi/180;
       calculate_first_order_vs_zshift(z_shift_vec, axis_shifts, angle);
     }
-    else if ((_j_prop["angle"].size()==2) and (_j_prop["zshift"].size()==2) and (_j_prop["axis shift 1"].size()==4) and (_j_prop["axis shift 2"].size()==2))
+    else if ((_j_prop["angle [degrees]"].size()==1) &&
+             (_j_prop["zshift [nm]"].size()==1)     && 
+             (_j_prop["axis shift 1 [nm]"].size()==3) &&
+             (_j_prop["axis shift 2 [nm]"].size()==1))
     {
       std::cout << "\nexciton transfer versus axis shift 1" << std::endl;
 
-      // check distance units
-      if ((_j_prop["zshift"][1] != "nm") or (_j_prop["axis shift 1"][3] != "nm") or (_j_prop["axis shift 2"][1] != "nm")){
-        throw std::invalid_argument("distance units must be \"nm\"");
-      }
-      arma::vec axis_shift_vec_1 = arma::linspace<arma::vec>(_j_prop["axis shift 1"][0],_j_prop["axis shift 1"][1],_j_prop["axis shift 1"][2])*1.e-9;
-      double axis_shift_2 = double(_j_prop["axis shift 2"][0])*1.e-9;
-      double z_shift = double(_j_prop["zshift"][0])*1.e-9;
+      arma::vec axis_shift_vec_1 = arma::linspace<arma::vec>(_j_prop["axis shift 1 [nm]"][0],_j_prop["axis shift 1 [nm]"][1],_j_prop["axis shift 1 [nm]"][2])*1.e-9;
+      double axis_shift_2 = double(_j_prop["axis shift 2 [nm]"][0])*1.e-9;
+      double z_shift = double(_j_prop["zshift [nm]"][0])*1.e-9;
 
-      // check angle units
-      if (_j_prop["angle"][3]!= "degrees"){
-        throw std::invalid_argument("angle units must be \"degrees\"");
-      }
-      double angle = double(_j_prop["angle"][0])*constants::pi/180;
+      double angle = double(_j_prop["angle [degrees]"][0])*constants::pi/180;
       calculate_first_order_vs_axis_shift_1(axis_shift_vec_1, axis_shift_2, z_shift, angle);
     }
-    else if ((_j_prop["angle"].size()==2) and (_j_prop["zshift"].size()==2) and (_j_prop["axis shift 1"].size()==2) and (_j_prop["axis shift 2"].size()==3))
+    else if ((_j_prop["angle [degrees]"].size()==1) &&
+             (_j_prop["zshift [nm]"].size()==1)     && 
+             (_j_prop["axis shift 1 [nm]"].size()==1) &&
+             (_j_prop["axis shift 2 [nm]"].size()==3))
     {
       std::cout << "\nexciton transfer versus axis shift 2" << std::endl;
 
-      // check distance units
-      if ((_j_prop["zshift"][1] != "nm") or (_j_prop["axis shift 1"][1] != "nm") or (_j_prop["axis shift 2"][3] != "nm")){
-        throw std::invalid_argument("distance units must be \"nm\"");
-      }
-      arma::vec axis_shift_vec_2 = arma::linspace<arma::vec>(_j_prop["axis shift 2"][0],_j_prop["axis shift 2"][1],_j_prop["axis shift 2"][2])*1.e-9;
-      double axis_shift_1 = double(_j_prop["axis shift 1"][0])*1.e-9;
-      double z_shift = double(_j_prop["zshift"][0])*1.e-9;
+      arma::vec axis_shift_vec_2 = arma::linspace<arma::vec>(_j_prop["axis shift 2 [nm]"][0],_j_prop["axis shift 2 [nm]"][1],_j_prop["axis shift 2 [nm]"][2])*1.e-9;
+      double axis_shift_1 = double(_j_prop["axis shift 1 [nm]"][0])*1.e-9;
+      double z_shift = double(_j_prop["zshift [nm]"][0])*1.e-9;
 
-      // check angle units
-      if (_j_prop["angle"][3]!= "degrees"){
-        throw std::invalid_argument("angle units must be \"degrees\"");
-      }
-      double angle = double(_j_prop["angle"][0])*constants::pi/180;
+      double angle = double(_j_prop["angle [degrees]"][0])*constants::pi/180;
       calculate_first_order_vs_axis_shift_2(axis_shift_vec_2, axis_shift_1, z_shift, angle);
     }
     else
